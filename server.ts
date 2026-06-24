@@ -1,8 +1,11 @@
-import express from "express";
+import express, { type Request, type Response } from "express";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import { z, type ZodType } from "zod";
 
 // Load environment variables
 dotenv.config();
@@ -10,7 +13,25 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+// Security headers. CSP is disabled for now because the SPA (Vite dev + bundled
+// assets) needs a tailored policy; tightening it is a Tier 3 follow-up.
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(express.json({ limit: "1mb" }));
+
+// Lightweight health check for load balancers / uptime monitors.
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", uptime: process.uptime() });
+});
+
+// Throttle the (paid) AI endpoints to limit abuse and runaway Gemini spend.
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  limit: 30, // 30 requests / minute / IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please slow down and try again shortly." },
+});
+app.use("/api/", aiLimiter);
 
 // Lazy-initialized Gemini client helper
 let aiClient: GoogleGenAI | null = null;
@@ -32,19 +53,96 @@ function getGeminiClient(): GoogleGenAI {
   return aiClient;
 }
 
+// Detect transient upstream errors (overload / rate limit) that are worth retrying.
+function isTransient(err: unknown): boolean {
+  const msg = String((err as any)?.message ?? err);
+  return (
+    msg.includes("503") ||
+    msg.includes("UNAVAILABLE") ||
+    msg.includes("overloaded") ||
+    msg.includes("429") ||
+    msg.includes("RESOURCE_EXHAUSTED")
+  );
+}
+
+// Call Gemini and parse its JSON response, retrying transient failures with backoff.
+async function generateJSON(params: Parameters<GoogleGenAI["models"]["generateContent"]>[0], retries = 2): Promise<any> {
+  const ai = getGeminiClient();
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await ai.models.generateContent(params);
+      const text = response.text;
+      if (!text) throw new Error("No response text received from Gemini.");
+      return JSON.parse(text.trim());
+    } catch (err) {
+      lastErr = err;
+      if (attempt < retries && isTransient(err)) {
+        // 500ms, then 1500ms
+        await new Promise((r) => setTimeout(r, 500 * Math.pow(3, attempt)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
+// Map an error to a clean, user-facing API response with the right status code.
+function sendAiError(res: Response, error: unknown, fallback: string): void {
+  console.error(fallback, error);
+  if (isTransient(error)) {
+    res.status(503).json({ error: "The AI service is busy right now. Please try again in a moment." });
+  } else if (String((error as any)?.message ?? "").includes("GEMINI_API_KEY")) {
+    res.status(500).json({ error: "AI is not configured on the server." });
+  } else {
+    res.status(500).json({ error: fallback });
+  }
+}
+
+// Validate req.body against a zod schema; on failure send 400 and return null.
+function parseBody<T>(schema: ZodType<T>, req: Request, res: Response): T | null {
+  const result = schema.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: result.error.issues[0]?.message ?? "Invalid request body." });
+    return null;
+  }
+  return result.data;
+}
+
+// ----- Request body schemas -----
+const estimateSchema = z.object({
+  description: z.string().min(1, "Food description is required.").max(500),
+});
+const barcodeSchema = z.object({
+  barcode: z.string().min(1, "Barcode is required.").max(64),
+});
+const searchSchema = z.object({
+  query: z.string().min(1, "Search query is required.").max(200),
+});
+const recipesSchema = z.object({
+  ingredients: z.string().min(1, "Ingredients are required.").max(500),
+});
+const coachSchema = z.object({
+  entries: z.array(z.any()).max(500),
+  goal: z.object({
+    calories: z.number(),
+    protein: z.number(),
+    carbs: z.number(),
+    fat: z.number(),
+  }),
+  date: z.string().max(40).optional(),
+});
+
 // 1. API Route: Estimate food nutrition from a custom text description
 app.post("/api/estimate", async (req, res) => {
+  const body = parseBody(estimateSchema, req, res);
+  if (!body) return;
+
+  const prompt = `Estimate the nutritional facts (calories, protein, carbs, fat, typical serving size, and serving unit) for the following food item or meal description: "${body.description}". Provide the most realistic and accurate nutritional values possible.`;
+
   try {
-    const { description } = req.body;
-    if (!description || typeof description !== "string") {
-      res.status(400).json({ error: "Food description is required." });
-      return;
-    }
-
-    const ai = getGeminiClient();
-    const prompt = `Estimate the nutritional facts (calories, protein, carbs, fat, typical serving size, and serving unit) for the following food item or meal description: "${description}". Provide the most realistic and accurate nutritional values possible.`;
-
-    const response = await ai.models.generateContent({
+    const result = await generateJSON({
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
@@ -86,90 +184,79 @@ app.post("/api/estimate", async (req, res) => {
         },
       },
     });
-
-    const text = response.text;
-    if (!text) {
-      throw new Error("No response text received from Gemini.");
-    }
-
-    const result = JSON.parse(text.trim());
     res.json(result);
-  } catch (error: any) {
-    console.error("Error in /api/estimate:", error);
-    res.status(500).json({ error: error.message || "Failed to estimate food nutrition." });
+  } catch (error) {
+    sendAiError(res, error, "Failed to estimate food nutrition.");
   }
 });
 
 // 2. API Route: Scan and parse barcode
 app.post("/api/barcode", async (req, res) => {
+  const body = parseBody(barcodeSchema, req, res);
+  if (!body) return;
+  const { barcode } = body;
+
+  // Handled pre-defined list for immediate and robust offline simulation in app,
+  // otherwise use AI to guess or simulate product details.
+  const mockBarcodes: Record<string, any> = {
+    "49000000443": {
+      name: "Coca-Cola Classic (12 oz)",
+      calories: 140,
+      protein: 0,
+      carbs: 39,
+      fat: 0,
+      servingSize: 355,
+      servingUnit: "ml",
+    },
+    "070569005077": {
+      name: "Rolled Oats (1/2 cup)",
+      calories: 150,
+      protein: 5,
+      carbs: 27,
+      fat: 3,
+      servingSize: 40,
+      servingUnit: "g",
+    },
+    "011110038364": {
+      name: "Greek Yogurt - Plain Non-Fat",
+      calories: 80,
+      protein: 15,
+      carbs: 6,
+      fat: 0,
+      servingSize: 150,
+      servingUnit: "g",
+    },
+    "021130070519": {
+      name: "Whole Wheat Bread (1 Slice)",
+      calories: 70,
+      protein: 4,
+      carbs: 12,
+      fat: 1,
+      servingSize: 28,
+      servingUnit: "g",
+    },
+    "074570610053": {
+      name: "Whey Protein Powder (1 Scoop)",
+      calories: 120,
+      protein: 24,
+      carbs: 3,
+      fat: 1.5,
+      servingSize: 32,
+      servingUnit: "g",
+    }
+  };
+
+  if (mockBarcodes[barcode]) {
+    res.json(mockBarcodes[barcode]);
+    return;
+  }
+
+  // If it's a custom or unknown barcode, let's ask Gemini to intelligently guess/simulate a realistic grocery product
+  // associated with the barcode numbers to make scanning other barcodes incredibly fun and engaging!
+  const prompt = `Identify or realistically estimate the grocery item and nutritional facts for barcode/UPC/EAN numbers: "${barcode}". If the barcode is real, identify it. If unknown, generate a highly realistic, typical grocery item (like protein bars, chips, soups, or snacks) and provide exact nutrients.`;
+
   try {
-    const { barcode } = req.body;
-    if (!barcode || typeof barcode !== "string") {
-      res.status(400).json({ error: "Barcode is required." });
-      return;
-    }
-
-    // Handled pre-defined list for immediate and robust offline simulation in app,
-    // otherwise use AI to guess or simulate product details.
-    const mockBarcodes: Record<string, any> = {
-      "49000000443": {
-        name: "Coca-Cola Classic (12 oz)",
-        calories: 140,
-        protein: 0,
-        carbs: 39,
-        fat: 0,
-        servingSize: 355,
-        servingUnit: "ml",
-      },
-      "070569005077": {
-        name: "Rolled Oats (1/2 cup)",
-        calories: 150,
-        protein: 5,
-        carbs: 27,
-        fat: 3,
-        servingSize: 40,
-        servingUnit: "g",
-      },
-      "011110038364": {
-        name: "Greek Yogurt - Plain Non-Fat",
-        calories: 80,
-        protein: 15,
-        carbs: 6,
-        fat: 0,
-        servingSize: 150,
-        servingUnit: "g",
-      },
-      "021130070519": {
-        name: "Whole Wheat Bread (1 Slice)",
-        calories: 70,
-        protein: 4,
-        carbs: 12,
-        fat: 1,
-        servingSize: 28,
-        servingUnit: "g",
-      },
-      "074570610053": {
-        name: "Whey Protein Powder (1 Scoop)",
-        calories: 120,
-        protein: 24,
-        carbs: 3,
-        fat: 1.5,
-        servingSize: 32,
-        servingUnit: "g",
-      }
-    };
-
-    if (mockBarcodes[barcode]) {
-      res.json(mockBarcodes[barcode]);
-      return;
-    }
-
-    // If it's a custom or unknown barcode, let's ask Gemini to intelligently guess/simulate a realistic grocery product
-    // associated with the barcode numbers to make scanning other barcodes incredibly fun and engaging!
-    const ai = getGeminiClient();
-    const prompt = `Identify or realistically estimate the grocery item and nutritional facts for barcode/UPC/EAN numbers: "${barcode}". If the barcode is real, identify it. If unknown, generate a highly realistic, typical grocery item (like protein bars, chips, soups, or snacks) and provide exact nutrients.`;
-
-    const response = await ai.models.generateContent({
+    const result = await generateJSON({
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
@@ -211,33 +298,21 @@ app.post("/api/barcode", async (req, res) => {
         },
       },
     });
-
-    const text = response.text;
-    if (!text) {
-      throw new Error("No response text received from Gemini.");
-    }
-
-    const result = JSON.parse(text.trim());
     res.json(result);
-  } catch (error: any) {
-    console.error("Error in /api/barcode:", error);
-    res.status(500).json({ error: error.message || "Failed to parse barcode." });
+  } catch (error) {
+    sendAiError(res, error, "Failed to parse barcode.");
   }
 });
 
 // 3. API Route: AI-powered food search/suggestions
 app.post("/api/search-ai", async (req, res) => {
+  const body = parseBody(searchSchema, req, res);
+  if (!body) return;
+
+  const prompt = `Provide a list of 4 to 6 food items that match or are highly relevant to the search query: "${body.query}". For each food item, provide its typical serving size, serving unit, and exact nutritional content (calories, protein, carbs, fat).`;
+
   try {
-    const { query } = req.body;
-    if (!query || typeof query !== "string") {
-      res.status(400).json({ error: "Search query is required." });
-      return;
-    }
-
-    const ai = getGeminiClient();
-    const prompt = `Provide a list of 4 to 6 food items that match or are highly relevant to the search query: "${query}". For each food item, provide its typical serving size, serving unit, and exact nutritional content (calories, protein, carbs, fat).`;
-
-    const response = await ai.models.generateContent({
+    const result = await generateJSON({
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
@@ -282,33 +357,21 @@ app.post("/api/search-ai", async (req, res) => {
         },
       },
     });
-
-    const text = response.text;
-    if (!text) {
-      throw new Error("No response text received from Gemini.");
-    }
-
-    const result = JSON.parse(text.trim());
     res.json(result);
-  } catch (error: any) {
-    console.error("Error in /api/search-ai:", error);
-    res.status(500).json({ error: error.message || "Failed to search foods via AI." });
+  } catch (error) {
+    sendAiError(res, error, "Failed to search foods via AI.");
   }
 });
 
 // 4. API Route: AI Recipes Generator based on ingredients
 app.post("/api/generate-recipes", async (req, res) => {
+  const body = parseBody(recipesSchema, req, res);
+  if (!body) return;
+
+  const prompt = `Based on these ingredients available: "${body.ingredients}", generate 3 distinct, delicious, healthy recipe recommendations. Calculate exact nutritional values (calories, protein, carbs, fat) and specify instructions, preparation time (mins), and difficulty.`;
+
   try {
-    const { ingredients } = req.body;
-    if (!ingredients || typeof ingredients !== "string") {
-      res.status(400).json({ error: "Ingredients are required." });
-      return;
-    }
-
-    const ai = getGeminiClient();
-    const prompt = `Based on these ingredients available: "${ingredients}", generate 3 distinct, delicious, healthy recipe recommendations. Calculate exact nutritional values (calories, protein, carbs, fat) and specify instructions, preparation time (mins), and difficulty.`;
-
-    const response = await ai.models.generateContent({
+    const result = await generateJSON({
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
@@ -334,33 +397,26 @@ app.post("/api/generate-recipes", async (req, res) => {
         },
       },
     });
-
-    const text = response.text;
-    if (!text) throw new Error("No response from Gemini.");
-    res.json(JSON.parse(text.trim()));
-  } catch (error: any) {
-    console.error("Error in /api/generate-recipes:", error);
-    res.status(500).json({ error: error.message || "Failed to generate AI recipes." });
+    res.json(result);
+  } catch (error) {
+    sendAiError(res, error, "Failed to generate AI recipes.");
   }
 });
 
 // 5. API Route: AI Coach Daily Nutrition & Workout Analysis
 app.post("/api/coach-analysis", async (req, res) => {
-  try {
-    const { entries, goal, date } = req.body;
-    if (!entries || !goal) {
-      res.status(400).json({ error: "Logged entries and daily goals are required." });
-      return;
-    }
+  const body = parseBody(coachSchema, req, res);
+  if (!body) return;
+  const { entries, goal, date } = body;
 
-    const ai = getGeminiClient();
-    const prompt = `Analyze the logged diet and exercise entries for date "${date || 'Today'}".
+  const prompt = `Analyze the logged diet and exercise entries for date "${date || 'Today'}".
 Current Daily Goals: ${JSON.stringify(goal)}.
 Daily Logs: ${JSON.stringify(entries)}.
 
 Evaluate their calorie balance (consumed vs. burned), macronutrient balance (protein, carbs, fat target vs actual), and physical activity. Give a constructive analysis.`;
 
-    const response = await ai.models.generateContent({
+  try {
+    const result = await generateJSON({
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
@@ -382,13 +438,9 @@ Evaluate their calorie balance (consumed vs. burned), macronutrient balance (pro
         },
       },
     });
-
-    const text = response.text;
-    if (!text) throw new Error("No response from Gemini.");
-    res.json(JSON.parse(text.trim()));
-  } catch (error: any) {
-    console.error("Error in /api/coach-analysis:", error);
-    res.status(500).json({ error: error.message || "Failed to analyze diet & workouts." });
+    res.json(result);
+  } catch (error) {
+    sendAiError(res, error, "Failed to analyze diet & workouts.");
   }
 });
 
@@ -398,7 +450,7 @@ async function startServer() {
   const isRunningFromTS = process.argv[1] && process.argv[1].endsWith("server.ts");
   const isRunningFromBundle = process.argv[1] && (process.argv[1].endsWith(".cjs") || process.argv[1].includes("dist"));
   const isProd = !isRunningFromTS && (process.env.NODE_ENV === "production" || isRunningFromBundle || hasDist);
-  
+
   if (!isProd) {
     console.log("Setting up Vite development middleware...");
     const { createServer } = await import("vite");
@@ -420,10 +472,10 @@ async function startServer() {
     if (!fs.existsSync(path.join(distPath, "index.html"))) {
       distPath = process.cwd();
     }
-    
+
     console.log(`Resolved production static assets path: ${distPath}`);
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
+    app.get("*", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
