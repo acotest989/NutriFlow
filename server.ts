@@ -11,7 +11,8 @@ import { z, type ZodType } from "zod";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+// Hosts (Render, Railway, Cloud Run, etc.) inject the port to listen on.
+const PORT = Number(process.env.PORT) || 3000;
 
 // Security headers. CSP is disabled for now because the SPA (Vite dev + bundled
 // assets) needs a tailored policy; tightening it is a Tier 3 follow-up.
