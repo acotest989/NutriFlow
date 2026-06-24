@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Flame,
   Apple,
@@ -10,7 +10,9 @@ import {
   Sun,
   Moon,
   LogOut,
-  Loader2
+  Loader2,
+  AlertTriangle,
+  X
 } from "lucide-react";
 import Dashboard from "./components/Dashboard";
 import FoodSearch from "./components/FoodSearch";
@@ -46,8 +48,20 @@ export default function App() {
   const initAuth = useStore((s) => s.initAuth);
   const signOut = useStore((s) => s.signOut);
 
+  // Data + error state
+  const dataLoading = useStore((s) => s.dataLoading);
+  const error = useStore((s) => s.error);
+  const setError = useStore((s) => s.setError);
+
   // Initialize the auth session listener once on mount.
   useEffect(() => initAuth(), [initAuth]);
+
+  // Auto-dismiss the error toast after a few seconds.
+  useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(t);
+  }, [error, setError]);
 
   // Mobile viewport current bottom navigation tab
   const [activeMobileTab, setActiveMobileTab] = useState<"dashboard" | "meals" | "exercises" | "charts" | "scanner" | "coach">("dashboard");
@@ -68,6 +82,30 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-[#0B0E14] flex flex-col antialiased selection:bg-[#6366F1] selection:text-white transition-colors duration-200 ${theme === 'high-contrast-light' ? 'theme-high-contrast-light' : ''}`}>
+      {/* Thin sync indicator while loading the user's data */}
+      {dataLoading && (
+        <div className="fixed top-0 inset-x-0 z-60 flex items-center justify-center gap-2 bg-[#6366F1] text-white text-[10px] font-mono font-bold uppercase tracking-wider py-1 shadow-md">
+          <Loader2 className="w-3 h-3 animate-spin" /> Syncing your data...
+        </div>
+      )}
+
+      {/* Dismissible error toast */}
+      {error && (
+        <div className="fixed bottom-4 inset-x-0 z-70 flex justify-center px-4 pointer-events-none">
+          <div className="pointer-events-auto max-w-sm w-full bg-[#141923] border border-rose-500/30 rounded-2xl px-4 py-3 shadow-xl flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <p className="flex-1 text-xs text-[#E2E8F0] font-sans leading-relaxed">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-[#64748B] hover:text-white transition-colors shrink-0"
+              title="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {isMobile ? (
         /* ================= MOBILE DIRECT NATIVE VIEWPORT ================= */
         <div className="flex-1 flex flex-col min-h-screen pb-24">

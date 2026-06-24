@@ -50,6 +50,7 @@ interface AppState {
   // UI
   currentDate: string;
   theme: Theme;
+  error: string | null; // transient, user-facing error (e.g. a failed sync)
 
   // Auth actions
   initAuth: () => () => void;
@@ -68,6 +69,7 @@ interface AppState {
   setCurrentDate: (date: string) => void;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  setError: (message: string | null) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -83,6 +85,7 @@ export const useStore = create<AppState>()(
 
       currentDate: todayStr(),
       theme: "deep-midnight",
+      error: null,
 
       // ---------- Auth ----------
       initAuth: () => {
@@ -132,8 +135,10 @@ export const useStore = create<AppState>()(
           supabase.from("goals").select("*").maybeSingle(),
         ]);
 
-        if (entriesRes.error) console.error("Failed to load entries:", entriesRes.error);
-        if (goalRes.error) console.error("Failed to load goal:", goalRes.error);
+        if (entriesRes.error || goalRes.error) {
+          console.error("Failed to load data:", entriesRes.error ?? goalRes.error);
+          set({ error: "Couldn't load your data. Check your connection and refresh." });
+        }
 
         const goalRow = goalRes.data;
         set({
@@ -160,6 +165,7 @@ export const useStore = create<AppState>()(
           .single();
         if (error || !data) {
           console.error("Failed to add entry:", error);
+          set({ error: "Couldn't save that entry. Please try again." });
           return;
         }
         set((s) => ({ entries: [rowToEntry(data as EntryRow), ...s.entries] }));
@@ -172,7 +178,7 @@ export const useStore = create<AppState>()(
         const { error } = await supabase.from("entries").delete().eq("id", id);
         if (error) {
           console.error("Failed to remove entry:", error);
-          set({ entries: prev });
+          set({ entries: prev, error: "Couldn't delete that entry. Please try again." });
         }
       },
 
@@ -186,7 +192,7 @@ export const useStore = create<AppState>()(
           .upsert({ user_id: user.id, ...goal, updated_at: new Date().toISOString() });
         if (error) {
           console.error("Failed to update goal:", error);
-          set({ goal: prev });
+          set({ goal: prev, error: "Couldn't save your goal. Please try again." });
         }
       },
 
@@ -210,6 +216,7 @@ export const useStore = create<AppState>()(
         set((s) => ({
           theme: s.theme === "deep-midnight" ? "high-contrast-light" : "deep-midnight",
         })),
+      setError: (message) => set({ error: message }),
     }),
     {
       // Only UI preferences are persisted locally; user data lives in Supabase.
