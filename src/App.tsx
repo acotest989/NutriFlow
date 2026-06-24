@@ -10,7 +10,9 @@ import {
   Cpu, 
   Info, 
   Calendar,
-  Sparkles
+  Sparkles,
+  Sun,
+  Moon
 } from "lucide-react";
 import { LogEntry, Goal } from "./types";
 import { DEFAULT_GOAL } from "./data";
@@ -85,6 +87,16 @@ export default function App() {
   const [currentDate, setCurrentDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [goal, setGoal] = useState<Goal>(DEFAULT_GOAL);
+  
+  // Accessibility Accessibility theme: Deep Midnight or High Contrast Light
+  const [theme, setTheme] = useState<"deep-midnight" | "high-contrast-light">(() => {
+    const saved = localStorage.getItem("nutriflow_theme");
+    return saved === "high-contrast-light" ? "high-contrast-light" : "deep-midnight";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("nutriflow_theme", theme);
+  }, [theme]);
 
   // Mobile viewport current bottom navigation tab
   const [activeMobileTab, setActiveMobileTab] = useState<"dashboard" | "meals" | "exercises" | "charts" | "scanner" | "coach">("dashboard");
@@ -149,7 +161,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0E14] flex flex-col antialiased selection:bg-[#6366F1] selection:text-white">
+    <div className={`min-h-screen bg-[#0B0E14] flex flex-col antialiased selection:bg-[#6366F1] selection:text-white transition-colors duration-200 ${theme === 'high-contrast-light' ? 'theme-high-contrast-light' : ''}`}>
       {isMobile ? (
         /* ================= MOBILE DIRECT NATIVE VIEWPORT ================= */
         <div className="flex-1 flex flex-col min-h-screen pb-24">
@@ -163,9 +175,23 @@ export default function App() {
                 Nutri<span className="text-[#818CF8]">Flow</span>
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] font-mono font-bold tracking-wider text-[#94A3B8] uppercase">Sync On</span>
+            <div className="flex items-center gap-3">
+              <button
+                id="mobile_theme_toggle"
+                onClick={() => setTheme(prev => prev === 'deep-midnight' ? 'high-contrast-light' : 'deep-midnight')}
+                className="p-1.5 rounded-lg border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 transition-all text-xs text-[#818CF8] flex items-center justify-center"
+                title={theme === 'deep-midnight' ? 'Switch to High Contrast Light Theme' : 'Switch to Deep Midnight Theme'}
+              >
+                {theme === 'deep-midnight' ? (
+                  <Sun className="w-4.5 h-4.5 text-amber-400" />
+                ) : (
+                  <Moon className="w-4.5 h-4.5 text-[#818CF8]" />
+                )}
+              </button>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] font-mono font-bold tracking-wider text-[#94A3B8] uppercase">Sync On</span>
+              </div>
             </div>
           </div>
 
@@ -314,6 +340,24 @@ export default function App() {
 
             {/* Status and Active Date indicators */}
             <div className="flex items-center gap-4">
+              <button
+                id="desktop_theme_toggle"
+                onClick={() => setTheme(prev => prev === 'deep-midnight' ? 'high-contrast-light' : 'deep-midnight')}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 transition-all text-xs font-semibold text-[#818CF8] cursor-pointer"
+                title={theme === 'deep-midnight' ? 'Switch to High Contrast Light Theme' : 'Switch to Deep Midnight Theme'}
+              >
+                {theme === 'deep-midnight' ? (
+                  <>
+                    <Sun className="w-4 h-4 text-amber-400" />
+                    <span className="text-[#E2E8F0] font-sans">High Contrast Light</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4 text-[#818CF8]" />
+                    <span className="text-[#0F172A] font-sans">Deep Midnight</span>
+                  </>
+                )}
+              </button>
               <div className="flex items-center gap-1.5 bg-[#0B0E14] border border-white/5 px-3 py-1.5 rounded-xl">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] font-mono font-bold text-[#10B981] uppercase tracking-wider">AI Engines Connected</span>
