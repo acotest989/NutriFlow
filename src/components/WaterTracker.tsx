@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Droplet, Plus, Trash2, Award, Volume2 } from "lucide-react";
 import { useStore } from "../store";
@@ -9,33 +8,13 @@ interface WaterTrackerProps {
 
 export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
   const currentDate = useStore((s) => s.currentDate);
-  const [consumed, setConsumed] = useState<number>(0);
+  const consumed = useStore((s) => s.hydration[currentDate] ?? 0);
+  const adjustWater = useStore((s) => s.adjustWater);
   const target = 2500; // default 2500ml or 2.5L target
 
-  // Load water data from localStorage on mount & when date changes
-  useEffect(() => {
-    const saved = localStorage.getItem("hydration_logs");
-    if (saved) {
-      const logs = JSON.parse(saved);
-      if (logs[currentDate]) {
-        setConsumed(logs[currentDate]);
-      } else {
-        setConsumed(0);
-      }
-    } else {
-      setConsumed(0);
-    }
-  }, [currentDate]);
-
-  // Save water to localStorage
+  // Persist water intake to Supabase (per user, per day).
   const updateWater = (amount: number) => {
-    const newAmount = Math.max(0, consumed + amount);
-    setConsumed(newAmount);
-
-    const saved = localStorage.getItem("hydration_logs");
-    const logs = saved ? JSON.parse(saved) : {};
-    logs[currentDate] = newAmount;
-    localStorage.setItem("hydration_logs", JSON.stringify(logs));
+    adjustWater(amount);
   };
 
   const percent = Math.min(100, Math.round((consumed / target) * 100));

@@ -45,6 +45,7 @@ interface AppState {
   // Data (loaded from Supabase for the signed-in user)
   entries: LogEntry[];
   goal: Goal;
+  hydration: Record<string, number>; // date (YYYY-MM-DD) -> consumed ml
   dataLoading: boolean;
 
   // UI
@@ -64,6 +65,7 @@ interface AppState {
   removeEntry: (id: string) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;
   addQuickCalories: (calories: number, type: "meal" | "exercise") => Promise<void>;
+  adjustWater: (deltaMl: number) => Promise<void>;
 
   // UI actions
   setCurrentDate: (date: string) => void;
@@ -81,6 +83,7 @@ export const useStore = create<AppState>()(
 
       entries: [],
       goal: DEFAULT_GOAL,
+      hydration: {},
       dataLoading: false,
 
       currentDate: todayStr(),
@@ -105,7 +108,7 @@ export const useStore = create<AppState>()(
             // Only (re)load when the user actually changes, not on token refresh.
             if (session.user.id !== prevUserId) get().loadData();
           } else {
-            set({ entries: [], goal: DEFAULT_GOAL });
+            set({ entries: [], goal: DEFAULT_GOAL, hydration: {} });
           }
         });
 
@@ -124,23 +127,29 @@ export const useStore = create<AppState>()(
 
       signOut: async () => {
         await supabase.auth.signOut();
-        set({ entries: [], goal: DEFAULT_GOAL });
+        set({ entries: [], goal: DEFAULT_GOAL, hydration: {} });
       },
 
       // ---------- Data ----------
       loadData: async () => {
         set({ dataLoading: true });
-        const [entriesRes, goalRes] = await Promise.all([
+        const [entriesRes, goalRes, hydrationRes] = await Promise.all([
           supabase.from("entries").select("*").order("created_at", { ascending: false }),
           supabase.from("goals").select("*").maybeSingle(),
+          supabase.from("hydration").select("date, consumed_ml"),
         ]);
 
-        if (entriesRes.error || goalRes.error) {
-          console.error("Failed to load data:", entriesRes.error ?? goalRes.error);
+        if (entriesRes.error || goalRes.error || hydrationRes.error) {
+          console.error("Failed to load data:", entriesRes.error ?? goalRes.error ?? hydrationRes.error);
           set({ error: "Couldn't load your data. Check your connection and refresh." });
         }
 
         const goalRow = goalRes.data;
+        const hydration: Record<string, number> = {};
+        for (const row of hydrationRes.data ?? []) {
+          hydration[(row as { date: string }).date] = Number((row as { consumed_ml: number }).consumed_ml);
+        }
+
         set({
           entries: (entriesRes.data ?? []).map((r) => rowToEntry(r as EntryRow)),
           goal: goalRow
@@ -151,6 +160,7 @@ export const useStore = create<AppState>()(
                 fat: Number(goalRow.fat),
               }
             : DEFAULT_GOAL,
+          hydration,
           dataLoading: false,
         });
       },
@@ -207,6 +217,23 @@ export const useStore = create<AppState>()(
           fat: type === "meal" ? Math.round(calories * 0.02) : 0,
           quantity: type === "meal" ? 100 : 30, // generic unit weight/time
         });
+      },
+
+      adjustWater: async (deltaMl) => {
+        const user = get().user;
+        if (!user) return;
+        const date = get().currentDate;
+        const prev = get().hydration;
+        const newAmount = Math.max(0, (prev[date] ?? 0) + deltaMl);
+        // Optimistic update.
+        set({ hydration: { ...prev, [date]: newAmount } });
+        const { error } = await supabase
+          .from("hydration")
+          .upsert({ user_id: user.id, date, consumed_ml: newAmount, updated_at: new Date().toISOString() });
+        if (error) {
+          console.error("Failed to update hydration:", error);
+          set({ hydration: prev, error: "Couldn't save your water intake. Please try again." });
+        }
       },
 
       // ---------- UI ----------
