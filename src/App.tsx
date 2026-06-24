@@ -8,7 +8,9 @@ import {
   Info,
   Sparkles,
   Sun,
-  Moon
+  Moon,
+  LogOut,
+  Loader2
 } from "lucide-react";
 import Dashboard from "./components/Dashboard";
 import FoodSearch from "./components/FoodSearch";
@@ -17,6 +19,7 @@ import ExerciseTracker from "./components/ExerciseTracker";
 import ProgressCharts from "./components/ProgressCharts";
 import AiCoach from "./components/AiCoach";
 import WaterTracker from "./components/WaterTracker";
+import Auth from "./components/Auth";
 import { useStore } from "./store";
 
 export default function App() {
@@ -37,8 +40,31 @@ export default function App() {
   const theme = useStore((s) => s.theme);
   const toggleTheme = useStore((s) => s.toggleTheme);
 
+  // Auth state
+  const authReady = useStore((s) => s.authReady);
+  const user = useStore((s) => s.user);
+  const initAuth = useStore((s) => s.initAuth);
+  const signOut = useStore((s) => s.signOut);
+
+  // Initialize the auth session listener once on mount.
+  useEffect(() => initAuth(), [initAuth]);
+
   // Mobile viewport current bottom navigation tab
   const [activeMobileTab, setActiveMobileTab] = useState<"dashboard" | "meals" | "exercises" | "charts" | "scanner" | "coach">("dashboard");
+
+  // While the initial session check runs, show a lightweight splash.
+  if (!authReady) {
+    return (
+      <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-[#818CF8] animate-spin" />
+      </div>
+    );
+  }
+
+  // Not signed in -> show the auth screen.
+  if (!user) {
+    return <Auth />;
+  }
 
   return (
     <div className={`min-h-screen bg-[#0B0E14] flex flex-col antialiased selection:bg-[#6366F1] selection:text-white transition-colors duration-200 ${theme === 'high-contrast-light' ? 'theme-high-contrast-light' : ''}`}>
@@ -72,6 +98,14 @@ export default function App() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[9px] font-mono font-bold tracking-wider text-[#94A3B8] uppercase">Sync On</span>
               </div>
+              <button
+                id="mobile_sign_out"
+                onClick={() => signOut()}
+                className="p-1.5 rounded-lg border border-white/10 hover:border-rose-500/40 bg-white/5 hover:bg-rose-500/10 transition-all text-[#94A3B8] hover:text-rose-400 flex items-center justify-center"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -203,6 +237,15 @@ export default function App() {
               <div className="text-[11px] font-sans text-[#94A3B8]">
                 Logged date: <span className="text-white font-semibold font-mono bg-white/5 px-2.5 py-1 rounded-lg border border-white/5 ml-1">{currentDate}</span>
               </div>
+              <button
+                id="desktop_sign_out"
+                onClick={() => signOut()}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:border-rose-500/40 bg-white/5 hover:bg-rose-500/10 transition-all text-xs font-semibold text-[#94A3B8] hover:text-rose-400 cursor-pointer"
+                title={user.email ? `Sign out (${user.email})` : "Sign out"}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="font-sans hidden xl:inline">Sign Out</span>
+              </button>
             </div>
           </div>
 
