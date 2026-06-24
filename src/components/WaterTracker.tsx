@@ -61,7 +61,7 @@ export default function WaterTracker({ currentDate, isCompact = false }: WaterTr
               initial={{ height: "0%" }}
               animate={{ height: `${percent}%` }}
               transition={{ type: "spring", stiffness: 45, damping: 15 }}
-              className="w-full bg-gradient-to-t from-[#0284C7] to-[#38BDF8] relative"
+              className="w-full bg-linear-to-t from-[#0284C7] to-[#38BDF8] relative"
             >
               {/* Overlay animated ripple effect */}
               <div className="absolute inset-x-0 -top-1 h-2 bg-white/20 animate-pulse blur-[1px]" />

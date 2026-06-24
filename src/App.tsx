@@ -168,7 +168,7 @@ export default function App() {
           {/* NutriFlow Mobile Brand Sticky Header */}
           <div className="bg-[#141923] px-5 py-4 border-b border-white/5 flex items-center justify-between sticky top-0 z-40 select-none shadow-md">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-md shadow-[#6366F1]/10">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-md shadow-[#6366F1]/10">
                 <Flame className="w-4.5 h-4.5 animate-pulse" />
               </div>
               <span className="font-sans font-black text-sm tracking-tight text-white">
@@ -327,7 +327,7 @@ export default function App() {
           {/* Desktop Brand Navigation Bar */}
           <div className="bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-[24px] px-6 py-4 flex flex-col md:flex-row items-center justify-between shadow-xl gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-md shadow-[#6366F1]/20">
+              <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-md shadow-[#6366F1]/20">
                 <Flame className="w-5 h-5 animate-pulse" />
               </div>
               <div>

@@ -300,7 +300,7 @@ export default function FoodSearch({
         /* Manual and AI Powered Estimations Panel */
         <div className="space-y-6">
           {/* AI Nutrition Estimator */}
-          <div className="bg-gradient-to-br from-indigo-950/40 via-[#141923] to-[#0B0E14] rounded-[24px] p-6 text-white shadow-lg border border-white/10 relative overflow-hidden">
+          <div className="bg-linear-to-br from-indigo-950/40 via-[#141923] to-[#0B0E14] rounded-[24px] p-6 text-white shadow-lg border border-white/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 opacity-15">
               <Sparkles className="w-40 h-40 text-[#818CF8]" />
             </div>
