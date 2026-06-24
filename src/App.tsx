@@ -325,7 +325,7 @@ export default function App() {
         /* ================= RESPONSIVE WEB/DESKTOP VIEWPORT ================= */
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-6 p-6">
           {/* Desktop Brand Navigation Bar */}
-          <div className="bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-[24px] px-6 py-4 flex flex-col md:flex-row items-center justify-between shadow-xl gap-4">
+          <div className="bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl px-6 py-4 flex flex-col md:flex-row items-center justify-between shadow-xl gap-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-md shadow-[#6366F1]/20">
                 <Flame className="w-5 h-5 animate-pulse" />
@@ -369,7 +369,7 @@ export default function App() {
           </div>
 
           {/* Main Web Bento Grid */}
-          <div className="grid lg:grid-cols-12 gap-6 bg-[#141923]/50 rounded-[24px] p-6 border border-white/10 backdrop-blur-md">
+          <div className="grid lg:grid-cols-12 gap-6 bg-[#141923]/50 rounded-3xl p-6 border border-white/10 backdrop-blur-md">
             {/* Left side bento block - Interactive Main Controller */}
             <div className="lg:col-span-8 space-y-6">
               

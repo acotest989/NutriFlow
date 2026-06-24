@@ -173,7 +173,7 @@ export default function FoodSearch({
       {/* Main Mode View Panels */}
       {!isManualMode ? (
         /* Presets Search Database Panel */
-        <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5 space-y-4">
+        <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-sans font-bold text-white">Food Database Search</h3>
             <span className="text-[10px] font-mono bg-white/5 text-[#94A3B8] px-2 py-1 rounded-md border border-white/5">
@@ -203,7 +203,7 @@ export default function FoodSearch({
                   className={`p-3 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
                     selectedFood?.id === food.id
                       ? "border-[#6366F1] bg-[#6366F1]/10"
-                      : "border-white/5 hover:border-white/10 hover:bg-white/[0.02]"
+                      : "border-white/5 hover:border-white/10 hover:bg-white/2"
                   }`}
                 >
                   <div className="font-sans">
@@ -300,7 +300,7 @@ export default function FoodSearch({
         /* Manual and AI Powered Estimations Panel */
         <div className="space-y-6">
           {/* AI Nutrition Estimator */}
-          <div className="bg-linear-to-br from-indigo-950/40 via-[#141923] to-[#0B0E14] rounded-[24px] p-6 text-white shadow-lg border border-white/10 relative overflow-hidden">
+          <div className="bg-linear-to-br from-indigo-950/40 via-[#141923] to-[#0B0E14] rounded-3xl p-6 text-white shadow-lg border border-white/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 opacity-15">
               <Sparkles className="w-40 h-40 text-[#818CF8]" />
             </div>
@@ -412,7 +412,7 @@ export default function FoodSearch({
           </div>
 
           {/* Standard Manual Log Form */}
-          <div className="bg-[#141923] rounded-[24px] p-6 shadow-sm border border-white/5 space-y-4">
+          <div className="bg-[#141923] rounded-3xl p-6 shadow-sm border border-white/5 space-y-4">
             <h4 className="font-sans font-bold text-white flex items-center gap-2">
               <Scale className="w-4 h-4 text-[#818CF8]" /> Manual Custom Entry
             </h4>
@@ -500,7 +500,7 @@ export default function FoodSearch({
       )}
 
       {/* Logged Foods List for Today */}
-      <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5">
+      <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5">
         <h3 className="font-sans font-bold text-white mb-4 flex items-center gap-2">
           <Utensils className="w-4 h-4 text-[#818CF8]" /> Logged Meal History
         </h3>

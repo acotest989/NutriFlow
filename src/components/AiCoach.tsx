@@ -151,7 +151,7 @@ export default function AiCoach({
   };
 
   return (
-    <div className="bg-[#141923] rounded-[24px] p-5 shadow-lg border border-white/5 font-sans h-full flex flex-col">
+    <div className="bg-[#141923] rounded-3xl p-5 shadow-lg border border-white/5 font-sans h-full flex flex-col">
       {/* Tab Switcher Headers */}
       <div className="flex bg-[#0B0E14] border border-white/5 p-1 rounded-2xl mb-5 shrink-0">
         <button
@@ -189,7 +189,7 @@ export default function AiCoach({
               transition={{ duration: 0.15 }}
               className="space-y-4"
             >
-              <div className="bg-white/[0.01] border border-white/5 p-4 rounded-2xl">
+              <div className="bg-white/1 border border-white/5 p-4 rounded-2xl">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-xl bg-[#818CF8]/10 flex items-center justify-center text-[#818CF8] shrink-0">
                     <Sparkles className="w-5 h-5" />
@@ -255,7 +255,7 @@ export default function AiCoach({
                   </div>
 
                   {/* Summary Segment */}
-                  <div className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl space-y-2">
+                  <div className="bg-white/2 border border-white/5 p-4 rounded-2xl space-y-2">
                     <h5 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 text-[#818CF8]">
                       <Activity className="w-3.5 h-3.5" /> Dietitian Summary
                     </h5>
@@ -265,7 +265,7 @@ export default function AiCoach({
                   </div>
 
                   {/* Tips Segment */}
-                  <div className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl space-y-3">
+                  <div className="bg-white/2 border border-white/5 p-4 rounded-2xl space-y-3">
                     <h5 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 text-[#818CF8]">
                       <Sparkles className="w-3.5 h-3.5" /> Direct Recommendations
                     </h5>
@@ -293,7 +293,7 @@ export default function AiCoach({
               transition={{ duration: 0.15 }}
               className="space-y-4"
             >
-              <form onSubmit={handleGenerateRecipes} className="bg-white/[0.01] border border-white/5 p-4 rounded-2xl space-y-3">
+              <form onSubmit={handleGenerateRecipes} className="bg-white/1 border border-white/5 p-4 rounded-2xl space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-xl bg-[#10B981]/10 flex items-center justify-center text-[#10B981] shrink-0">
                     <Utensils className="w-5 h-5" />
@@ -362,7 +362,7 @@ export default function AiCoach({
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3 hover:border-white/10 transition-all"
+                        className="bg-white/2 border border-white/5 rounded-2xl p-4 space-y-3 hover:border-white/10 transition-all"
                       >
                         {/* Title Row */}
                         <div className="flex justify-between items-start gap-2">

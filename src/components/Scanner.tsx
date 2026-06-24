@@ -120,7 +120,7 @@ export default function Scanner({ currentDate, onAddEntry, isCompact = false }: 
   return (
     <div id="barcode_scanner_panel" className="space-y-6">
       {/* Viewport Frame Box / Visual Camera Feedback */}
-      <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5 space-y-4">
+      <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
         <h3 className="font-sans font-bold text-white flex items-center gap-2">
           <Scan className="w-5 h-5 text-[#818CF8]" /> Multi-Platform Barcode Scanner
         </h3>
@@ -205,7 +205,7 @@ export default function Scanner({ currentDate, onAddEntry, isCompact = false }: 
       </div>
 
       {/* Database Quick Code / Simulation Helper */}
-      <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5 space-y-4">
+      <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
         <h4 className="font-sans font-bold text-white flex items-center gap-1.5">
           <Sparkles className="w-4 h-4 text-[#818CF8]" /> Simulated Barcode Console
         </h4>
