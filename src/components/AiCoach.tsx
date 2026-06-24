@@ -256,7 +256,7 @@ export default function AiCoach({
 
                   {/* Summary Segment */}
                   <div className="bg-white/2 border border-white/5 p-4 rounded-2xl space-y-2">
-                    <h5 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 text-[#818CF8]">
+                    <h5 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-[#818CF8]">
                       <Activity className="w-3.5 h-3.5" /> Dietitian Summary
                     </h5>
                     <p className="text-xs text-[#E2E8F0] leading-relaxed">
@@ -266,7 +266,7 @@ export default function AiCoach({
 
                   {/* Tips Segment */}
                   <div className="bg-white/2 border border-white/5 p-4 rounded-2xl space-y-3">
-                    <h5 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 text-[#818CF8]">
+                    <h5 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-[#818CF8]">
                       <Sparkles className="w-3.5 h-3.5" /> Direct Recommendations
                     </h5>
                     <ul className="space-y-2.5">

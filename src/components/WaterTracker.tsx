@@ -47,7 +47,7 @@ export default function WaterTracker({ currentDate, isCompact = false }: WaterTr
           <h3 className="font-sans font-bold text-sm text-[#38BDF8] flex items-center gap-2">
             <Droplet className="w-4.5 h-4.5 text-[#38BDF8] animate-bounce" /> Hydration Tracker
           </h3>
-          <span className="text-[10px] font-mono text-[#64748B] uppercase bg-[#38BDF8]/10 px-2 py-0.5 rounded-full text-[#38BDF8] font-bold">
+          <span className="text-[10px] font-mono uppercase bg-[#38BDF8]/10 px-2 py-0.5 rounded-full text-[#38BDF8] font-bold">
             Target: 2.5L
           </span>
         </div>
