@@ -126,7 +126,7 @@ export default function Dashboard({
       </div>
 
       {/* Main Calorie Ring Card */}
-      <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5 relative overflow-hidden">
+      <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 relative overflow-hidden">
         {/* Card Header with Safe Settings Button */}
         <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-3">
           <h3 className="font-sans font-bold text-sm text-[#818CF8] flex items-center gap-2">
@@ -271,7 +271,7 @@ export default function Dashboard({
 
             {/* Quick Summary Numbers */}
             <div className="space-y-4 font-sans w-full max-w-sm">
-              <div className="flex items-center gap-3 bg-white/[0.02] p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center gap-3 bg-white/2 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
                 <div className="w-10 h-10 rounded-xl bg-[#818CF8]/10 flex items-center justify-center text-[#818CF8] shrink-0">
                   <Apple className="w-5 h-5" />
                 </div>
@@ -293,7 +293,7 @@ export default function Dashboard({
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 bg-white/[0.02] p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+              <div className="flex items-center gap-3 bg-white/2 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
                 <div className="w-10 h-10 rounded-xl bg-[#4ADE80]/10 flex items-center justify-center text-[#4ADE80] shrink-0">
                   <Flame className="w-5 h-5" />
                 </div>
@@ -325,7 +325,7 @@ export default function Dashboard({
       </div>
 
       {/* Macronutrients Goals Progress */}
-      <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5">
+      <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5">
         <h3 className="font-sans font-bold text-white mb-5 flex items-center gap-2">
           <Utensils className="w-4 h-4 text-[#818CF8]" /> Daily Macronutrients
         </h3>

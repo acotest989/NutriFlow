@@ -111,7 +111,7 @@ export default function ExerciseTracker({
       {/* Main Mode View Panels */}
       {!isManual ? (
         /* Presets Search Database Panel */
-        <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5 space-y-4">
+        <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-sans font-bold text-white">Workout Catalog</h3>
             <span className="text-[10px] font-mono bg-white/5 text-[#94A3B8] px-2 py-1 rounded-md border border-white/5">
@@ -140,7 +140,7 @@ export default function ExerciseTracker({
                 className={`p-3 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
                   selectedExercise?.id === ex.id
                     ? "border-[#4ADE80] bg-[#4ADE80]/10"
-                    : "border-white/5 hover:border-white/10 hover:bg-white/[0.02]"
+                    : "border-white/5 hover:border-white/10 hover:bg-white/2"
                 }`}
               >
                 <div className="font-sans flex items-center gap-2.5">
@@ -227,7 +227,7 @@ export default function ExerciseTracker({
         </div>
       ) : (
         /* Manual Custom Exercise Panel */
-        <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5 space-y-4">
+        <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
           <h4 className="font-sans font-bold text-white flex items-center gap-2">
             <Activity className="w-4 h-4 text-[#4ADE80]" /> Log Custom Workout
           </h4>
@@ -285,7 +285,7 @@ export default function ExerciseTracker({
       )}
 
       {/* Burned Exercises List */}
-      <div className="bg-[#141923] rounded-[24px] p-6 shadow-md border border-white/5">
+      <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-sans font-bold text-white flex items-center gap-2">
             <Flame className="w-4 h-4 text-[#4ADE80]" /> Active Workout Log
