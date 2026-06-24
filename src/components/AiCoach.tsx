@@ -207,7 +207,7 @@ export default function AiCoach({
                     id="btn_ask_coach"
                     onClick={handleAskCoach}
                     disabled={isCoachLoading}
-                    className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6366F1] to-[#818CF8] hover:from-[#4F46E5] hover:to-[#6366F1] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 shadow-md shadow-[#6366F1]/10"
+                    className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-linear-to-r from-[#6366F1] to-[#818CF8] hover:from-[#4F46E5] hover:to-[#6366F1] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 shadow-md shadow-[#6366F1]/10"
                   >
                     {isCoachLoading ? (
                       <>
@@ -238,7 +238,7 @@ export default function AiCoach({
                   className="space-y-4"
                 >
                   {/* Top Grade Bar */}
-                  <div className={`p-4 rounded-2xl border bg-gradient-to-br ${getGradeColor(coachData.grade)} flex items-center gap-4`}>
+                  <div className={`p-4 rounded-2xl border bg-linear-to-br ${getGradeColor(coachData.grade)} flex items-center gap-4`}>
                     <div className="w-14 h-14 rounded-2xl bg-black/20 border border-white/5 flex flex-col items-center justify-center shrink-0">
                       <span className="text-[10px] font-mono tracking-widest text-[#94A3B8] uppercase font-bold">Grade</span>
                       <span className="text-2xl font-black leading-none mt-0.5">{coachData.grade}</span>
@@ -321,7 +321,7 @@ export default function AiCoach({
                   id="btn_chef_submit"
                   type="submit"
                   disabled={isChefLoading || !ingredients.trim()}
-                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#10B981] to-[#34D399] hover:from-[#059669] hover:to-[#10B981] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 shadow-md shadow-[#10B981]/10"
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-linear-to-r from-[#10B981] to-[#34D399] hover:from-[#059669] hover:to-[#10B981] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 shadow-md shadow-[#10B981]/10"
                 >
                   {isChefLoading ? (
                     <>

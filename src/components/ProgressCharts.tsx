@@ -98,7 +98,7 @@ export default function ProgressCharts({ entries, goal, isCompact = false }: Pro
   return (
     <div id="analytics_panel" className="space-y-6">
       {/* Motivating Stats Banner */}
-      <div className="bg-gradient-to-r from-[#6366F1] to-[#4F46E5] rounded-[24px] p-5 text-white shadow-md flex items-center gap-4 border border-white/5">
+      <div className="bg-linear-to-r from-[#6366F1] to-[#4F46E5] rounded-[24px] p-5 text-white shadow-md flex items-center gap-4 border border-white/5">
         <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white shrink-0">
           <Award className="w-6 h-6 animate-pulse text-[#818CF8]" />
         </div>
