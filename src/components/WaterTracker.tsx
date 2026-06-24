@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Droplet, Plus, Trash2, Award, Volume2 } from "lucide-react";
+import { useStore } from "../store";
 
 interface WaterTrackerProps {
-  currentDate: string;
   isCompact?: boolean;
 }
 
-export default function WaterTracker({ currentDate, isCompact = false }: WaterTrackerProps) {
+export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
+  const currentDate = useStore((s) => s.currentDate);
   const [consumed, setConsumed] = useState<number>(0);
   const target = 2500; // default 2500ml or 2.5L target
 

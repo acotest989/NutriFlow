@@ -9,22 +9,15 @@ import {
   Watch, 
   Dumbbell 
 } from "lucide-react";
-import { ExerciseItem, LogEntry } from "../types";
+import { ExerciseItem } from "../types";
 import { PRESET_EXERCISES } from "../data";
+import { useStore } from "../store";
 
-interface ExerciseTrackerProps {
-  currentDate: string;
-  entries: LogEntry[];
-  onAddEntry: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void;
-  onRemoveEntry: (id: string) => void;
-}
-
-export default function ExerciseTracker({
-  currentDate,
-  entries,
-  onAddEntry,
-  onRemoveEntry,
-}: ExerciseTrackerProps) {
+export default function ExerciseTracker() {
+  const currentDate = useStore((s) => s.currentDate);
+  const entries = useStore((s) => s.entries);
+  const onAddEntry = useStore((s) => s.addEntry);
+  const onRemoveEntry = useStore((s) => s.removeEntry);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedExercise, setSelectedExercise] = useState<ExerciseItem | null>(null);
   const [minutes, setMinutes] = useState(30);

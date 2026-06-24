@@ -12,16 +12,17 @@ import {
   Search,
   Scan
 } from "lucide-react";
-import { LogEntry, FoodItem } from "../types";
+import { FoodItem } from "../types";
 import { SAMPLE_BARCODES } from "../data";
+import { useStore } from "../store";
 
 interface ScannerProps {
-  currentDate: string;
-  onAddEntry: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void;
   isCompact?: boolean;
 }
 
-export default function Scanner({ currentDate, onAddEntry, isCompact = false }: ScannerProps) {
+export default function Scanner({ isCompact = false }: ScannerProps) {
+  const currentDate = useStore((s) => s.currentDate);
+  const onAddEntry = useStore((s) => s.addEntry);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
