@@ -409,7 +409,12 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     console.log("Serving static assets in production mode...");
-    const distPath = path.join(process.cwd(), "dist");
+    // Robust path resolution regardless of working directory at execution time
+    const distPath = fs.existsSync(path.join(__dirname, "index.html")) && !fs.existsSync(path.join(__dirname, "server.ts"))
+      ? __dirname
+      : path.join(process.cwd(), "dist");
+    
+    console.log(`Resolved production static assets path: ${distPath}`);
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
