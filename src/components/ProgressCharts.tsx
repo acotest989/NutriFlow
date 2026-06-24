@@ -14,16 +14,16 @@ import {
   Line,
   ComposedChart
 } from "recharts";
-import { LogEntry, Goal } from "../types";
 import { Activity, Award, TrendingUp, CircleAlert } from "lucide-react";
+import { useStore } from "../store";
 
 interface ProgressChartsProps {
-  entries: LogEntry[];
-  goal: Goal;
   isCompact?: boolean;
 }
 
-export default function ProgressCharts({ entries, goal, isCompact = false }: ProgressChartsProps) {
+export default function ProgressCharts({ isCompact = false }: ProgressChartsProps) {
+  const entries = useStore((s) => s.entries);
+  const goal = useStore((s) => s.goal);
   // 1. Generate 7 days of trend data ending today
   const getTrendData = () => {
     const data = [];
