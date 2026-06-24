@@ -170,7 +170,7 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
         </div>
 
         <div className={isCompact ? "flex flex-col gap-6 items-center pt-4" : "flex flex-row flex-wrap gap-6 items-center justify-center lg:justify-between pt-4"}>
-          <div className="h-44 w-full max-w-[180px] flex items-center justify-center relative shrink-0">
+          <div className="h-44 w-full max-w-45 flex items-center justify-center relative shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
