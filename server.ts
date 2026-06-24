@@ -409,10 +409,17 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     console.log("Serving static assets in production mode...");
-    // Robust path resolution regardless of working directory at execution time
-    const distPath = fs.existsSync(path.join(__dirname, "index.html")) && !fs.existsSync(path.join(__dirname, "server.ts"))
-      ? __dirname
-      : path.join(process.cwd(), "dist");
+    // Robust path resolution checking multiple potential build layout locations
+    let distPath = path.join(process.cwd(), "dist");
+    if (!fs.existsSync(path.join(distPath, "index.html"))) {
+      distPath = __dirname;
+    }
+    if (!fs.existsSync(path.join(distPath, "index.html"))) {
+      distPath = path.join(__dirname, "dist");
+    }
+    if (!fs.existsSync(path.join(distPath, "index.html"))) {
+      distPath = process.cwd();
+    }
     
     console.log(`Resolved production static assets path: ${distPath}`);
     app.use(express.static(distPath));
