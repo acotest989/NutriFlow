@@ -13,7 +13,7 @@ import {
   Apple,
   Dumbbell
 } from "lucide-react";
-import { LogEntry, Goal } from "../types";
+import { useStore } from "../store";
 
 interface Recipe {
   name: string;
@@ -35,20 +35,14 @@ interface CoachResponse {
 }
 
 interface AiCoachProps {
-  currentDate: string;
-  entries: LogEntry[];
-  goal: Goal;
-  onAddEntry: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void;
   isCompact?: boolean;
 }
 
-export default function AiCoach({
-  currentDate,
-  entries,
-  goal,
-  onAddEntry,
-  isCompact = false,
-}: AiCoachProps) {
+export default function AiCoach({ isCompact = false }: AiCoachProps) {
+  const currentDate = useStore((s) => s.currentDate);
+  const entries = useStore((s) => s.entries);
+  const goal = useStore((s) => s.goal);
+  const onAddEntry = useStore((s) => s.addEntry);
   const [activeTab, setActiveTab] = useState<"coach" | "chef">("coach");
 
   // AI Coach States

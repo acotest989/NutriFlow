@@ -1,0 +1,14 @@
+# Keep the build context small and keep local secrets OUT of the image.
+node_modules
+dist
+build
+.git
+.gitignore
+coverage
+*.log
+
+# Local/secret env files must never enter the image.
+# (.env.production is intentionally NOT ignored — it holds public client config.)
+.env
+.env.local
+.env.development

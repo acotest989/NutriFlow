@@ -12,27 +12,20 @@ import {
   Target,
   Plus
 } from "lucide-react";
-import { Goal, LogEntry } from "../types";
+import { Goal } from "../types";
+import { useStore } from "../store";
 
 interface DashboardProps {
-  currentDate: string;
-  setCurrentDate: (date: string) => void;
-  entries: LogEntry[];
-  goal: Goal;
-  onUpdateGoal: (newGoal: Goal) => void;
-  onAddQuickCalories: (calories: number, type: 'meal' | 'exercise') => void;
   isCompact?: boolean;
 }
 
-export default function Dashboard({
-  currentDate,
-  setCurrentDate,
-  entries,
-  goal,
-  onUpdateGoal,
-  onAddQuickCalories,
-  isCompact = false,
-}: DashboardProps) {
+export default function Dashboard({ isCompact = false }: DashboardProps) {
+  const currentDate = useStore((s) => s.currentDate);
+  const setCurrentDate = useStore((s) => s.setCurrentDate);
+  const entries = useStore((s) => s.entries);
+  const goal = useStore((s) => s.goal);
+  const onUpdateGoal = useStore((s) => s.updateGoal);
+  const onAddQuickCalories = useStore((s) => s.addQuickCalories);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [tempGoal, setTempGoal] = useState<Goal>({ ...goal });
 

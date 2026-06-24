@@ -12,22 +12,15 @@ import {
   HelpCircle,
   Database
 } from "lucide-react";
-import { FoodItem, LogEntry } from "../types";
+import { FoodItem } from "../types";
 import { COMMON_FOOD_ITEMS } from "../data";
+import { useStore } from "../store";
 
-interface FoodSearchProps {
-  currentDate: string;
-  entries: LogEntry[];
-  onAddEntry: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void;
-  onRemoveEntry: (id: string) => void;
-}
-
-export default function FoodSearch({
-  currentDate,
-  entries,
-  onAddEntry,
-  onRemoveEntry,
-}: FoodSearchProps) {
+export default function FoodSearch() {
+  const currentDate = useStore((s) => s.currentDate);
+  const entries = useStore((s) => s.entries);
+  const onAddEntry = useStore((s) => s.addEntry);
+  const onRemoveEntry = useStore((s) => s.removeEntry);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [multiplier, setMultiplier] = useState(1);

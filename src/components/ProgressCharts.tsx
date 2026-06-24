@@ -14,16 +14,16 @@ import {
   Line,
   ComposedChart
 } from "recharts";
-import { LogEntry, Goal } from "../types";
 import { Activity, Award, TrendingUp, CircleAlert } from "lucide-react";
+import { useStore } from "../store";
 
 interface ProgressChartsProps {
-  entries: LogEntry[];
-  goal: Goal;
   isCompact?: boolean;
 }
 
-export default function ProgressCharts({ entries, goal, isCompact = false }: ProgressChartsProps) {
+export default function ProgressCharts({ isCompact = false }: ProgressChartsProps) {
+  const entries = useStore((s) => s.entries);
+  const goal = useStore((s) => s.goal);
   // 1. Generate 7 days of trend data ending today
   const getTrendData = () => {
     const data = [];
@@ -170,7 +170,7 @@ export default function ProgressCharts({ entries, goal, isCompact = false }: Pro
         </div>
 
         <div className={isCompact ? "flex flex-col gap-6 items-center pt-4" : "flex flex-row flex-wrap gap-6 items-center justify-center lg:justify-between pt-4"}>
-          <div className="h-44 w-full max-w-[180px] flex items-center justify-center relative shrink-0">
+          <div className="h-44 w-full max-w-45 flex items-center justify-center relative shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
