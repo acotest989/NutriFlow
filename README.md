@@ -1,32 +1,37 @@
 # NutriFlow AI
 
-**NutriFlow** is an elegant, high-performance personal diet, hydration, and exercise tracker. It features a unique cross-platform presentation layout, pairing a responsive modern web dashboard on desktop with an immersive, interactive mobile smartphone simulator on smaller screens. 
+**NutriFlow** is an elegant, high-performance personal diet, hydration, and exercise tracker. It features a unique cross-platform presentation layout, pairing a responsive modern web dashboard on desktop with an immersive, interactive mobile smartphone simulator on smaller screens.
 
-The application is powered by a high-fidelity **Node.js Express backend** combined with **Vite & React 18+**, utilizing the robust **Google Gemini AI SDK** to power intelligent features like automated pantry-based recipe generation and diet-coaching feedback.
+It is a full multi-user cloud application: a **Node.js Express backend** (a secured Gemini AI proxy) and a **Vite + React 19** frontend, with **Supabase** providing authentication and per-user data storage, and the **Google Gemini AI SDK** powering intelligent features like pantry-based recipe generation and diet-coaching feedback.
 
 ---
 
 ## 🌟 Key Features
 
-### 1. 📊 Interactive Dashboard & Analytics
+### 1. 🔐 Accounts & Cloud Sync
+* **Email/password authentication** via Supabase — each user has a private account.
+* **Cloud persistence**: meals, exercises, goals, and hydration are stored per-user in Supabase and sync across devices.
+* **Row-Level Security**: every row is gated so users can only ever read/write their own data.
+
+### 2. 📊 Interactive Dashboard & Analytics
 * **Macro Calorie Budgeting**: Track consumed calories against an adjustable daily allowance with live percentage gauges.
 * **Macronutrient Breakdown**: Visual progress rings mapping Protein, Carbs, and Fats so users can stay inside their target zone.
 * **Time-Series Trends**: Embedded charts plotting historic intake and expenditure over the last 7 days.
 
-### 2. ⚡ AI Daily Coach Review
+### 3. ⚡ AI Daily Coach Review
 * **Instant Evaluation**: Analyzes daily logged food items, exercises, and target goals at the click of a button.
 * **Intelligent Feedback**: Returns an overall daily "grade" (e.g., A, B+, C), a highly motivating summary, and three actionable athletic suggestions.
 
-### 3. 🍳 Pantry Recipe Generator (AI Chef)
+### 4. 🍳 Pantry Recipe Generator (AI Chef)
 * **Custom Meal Crafting**: Input any combination of ingredients sitting in your fridge or pantry.
 * **Detailed Formulations**: Gemini instantly formulates three high-macro healthy recipes complete with calories, precise protein/carb/fat content, and prep times.
 * **One-Click Logging**: Directly log any generated recipe into your daily meals without manual data entry.
 
-### 4. 💧 Dynamic Hydration Tracker
+### 5. 💧 Dynamic Hydration Tracker
 * **Visual Cup Indicator**: Interactive liquid visual container with smooth spring height physics based on water logged.
 * **Preset Additions**: Fast increment buttons (`+250ml`, `+500ml`) and a reduction button to manage baseline daily hydration.
 
-### 5. 🔍 Smart Nutrition Search & Barcode Simulator
+### 6. 🔍 Smart Nutrition Search & Barcode Simulator
 * **Natural Language Queries**: Search for common meals, raw ingredients, or complex items to get accurate nutritional estimates.
 * **UPC Barcode Scanner**: Simulates camera scanner interactions with realistic viewport crosshairs and preset product scans to easily test barcode lookups.
 
@@ -34,68 +39,94 @@ The application is powered by a high-fidelity **Node.js Express backend** combin
 
 ## 🛠️ Technology Stack
 
-* **Frontend**: React 18 (TypeScript), Vite, Tailwind CSS, Recharts (for analytics), Framer Motion (for crisp physical animations).
-* **Backend**: Node.js Express server with lazy-loaded `@google/genai` TypeScript SDK.
-* **Persistence**: Dual-layer storage setup. Core entries are cached in reactive client-side states, while daily hydration logs persist automatically inside the client's `localStorage` for offline survivability.
+* **Frontend**: React 19 (TypeScript), Vite 6, Tailwind CSS 4, [Zustand](https://github.com/pmndrs/zustand) (global state), Recharts (analytics), Framer Motion (animations), lucide-react (icons).
+* **Backend**: Node.js Express server with a lazy-loaded `@google/genai` SDK, hardened with `helmet` (security headers), `express-rate-limit`, and `zod` request validation.
+* **Auth & Data**: [Supabase](https://supabase.com) — authentication, PostgreSQL, and Row-Level Security. The browser talks to Supabase directly; the Express server is used only to proxy Gemini (keeping the API key server-side).
+* **Persistence**: User data (entries, goals, hydration) lives in Supabase per-user. Only UI preferences (theme) are kept in `localStorage`.
 
 ---
 
 ## 🚀 Getting Started & Local Development
 
 ### Prerequisites
-* **Node.js** (v18 or higher is recommended)
-* A **Google Gemini API Key** (Set this as an environment variable)
+* **Node.js** (v20+ recommended)
+* A **Google Gemini API Key**
+* A **Supabase project** (free tier is fine)
 
-### Installation
+### 1. Install dependencies
+```bash
+npm install
+```
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+### 2. Set up Supabase
+1. Create a project at [supabase.com](https://supabase.com).
+2. In the Supabase **SQL Editor**, run the migrations in order:
+   * `supabase/migrations/0001_init.sql` (entries + goals)
+   * `supabase/migrations/0002_hydration.sql` (hydration)
+3. From **Project Settings → API**, copy your **Project URL** and **anon / publishable key**.
 
-2. Copy the environment variables template and configure your secrets:
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` and add your Gemini secret key:
-   ```env
-   GEMINI_API_KEY=your_gemini_api_key_here
-   ```
+### 3. Configure environment variables
+```bash
+cp .env.example .env
+```
+Edit `.env`:
+```env
+# Server secret (never exposed to the browser)
+GEMINI_API_KEY=your_gemini_api_key_here
 
-3. Launch the local development server:
-   ```bash
-   npm run dev
-   ```
-   Open your browser to the local address outputted in the terminal (by default `http://localhost:3000`).
+# Public client config (safe to expose — protected by RLS)
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_publishable_or_anon_key
+```
+> `.env.production` holds the **public** Supabase values used for production builds/containers. Never put server secrets there.
 
-### Production Build
+### 4. Run it
+```bash
+npm run dev
+```
+Open `http://localhost:3000`, sign up, and start logging.
 
-To compile and optimize both the client assets and the Node server for production, run:
-   ```bash
-   npm run build
-   ```
-   This generates static files in `dist/` and compiles the Express backend into `dist/server.cjs`. 
+Other scripts:
+```bash
+npm run build   # build client (dist/) + server bundle (dist/server.cjs)
+npm run start   # run the production server
+npm run lint    # type-check (tsc --noEmit, strict mode)
+```
 
-To boot the production server:
-   ```bash
-   npm run start
-   ```
+---
+
+## ☁️ Deployment (Google Cloud Run)
+
+The app ships as a single container (see `Dockerfile`) that serves both the API and the built SPA.
+
+* Deploy via the Cloud Run console's **"Connect repository"** (Cloud Build + GitHub), or `gcloud run deploy --source .`.
+* Set `GEMINI_API_KEY` as a **runtime** environment variable on the service (it is *not* baked into the image).
+* The public `VITE_SUPABASE_*` values are baked at build time from `.env.production`.
+* After deploy, set the Cloud Run URL as the **Site URL** and add it to **Redirect URLs** in Supabase → **Authentication → URL Configuration** (so email confirmation works in production).
 
 ---
 
 ## 📁 Project Structure
 
 ```text
-├── server.ts               # Express Backend server & Gemini API Router
+├── server.ts                       # Express backend: Gemini proxy, validation, rate-limit, /health
+├── Dockerfile                      # Cloud Run container build
+├── supabase/migrations/            # SQL schema + RLS policies (run in Supabase SQL Editor)
 ├── src/
-│   ├── App.tsx             # App Entry & Cross-platform layout shell
-│   ├── types.ts            # Global TypeScript interface definitions
-│   ├── index.css           # Tailwind custom imports and root theme declarations
-│   ├── components/
-│   │   ├── Dashboard.tsx       # Calories progress bar, goal edits & summary
-│   │   ├── FoodSearch.tsx      # Natural language food lookup & additions
-│   │   ├── ExerciseTracker.tsx # Cardio/Strength logger & burned stats
-│   │   ├── Scanner.tsx         # Simulated barcode camera viewfinder
-│   │   ├── AiCoach.tsx         # AI Chef Pantry Recipes & Coach Review
-│   │   └── WaterTracker.tsx    # Hydro water glass visual simulator
+│   ├── main.tsx                    # React entry (wrapped in ErrorBoundary)
+│   ├── App.tsx                     # Cross-platform layout shell + auth gating
+│   ├── store.ts                    # Zustand store: auth + cloud data + UI state
+│   ├── types.ts                    # Global TypeScript interfaces
+│   ├── lib/supabase.ts             # Supabase client
+│   ├── index.css                   # Tailwind imports & theme declarations
+│   └── components/
+│       ├── Auth.tsx                # Sign-in / sign-up screen
+│       ├── ErrorBoundary.tsx       # Graceful render-error fallback
+│       ├── Dashboard.tsx           # Calorie progress, goal edits & summary
+│       ├── FoodSearch.tsx          # Natural-language food lookup & additions
+│       ├── ExerciseTracker.tsx     # Cardio/strength logger & burned stats
+│       ├── Scanner.tsx             # Simulated barcode camera viewfinder
+│       ├── ProgressCharts.tsx      # 7-day trend & macro distribution charts
+│       ├── AiCoach.tsx             # AI Chef pantry recipes & coach review
+│       └── WaterTracker.tsx        # Hydration water-glass visual
 ```

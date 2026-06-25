@@ -1,15 +1,24 @@
 # NutriFlow AI — Future Backlog & Roadmap
 
-This document serves as a repository for feature ideas, engineering refinements, and future expansion steps to take **NutriFlow** from an initial MVP (v1.0) into a production-grade wellness application.
+This document tracks what shipped in v1 and what remains to take **NutriFlow** further into a production-grade wellness application.
+
+---
+
+## ✅ Shipped in v1
+
+NutriFlow is a deployed, multi-user cloud application (Google Cloud Run + Supabase). The following are done:
+
+* **Global state** — app state centralized in a Zustand store (replaced prop-drilling).
+* **Persistent database & cloud sync** — meals, exercises, goals, and hydration persist per-user in **Supabase (PostgreSQL)** and sync across devices.
+* **Authentication** — Supabase email/password auth with email confirmation; the app is gated behind sign-in.
+* **Row-Level Security** — every table has RLS so users access only their own rows.
+* **Hardened backend** — `helmet` security headers, `express-rate-limit` on the AI routes, `zod` request validation, a `/health` endpoint, and graceful retry/handling of transient Gemini errors.
+* **Resilient UX** — global error boundary, user-facing error toasts, and data-loading indicators.
+* **Production deployment** — containerized (`Dockerfile`) and deployed to Cloud Run with auto-deploy on push to `main`.
 
 ---
 
 ## 🗺️ Feature Roadmap & Backlog
-
-### Phase 1: Real-Time Persistent Sync & User Authentication (Crucial)
-* **Persistent Database**: Transition from client-side state / standard `localStorage` to **Firebase Firestore** or **Cloud SQL (PostgreSQL)** to persist logs, meals, custom exercises, and history securely across sessions.
-* **Authentication Flow**: Set up **Firebase Authentication** or **OAuth 2.0** (Google Sign-In, Apple Sign-In) to allow users to create personal profiles and secure their health data.
-* **Multi-Device Syncing**: Ensure that items logged on the mobile simulator or web view instantly synchronize in real-time across all browser windows.
 
 ### Phase 2: Core Wearable & API Integrations
 * **Google Fit & Apple Health**: Integrate direct health SDK synchronization to read active steps, continuous heart rate, and sleep metrics automatically.
@@ -28,10 +37,21 @@ This document serves as a repository for feature ideas, engineering refinements,
 * **Coach Voice Over (TTS)**: Convert the daily AI coach review text into realistic voice notes using a text-to-speech engine to simulate a real personal trainer.
 * **Community Challenges**: Optional shared lobbies where users can join team hydration or steps challenges.
 
+### Social / Account
+* **OAuth sign-in** (Google / Apple) in addition to email/password.
+* **Password reset** and account management (change email, delete account).
+
 ---
 
 ## 📈 Engineering Backlog & Tech Debt
 
-- [ ] **State Management**: Migrate existing Prop-drilling state inside `App.tsx` into a lightweight global store (e.g., Zustand or React Context API).
-- [ ] **Unit & Integration Tests**: Set up a test runner (Vitest or Jest) with MSW (Mock Service Worker) to test backend API endpoints (`/api/coach-analysis`, `/api/generate-recipes`).
-- [ ] **True Barcode Lookup**: Replace the simulated mockup database in `Scanner.tsx` with a live REST API request to an open food database (e.g., Open Food Facts).
+- [x] **State Management** — migrated `App.tsx` prop-drilling into a Zustand store.
+- [x] **Cloud persistence & auth** — Supabase with RLS.
+- [x] **API hardening** — validation, rate limiting, security headers, health check.
+- [ ] **Unit & Integration Tests**: Set up a test runner (Vitest) with a request layer (supertest/MSW) to cover the backend API routes and store actions.
+- [ ] **True Barcode Lookup**: Replace the simulated mock database in `Scanner.tsx` with a live request to an open food database (e.g., Open Food Facts).
+- [ ] **Bundle size**: Code-split the client (the JS bundle is ~1 MB) to improve first-load performance.
+- [ ] **AI reliability**: `gemini-3.5-flash` intermittently returns 503/overloaded; evaluate model choice and longer backoff for the Gemini calls.
+- [ ] **Tighten CSP**: `helmet`'s Content-Security-Policy is currently disabled; define a tailored policy for the SPA.
+- [ ] **Secrets management**: Move `GEMINI_API_KEY` from a plain Cloud Run env var into Secret Manager.
+- [ ] **Offline support**: Re-introduce an offline cache layer (the PWA service worker + cached data) now that data is cloud-backed.
