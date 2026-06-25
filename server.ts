@@ -41,6 +41,14 @@ app.get("/privacy", (_req, res) => {
   });
 });
 
+// Account/data deletion instructions — required by Google Play (Data Safety
+// "Delete account URL"). Steps to request deletion + what is removed/retained.
+app.get("/delete-account", (_req, res) => {
+  res.sendFile(path.join(process.cwd(), "delete-account.html"), (err) => {
+    if (err) res.status(404).send("Page not found.");
+  });
+});
+
 // Throttle the (paid) AI endpoints to limit abuse and runaway Gemini spend.
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
