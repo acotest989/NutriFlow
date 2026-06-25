@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NutriFlow — Privacy Policy</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        background: #0B0E14;
+        color: #E2E8F0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        line-height: 1.65;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+      h1 { color: #fff; font-size: 1.8rem; margin-bottom: 4px; }
+      h2 { color: #818CF8; font-size: 1.1rem; margin-top: 32px; }
+      .muted { color: #94A3B8; font-size: 0.9rem; }
+      a { color: #818CF8; }
+      ul { padding-left: 1.2rem; }
+      code { background: #141923; padding: 1px 6px; border-radius: 6px; }
+      .card { background: #141923; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px 24px; margin-top: 16px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>NutriFlow — Privacy Policy</h1>
+      <p class="muted">Last updated: 25 June 2026</p>
+
+      <p>
+        NutriFlow ("the app", "we") is a personal diet, hydration, and exercise tracker.
+        This policy explains what data we collect, how it is used, and your choices.
+      </p>
+
+      <h2>Information we collect</h2>
+      <ul>
+        <li><strong>Account data:</strong> your email address and an authentication
+          credential, used to create and secure your account.</li>
+        <li><strong>Health &amp; fitness data you enter:</strong> logged meals, exercises,
+          daily calorie/macronutrient goals, and hydration amounts.</li>
+        <li><strong>Technical data:</strong> standard server logs (e.g. timestamps,
+          error logs) needed to operate and secure the service.</li>
+      </ul>
+
+      <h2>How we use it</h2>
+      <ul>
+        <li>To provide the core features — storing and displaying your logs, goals, and trends.</li>
+        <li>To generate AI features (nutrition estimates, recipes, and coaching feedback).
+          The text you submit for these features is sent to <strong>Google's Gemini API</strong>
+          for processing and is not used to train models by us.</li>
+      </ul>
+
+      <h2>Where your data is stored</h2>
+      <p>
+        Account and health/fitness data are stored in <strong>Supabase</strong> (PostgreSQL),
+        protected by row-level security so each account can access only its own data. Data is
+        encrypted in transit (HTTPS/TLS). We do <strong>not</strong> sell your data or share it
+        with advertisers.
+      </p>
+
+      <h2>Third-party services</h2>
+      <ul>
+        <li><strong>Supabase</strong> — authentication and database.</li>
+        <li><strong>Google Gemini API</strong> — AI processing of content you submit to AI features.</li>
+        <li><strong>Google Cloud Run</strong> — application hosting.</li>
+      </ul>
+
+      <h2>Data retention &amp; deletion</h2>
+      <p>
+        Your data is retained while your account is active. You can request deletion of your
+        account and all associated data at any time by emailing the address below; we will
+        remove your account and data within 30 days.
+      </p>
+
+      <h2>Children</h2>
+      <p>NutriFlow is not directed to children under 13, and we do not knowingly collect their data.</p>
+
+      <h2>Changes</h2>
+      <p>We may update this policy; material changes will be reflected by the date above.</p>
+
+      <h2>Contact</h2>
+      <div class="card">
+        <p style="margin:0">
+          Questions or data-deletion requests:<br />
+          <a href="mailto:adam.djukic@infomedia.ba">adam.djukic@infomedia.ba</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

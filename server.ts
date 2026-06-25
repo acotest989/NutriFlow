@@ -24,6 +24,23 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", uptime: process.uptime() });
 });
 
+// Digital Asset Links — required for the Android TWA to verify domain ownership
+// and run without a browser address bar. Served from a committed file (copied
+// into the container via `COPY . .`). Explicit route so it works regardless of
+// how static assets are bundled.
+app.get("/.well-known/assetlinks.json", (_req, res) => {
+  res.sendFile(path.join(process.cwd(), "assetlinks.json"), (err) => {
+    if (err) res.status(404).json({ error: "assetlinks not configured" });
+  });
+});
+
+// Privacy policy — required by the Google Play Data Safety section.
+app.get("/privacy", (_req, res) => {
+  res.sendFile(path.join(process.cwd(), "privacy.html"), (err) => {
+    if (err) res.status(404).send("Privacy policy not found.");
+  });
+});
+
 // Throttle the (paid) AI endpoints to limit abuse and runaway Gemini spend.
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
