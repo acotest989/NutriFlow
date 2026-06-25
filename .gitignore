@@ -7,3 +7,8 @@ coverage/
 .env*
 !.env.example
 !.env.production
+
+# Android signing secrets — NEVER commit (keep local backups elsewhere)
+*.keystore
+*.jks
+play-package/signing-key-info.txt
