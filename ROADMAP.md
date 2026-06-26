@@ -29,11 +29,12 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 
 Prioritized post-launch work:
 
-1. **AI reliability** — the headline Gemini features (coach, recipes, food estimate) intermittently fail with `503 overloaded`. Pick a more reliable model and/or add longer backoff + a graceful fallback.
-2. **Google sign-in (OAuth)** — one-tap Google login to avoid the clunky email-confirmation flow on mobile and improve onboarding/conversion.
-3. **In-app account deletion** — a "Delete account" button + server endpoint (Supabase service-role) that removes the user and all rows (currently request-by-email via `/delete-account`).
+1. **Google sign-in (OAuth)** — one-tap Google login to avoid the clunky email-confirmation flow on mobile and improve onboarding/conversion.
+2. **In-app account deletion** — a "Delete account" button + server endpoint (Supabase service-role) that removes the user and all rows (currently request-by-email via `/delete-account`).
 
-✅ **Done:** Password reset (forgot-password email + in-app update-password flow).
+✅ **Done:**
+* **Password reset** — forgot-password email + in-app update-password flow.
+* **AI reliability** — the AI helper (`generateJSON` in `server.ts`) now retries transient Gemini errors (503/overloaded/429/500/timeout, plus empty/garbled responses) with exponential backoff + jitter, then **falls back to the next model in a chain** instead of hammering the overloaded one. The chain is env-configurable via `GEMINI_MODELS` (default `gemini-3.5-flash,gemini-2.5-flash`); an unavailable fallback model is skipped safely.
 
 ---
 
@@ -71,7 +72,7 @@ Prioritized post-launch work:
 - [ ] **Unit & Integration Tests**: Set up a test runner (Vitest) with a request layer (supertest/MSW) to cover the backend API routes and store actions.
 - [ ] **True Barcode Lookup**: Replace the simulated mock database in `Scanner.tsx` with a live request to an open food database (e.g., Open Food Facts).
 - [ ] **Bundle size**: Code-split the client (the JS bundle is ~1 MB) to improve first-load performance.
-- [ ] **AI reliability**: `gemini-3.5-flash` intermittently returns 503/overloaded; evaluate model choice and longer backoff for the Gemini calls.
+- [x] **AI reliability**: retry transient Gemini errors with exponential backoff + jitter and fall back through a configurable model chain (`GEMINI_MODELS`) when the primary is overloaded.
 - [ ] **Tighten CSP**: `helmet`'s Content-Security-Policy is currently disabled; define a tailored policy for the SPA.
 - [ ] **Secrets management**: Move `GEMINI_API_KEY` from a plain Cloud Run env var into Secret Manager.
 - [ ] **Offline support**: Re-introduce an offline cache layer (the PWA service worker + cached data) now that data is cloud-backed.

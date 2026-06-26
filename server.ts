@@ -79,6 +79,17 @@ function getGeminiClient(): GoogleGenAI {
   return aiClient;
 }
 
+// Model fallback chain. If the primary model is overloaded, we fall through to
+// the next one instead of hammering the same overloaded model. Configurable via
+// the GEMINI_MODELS env var (comma-separated) so it can be tuned without a code
+// change. The first entry is the primary; the rest are fallbacks in order.
+const MODELS = (process.env.GEMINI_MODELS || "gemini-3.5-flash,gemini-2.5-flash")
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);
+
+const RETRIES_PER_MODEL = 2; // attempts per model = RETRIES_PER_MODEL + 1
+
 // Detect transient upstream errors (overload / rate limit) that are worth retrying.
 function isTransient(err: unknown): boolean {
   const msg = String((err as any)?.message ?? err);
@@ -87,28 +98,64 @@ function isTransient(err: unknown): boolean {
     msg.includes("UNAVAILABLE") ||
     msg.includes("overloaded") ||
     msg.includes("429") ||
-    msg.includes("RESOURCE_EXHAUSTED")
+    msg.includes("RESOURCE_EXHAUSTED") ||
+    msg.includes("500") ||
+    msg.includes("INTERNAL") ||
+    msg.includes("DEADLINE")
   );
 }
 
-// Call Gemini and parse its JSON response, retrying transient failures with backoff.
-async function generateJSON(params: Parameters<GoogleGenAI["models"]["generateContent"]>[0], retries = 2): Promise<any> {
+// A truncated/empty/garbled response is often transient too — worth one more shot.
+function isRetryable(err: unknown): boolean {
+  if (isTransient(err)) return true;
+  const msg = String((err as any)?.message ?? err);
+  return err instanceof SyntaxError || msg.includes("No response text");
+}
+
+// A model that doesn't exist / isn't enabled for this key. Lets us safely skip a
+// bad fallback entry without failing the whole request.
+function isModelUnavailable(err: unknown): boolean {
+  const msg = String((err as any)?.message ?? err);
+  return msg.includes("404") || msg.includes("NOT_FOUND") || msg.includes("not found") || msg.includes("not supported");
+}
+
+type GenParams = Parameters<GoogleGenAI["models"]["generateContent"]>[0];
+
+// Call Gemini and parse its JSON response. Retries transient failures with
+// exponential backoff + jitter, then falls back to the next model in the chain.
+async function generateJSON(params: Omit<GenParams, "model">, retries = RETRIES_PER_MODEL): Promise<any> {
   const ai = getGeminiClient();
   let lastErr: unknown;
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const response = await ai.models.generateContent(params);
-      const text = response.text;
-      if (!text) throw new Error("No response text received from Gemini.");
-      return JSON.parse(text.trim());
-    } catch (err) {
-      lastErr = err;
-      if (attempt < retries && isTransient(err)) {
-        // 500ms, then 1500ms
-        await new Promise((r) => setTimeout(r, 500 * Math.pow(3, attempt)));
-        continue;
+
+  for (let m = 0; m < MODELS.length; m++) {
+    const model = MODELS[m];
+    const isLastModel = m === MODELS.length - 1;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const response = await ai.models.generateContent({ ...params, model } as GenParams);
+        const text = response.text;
+        if (!text) throw new Error("No response text received from Gemini.");
+        return JSON.parse(text.trim());
+      } catch (err) {
+        lastErr = err;
+        const retryable = isRetryable(err);
+
+        // Same model, more attempts left, and the error looks transient → back off and retry.
+        if (attempt < retries && retryable) {
+          const backoff = 400 * Math.pow(3, attempt) + Math.floor(Math.random() * 250);
+          await new Promise((r) => setTimeout(r, backoff));
+          continue;
+        }
+
+        // Out of attempts for this model (or a bad model name). Try the next
+        // model in the chain when the failure is transient or the model is
+        // unavailable; otherwise the input is bad and switching won't help.
+        if (!isLastModel && (retryable || isModelUnavailable(err))) {
+          break; // exit the attempt loop → next model
+        }
+        throw err;
       }
-      throw err;
     }
   }
   throw lastErr;
@@ -169,7 +216,6 @@ app.post("/api/estimate", async (req, res) => {
 
   try {
     const result = await generateJSON({
-      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are a professional nutrition expert and dietitian. Analyze food and meal descriptions to provide accurate estimations for calories (kcal) and macronutrients in grams. Return values as a structured JSON object.",
@@ -283,7 +329,6 @@ app.post("/api/barcode", async (req, res) => {
 
   try {
     const result = await generateJSON({
-      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are a barcode nutrition interpreter. Identify products by barcode or generate a highly realistic product nutrition profile if the barcode is custom. Return values as a structured JSON object.",
@@ -339,7 +384,6 @@ app.post("/api/search-ai", async (req, res) => {
 
   try {
     const result = await generateJSON({
-      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are a professional nutrition catalog. For any food query, suggest 4 to 6 relevant food items with exact calories and macronutrients. Return the list as a structured JSON array.",
@@ -398,7 +442,6 @@ app.post("/api/generate-recipes", async (req, res) => {
 
   try {
     const result = await generateJSON({
-      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are a professional chef and sports nutritionist. Create exactly 3 fitness-friendly recipes using provided ingredients. Return a structured JSON array.",
@@ -443,7 +486,6 @@ Evaluate their calorie balance (consumed vs. burned), macronutrient balance (pro
 
   try {
     const result = await generateJSON({
-      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are a friendly, motivational, high-performance athletic diet coach. Evaluate user logs and give professional structured feedback including a letter grade (e.g. A, B+, C), a 2-3 sentence motivational summary, and 3 specific, actionable nutrition or workout suggestions.",
