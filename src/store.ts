@@ -41,6 +41,7 @@ interface AppState {
   session: Session | null;
   user: User | null;
   authReady: boolean; // initial session check has completed
+  recoveryMode: boolean; // arrived via a password-reset link -> show update-password screen
 
   // Data (loaded from Supabase for the signed-in user)
   entries: LogEntry[];
@@ -58,6 +59,8 @@ interface AppState {
   signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
 
   // Data actions
   loadData: () => Promise<void>;
@@ -80,6 +83,7 @@ export const useStore = create<AppState>()(
       session: null,
       user: null,
       authReady: false,
+      recoveryMode: false,
 
       entries: [],
       goal: DEFAULT_GOAL,
@@ -101,9 +105,13 @@ export const useStore = create<AppState>()(
         // React to sign in / sign out / token refresh.
         const {
           data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
           const prevUserId = get().user?.id;
           set({ session, user: session?.user ?? null, authReady: true });
+          // Arrived via a password-reset link: show the update-password screen.
+          if (event === "PASSWORD_RECOVERY") {
+            set({ recoveryMode: true });
+          }
           if (session?.user) {
             // Only (re)load when the user actually changes, not on token refresh.
             if (session.user.id !== prevUserId) get().loadData();
@@ -127,7 +135,21 @@ export const useStore = create<AppState>()(
 
       signOut: async () => {
         await supabase.auth.signOut();
-        set({ entries: [], goal: DEFAULT_GOAL, hydration: {} });
+        set({ entries: [], goal: DEFAULT_GOAL, hydration: {}, recoveryMode: false });
+      },
+
+      resetPassword: async (email) => {
+        // Sends a reset email; the link returns the user to the app in recovery mode.
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        return { error: error?.message ?? null };
+      },
+
+      updatePassword: async (password) => {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (!error) set({ recoveryMode: false });
+        return { error: error?.message ?? null };
       },
 
       // ---------- Data ----------

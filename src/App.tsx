@@ -22,6 +22,7 @@ import ProgressCharts from "./components/ProgressCharts";
 import AiCoach from "./components/AiCoach";
 import WaterTracker from "./components/WaterTracker";
 import Auth from "./components/Auth";
+import UpdatePassword from "./components/UpdatePassword";
 import { useStore } from "./store";
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
   // Auth state
   const authReady = useStore((s) => s.authReady);
   const user = useStore((s) => s.user);
+  const recoveryMode = useStore((s) => s.recoveryMode);
   const initAuth = useStore((s) => s.initAuth);
   const signOut = useStore((s) => s.signOut);
 
@@ -73,6 +75,11 @@ export default function App() {
         <Loader2 className="w-6 h-6 text-[#818CF8] animate-spin" />
       </div>
     );
+  }
+
+  // Arrived via a password-reset link -> show the update-password screen.
+  if (recoveryMode) {
+    return <UpdatePassword />;
   }
 
   // Not signed in -> show the auth screen.
