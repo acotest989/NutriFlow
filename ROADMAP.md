@@ -15,6 +15,13 @@ NutriFlow is a deployed, multi-user cloud application (Google Cloud Run + Supaba
 * **Hardened backend** — `helmet` security headers, `express-rate-limit` on the AI routes, `zod` request validation, a `/health` endpoint, and graceful retry/handling of transient Gemini errors.
 * **Resilient UX** — global error boundary, user-facing error toasts, and data-loading indicators.
 * **Production deployment** — containerized (`Dockerfile`) and deployed to Cloud Run with auto-deploy on push to `main`.
+* **Android app on Google Play** — packaged as a **Trusted Web Activity (TWA)** wrapping the live site (`app.nutriflow.twa`), domain-verified via Digital Asset Links, installed and confirmed running full-screen (no address bar). Store listing, Data Safety, content rating, and privacy/data-deletion pages complete. See [play-store packaging notes].
+
+---
+
+## 🔄 Update model (TWA)
+
+Because the Android app is a thin TWA over the live web app, **content/feature/UI/back-end changes deploy via `git push` to `main` → Cloud Run, and appear in the installed app instantly — no new Play Store build or review.** A new `.aab` is only needed for native-wrapper changes: launcher icon, splash, app name, package id, target SDK, permissions, or the Play `versionName`/`versionCode`.
 
 ---
 
@@ -55,3 +62,4 @@ NutriFlow is a deployed, multi-user cloud application (Google Cloud Run + Supaba
 - [ ] **Tighten CSP**: `helmet`'s Content-Security-Policy is currently disabled; define a tailored policy for the SPA.
 - [ ] **Secrets management**: Move `GEMINI_API_KEY` from a plain Cloud Run env var into Secret Manager.
 - [ ] **Offline support**: Re-introduce an offline cache layer (the PWA service worker + cached data) now that data is cloud-backed.
+- [ ] **In-app account deletion**: Currently deletion is request-by-email via the `/delete-account` page. Add an in-app "Delete account" button backed by a server endpoint (Supabase service-role) that removes the user + all rows.

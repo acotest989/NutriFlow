@@ -4,6 +4,8 @@
 
 It is a full multi-user cloud application: a **Node.js Express backend** (a secured Gemini AI proxy) and a **Vite + React 19** frontend, with **Supabase** providing authentication and per-user data storage, and the **Google Gemini AI SDK** powering intelligent features like pantry-based recipe generation and diet-coaching feedback.
 
+It ships on the **web** (Google Cloud Run) and on **Android via the Google Play Store**, packaged as a **Trusted Web Activity (TWA)** that wraps the live site.
+
 ---
 
 ## 🌟 Key Features
@@ -106,12 +108,31 @@ The app ships as a single container (see `Dockerfile`) that serves both the API 
 
 ---
 
+## 🤖 Android / Google Play (TWA)
+
+NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin Android wrapper (`app.nutriflow.twa`) around the live Cloud Run site, generated with [PWABuilder](https://www.pwabuilder.com).
+
+* **Domain verification:** `assetlinks.json` (served at `/.well-known/assetlinks.json` by `server.ts`) lists both the upload-key and Play App Signing SHA-256 fingerprints, so the app runs full-screen with no browser address bar.
+* **Required pages:** `/privacy` and `/delete-account` (served from `privacy.html` / `delete-account.html`).
+* **Store assets:** app icon, feature graphic, and phone/tablet screenshots live in `store-assets/`. Screenshots are generated from the real app via `scripts/gen-screenshots*.mjs` (Playwright).
+* **Signing secrets** (`signing.keystore`, `signing-key-info.txt`) are gitignored and kept only locally — back them up; losing them blocks updates.
+
+**Update model:** because the app is a TWA, design/feature/back-end changes go live in the installed app simply by pushing to `main` (Cloud Run redeploys) — **no new Play build or review**. A new `.aab` is only needed for native-wrapper changes (launcher icon, splash, app name, package id, target SDK, permissions, or the Play version).
+
+---
+
 ## 📁 Project Structure
 
 ```text
-├── server.ts                       # Express backend: Gemini proxy, validation, rate-limit, /health
+├── server.ts                       # Express backend: Gemini proxy, validation, rate-limit, /health,
+│                                   #   /.well-known/assetlinks.json, /privacy, /delete-account
 ├── Dockerfile                      # Cloud Run container build
+├── assetlinks.json                 # Digital Asset Links (TWA domain verification)
+├── privacy.html / delete-account.html  # Play-required policy pages
 ├── supabase/migrations/            # SQL schema + RLS policies (run in Supabase SQL Editor)
+├── store-assets/                   # Play listing assets: icon source, feature graphic, screenshots
+├── play-package/                   # PWABuilder Android output (.aab/.apk; keystore gitignored)
+├── scripts/                        # Icon + screenshot generators (sharp / playwright)
 ├── src/
 │   ├── main.tsx                    # React entry (wrapped in ErrorBoundary)
 │   ├── App.tsx                     # Cross-platform layout shell + auth gating
