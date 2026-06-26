@@ -12,6 +12,8 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 
 ### 1. 🔐 Accounts & Cloud Sync
 * **Email/password authentication** via Supabase — each user has a private account.
+* **Password reset**: forgot-password email link + in-app update-password flow.
+* **In-app account deletion**: a "Delete account" action permanently removes the user and all their data (server-verified, service-role; rows cascade-delete).
 * **Cloud persistence**: meals, exercises, goals, and hydration are stored per-user in Supabase and sync across devices.
 * **Row-Level Security**: every row is gated so users can only ever read/write their own data.
 
@@ -42,7 +44,7 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 ## 🛠️ Technology Stack
 
 * **Frontend**: React 19 (TypeScript), Vite 6, Tailwind CSS 4, [Zustand](https://github.com/pmndrs/zustand) (global state), Recharts (analytics), Framer Motion (animations), lucide-react (icons).
-* **Backend**: Node.js Express server with a lazy-loaded `@google/genai` SDK, hardened with `helmet` (security headers), `express-rate-limit`, and `zod` request validation.
+* **Backend**: Node.js Express server with a lazy-loaded `@google/genai` SDK, hardened with `helmet` (security headers), `express-rate-limit`, and `zod` request validation. AI calls retry transient Gemini errors with exponential backoff + jitter and **fall back across a model chain** (`GEMINI_MODELS`) when a model is overloaded. A privileged `@supabase/supabase-js` admin client (service-role) backs account deletion only.
 * **Auth & Data**: [Supabase](https://supabase.com) — authentication, PostgreSQL, and Row-Level Security. The browser talks to Supabase directly; the Express server is used only to proxy Gemini (keeping the API key server-side).
 * **Persistence**: User data (entries, goals, hydration) lives in Supabase per-user. Only UI preferences (theme) are kept in `localStorage`.
 
@@ -73,14 +75,20 @@ cp .env.example .env
 ```
 Edit `.env`:
 ```env
-# Server secret (never exposed to the browser)
+# Server secrets (never exposed to the browser)
 GEMINI_API_KEY=your_gemini_api_key_here
+# Optional: override the Gemini model fallback chain (primary first, comma-separated)
+# GEMINI_MODELS=gemini-3.5-flash,gemini-2.5-flash
+
+# Server-side Supabase admin (for in-app account deletion only — service-role key bypasses RLS, keep secret)
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_or_secret_key
 
 # Public client config (safe to expose — protected by RLS)
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_publishable_or_anon_key
 ```
-> `.env.production` holds the **public** Supabase values used for production builds/containers. Never put server secrets there.
+> `.env.production` holds the **public** Supabase values used for production builds/containers. Never put server secrets (`GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) there.
 
 ### 4. Run it
 ```bash
@@ -102,7 +110,10 @@ npm run lint    # type-check (tsc --noEmit, strict mode)
 The app ships as a single container (see `Dockerfile`) that serves both the API and the built SPA.
 
 * Deploy via the Cloud Run console's **"Connect repository"** (Cloud Build + GitHub), or `gcloud run deploy --source .`.
-* Set `GEMINI_API_KEY` as a **runtime** environment variable on the service (it is *not* baked into the image).
+* Set these as **runtime** environment variables on the service (they are *not* baked into the image):
+  * `GEMINI_API_KEY` — Gemini proxy.
+  * `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` — required for in-app account deletion (without them `DELETE /api/account` returns "not configured"). The service-role/secret key bypasses RLS — keep it secret.
+  * `GEMINI_MODELS` *(optional)* — override the model fallback chain without a code change.
 * The public `VITE_SUPABASE_*` values are baked at build time from `.env.production`.
 * After deploy, set the Cloud Run URL as the **Site URL** and add it to **Redirect URLs** in Supabase → **Authentication → URL Configuration** (so email confirmation works in production).
 
@@ -124,7 +135,8 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 ## 📁 Project Structure
 
 ```text
-├── server.ts                       # Express backend: Gemini proxy, validation, rate-limit, /health,
+├── server.ts                       # Express backend: Gemini proxy (retry + model fallback), validation,
+│                                   #   rate-limit, DELETE /api/account, /health,
 │                                   #   /.well-known/assetlinks.json, /privacy, /delete-account
 ├── Dockerfile                      # Cloud Run container build
 ├── assetlinks.json                 # Digital Asset Links (TWA domain verification)
@@ -141,7 +153,9 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 │   ├── lib/supabase.ts             # Supabase client
 │   ├── index.css                   # Tailwind imports & theme declarations
 │   └── components/
-│       ├── Auth.tsx                # Sign-in / sign-up screen
+│       ├── Auth.tsx                # Sign-in / sign-up / forgot-password screen
+│       ├── UpdatePassword.tsx      # Set-new-password screen (password-reset flow)
+│       ├── DeleteAccountModal.tsx  # Confirm-and-delete-account modal
 │       ├── ErrorBoundary.tsx       # Graceful render-error fallback
 │       ├── Dashboard.tsx           # Calorie progress, goal edits & summary
 │       ├── FoodSearch.tsx          # Natural-language food lookup & additions
