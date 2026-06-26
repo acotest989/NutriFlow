@@ -126,6 +126,7 @@ type GenParams = Parameters<GoogleGenAI["models"]["generateContent"]>[0];
 async function generateJSON(params: Omit<GenParams, "model">, retries = RETRIES_PER_MODEL): Promise<any> {
   const ai = getGeminiClient();
   let lastErr: unknown;
+  let transientErr: unknown; // remembered so the friendly "AI is busy" 503 wins over a misconfigured-fallback 404
 
   for (let m = 0; m < MODELS.length; m++) {
     const model = MODELS[m];
@@ -139,6 +140,7 @@ async function generateJSON(params: Omit<GenParams, "model">, retries = RETRIES_
         return JSON.parse(text.trim());
       } catch (err) {
         lastErr = err;
+        if (isTransient(err)) transientErr = err;
         const retryable = isRetryable(err);
 
         // Same model, more attempts left, and the error looks transient → back off and retry.
@@ -154,11 +156,13 @@ async function generateJSON(params: Omit<GenParams, "model">, retries = RETRIES_
         if (!isLastModel && (retryable || isModelUnavailable(err))) {
           break; // exit the attempt loop → next model
         }
-        throw err;
+        throw transientErr ?? err;
       }
     }
   }
-  throw lastErr;
+  // Prefer surfacing a transient/overload error so the user sees the friendly
+  // "AI is busy, try again" message rather than a misconfigured-fallback error.
+  throw transientErr ?? lastErr;
 }
 
 // Map an error to a clean, user-facing API response with the right status code.
