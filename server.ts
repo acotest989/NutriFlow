@@ -1,6 +1,7 @@
 import express, { type Request, type Response } from "express";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import fs from "fs";
 import helmet from "helmet";
@@ -175,6 +176,25 @@ function sendAiError(res: Response, error: unknown, fallback: string): void {
   } else {
     res.status(500).json({ error: fallback });
   }
+}
+
+// Lazy-initialized Supabase admin client (service-role). Used only for
+// privileged server-side operations like account deletion. The service-role key
+// bypasses Row-Level Security, so it must NEVER be exposed to the client — it
+// lives only in a runtime env var (like GEMINI_API_KEY).
+let supabaseAdmin: SupabaseClient | null = null;
+function getSupabaseAdmin(): SupabaseClient {
+  if (!supabaseAdmin) {
+    const url = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !serviceKey) {
+      throw new Error("SUPABASE_NOT_CONFIGURED");
+    }
+    supabaseAdmin = createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  }
+  return supabaseAdmin;
 }
 
 // Validate req.body against a zod schema; on failure send 400 and return null.
@@ -513,6 +533,48 @@ Evaluate their calorie balance (consumed vs. burned), macronutrient balance (pro
     res.json(result);
   } catch (error) {
     sendAiError(res, error, "Failed to analyze diet & workouts.");
+  }
+});
+
+// 6. API Route: Permanently delete the signed-in user's account + all their data.
+// Verifies the caller's access token, then deletes the auth user. Their rows in
+// entries/goals/hydration cascade-delete via the on-delete-cascade FKs.
+app.delete("/api/account", async (req, res) => {
+  const authHeader = req.headers.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  if (!token) {
+    res.status(401).json({ error: "Not authenticated." });
+    return;
+  }
+
+  let admin: SupabaseClient;
+  try {
+    admin = getSupabaseAdmin();
+  } catch {
+    res.status(500).json({ error: "Account deletion is not configured on the server." });
+    return;
+  }
+
+  try {
+    // Resolve the token to a user — this both authenticates the caller and
+    // guarantees they can only ever delete their own account.
+    const { data, error } = await admin.auth.getUser(token);
+    if (error || !data.user) {
+      res.status(401).json({ error: "Your session is invalid. Please sign in again." });
+      return;
+    }
+
+    const { error: delError } = await admin.auth.admin.deleteUser(data.user.id);
+    if (delError) {
+      console.error("Account deletion failed:", delError);
+      res.status(500).json({ error: "Couldn't delete your account. Please try again." });
+      return;
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Account deletion error:", err);
+    res.status(500).json({ error: "Couldn't delete your account. Please try again." });
   }
 });
 

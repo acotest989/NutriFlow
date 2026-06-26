@@ -23,11 +23,13 @@ import AiCoach from "./components/AiCoach";
 import WaterTracker from "./components/WaterTracker";
 import Auth from "./components/Auth";
 import UpdatePassword from "./components/UpdatePassword";
+import DeleteAccountModal from "./components/DeleteAccountModal";
 import { useStore } from "./store";
 
 export default function App() {
   // Automatically switches between layouts responsively!
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   useEffect(() => {
     const checkResponsive = () => {
@@ -338,9 +340,12 @@ export default function App() {
             Privacy Policy
           </a>
           <span className="text-[#334155]">·</span>
-          <a href="/delete-account" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-white transition-colors">
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="text-[#94A3B8] hover:text-rose-400 transition-colors"
+          >
             Delete Account
-          </a>
+          </button>
           <span className="text-[#334155]">·</span>
           <a href="mailto:chillibrimedia@gmail.com" className="text-[#94A3B8] hover:text-white transition-colors">
             Contact
@@ -359,6 +364,8 @@ export default function App() {
           NutriFlow · AI diet, hydration &amp; exercise tracker · © 2026
         </p>
       </footer>
+
+      {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
     </div>
   );
 }

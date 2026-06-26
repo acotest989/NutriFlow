@@ -30,11 +30,11 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 Prioritized post-launch work:
 
 1. **Google sign-in (OAuth)** — one-tap Google login to avoid the clunky email-confirmation flow on mobile and improve onboarding/conversion.
-2. **In-app account deletion** — a "Delete account" button + server endpoint (Supabase service-role) that removes the user and all rows (currently request-by-email via `/delete-account`).
 
 ✅ **Done:**
 * **Password reset** — forgot-password email + in-app update-password flow.
 * **AI reliability** — the AI helper (`generateJSON` in `server.ts`) now retries transient Gemini errors (503/overloaded/429/500/timeout, plus empty/garbled responses) with exponential backoff + jitter, then **falls back to the next model in a chain** instead of hammering the overloaded one. The chain is env-configurable via `GEMINI_MODELS` (default `gemini-3.5-flash,gemini-2.5-flash`); an unavailable fallback model is skipped safely.
+* **In-app account deletion** — a "Delete account" button (footer → confirmation modal, type `DELETE`) calls `DELETE /api/account`, which verifies the caller's token and uses the Supabase **service-role** key to delete the user; all rows cascade-delete via the FKs. Requires server env vars `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
 
 ---
 
@@ -60,7 +60,7 @@ Prioritized post-launch work:
 ### Social / Account
 * **OAuth sign-in** (Google / Apple) in addition to email/password.
 * ✅ **Password reset** — shipped (forgot-password email + in-app update flow).
-* **Account management** — change email, in-app account deletion.
+* **Account management** — change email. (✅ in-app account deletion shipped.)
 
 ---
 
@@ -76,4 +76,4 @@ Prioritized post-launch work:
 - [ ] **Tighten CSP**: `helmet`'s Content-Security-Policy is currently disabled; define a tailored policy for the SPA.
 - [ ] **Secrets management**: Move `GEMINI_API_KEY` from a plain Cloud Run env var into Secret Manager.
 - [ ] **Offline support**: Re-introduce an offline cache layer (the PWA service worker + cached data) now that data is cloud-backed.
-- [ ] **In-app account deletion**: Currently deletion is request-by-email via the `/delete-account` page. Add an in-app "Delete account" button backed by a server endpoint (Supabase service-role) that removes the user + all rows.
+- [x] **In-app account deletion**: "Delete account" button → `DELETE /api/account` (verifies the caller's token, deletes via Supabase service-role; rows cascade). The static `/delete-account` page remains as the documented request path for the Play Data Safety form.

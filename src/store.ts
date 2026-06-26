@@ -61,6 +61,7 @@ interface AppState {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
+  deleteAccount: () => Promise<{ error: string | null }>;
 
   // Data actions
   loadData: () => Promise<void>;
@@ -150,6 +151,27 @@ export const useStore = create<AppState>()(
         const { error } = await supabase.auth.updateUser({ password });
         if (!error) set({ recoveryMode: false });
         return { error: error?.message ?? null };
+      },
+
+      deleteAccount: async () => {
+        const token = get().session?.access_token;
+        if (!token) return { error: "You're not signed in." };
+        try {
+          const res = await fetch("/api/account", {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({} as { error?: string }));
+            return { error: body.error ?? "Couldn't delete your account. Please try again." };
+          }
+          // Account is gone — clear the local session and in-memory data.
+          await supabase.auth.signOut();
+          set({ entries: [], goal: DEFAULT_GOAL, hydration: {}, recoveryMode: false });
+          return { error: null };
+        } catch {
+          return { error: "Network error. Please check your connection and try again." };
+        }
       },
 
       // ---------- Data ----------
