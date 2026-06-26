@@ -25,6 +25,18 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 
 ---
 
+## 🎯 Near-term (next up)
+
+Prioritized post-launch work:
+
+1. **AI reliability** — the headline Gemini features (coach, recipes, food estimate) intermittently fail with `503 overloaded`. Pick a more reliable model and/or add longer backoff + a graceful fallback.
+2. **Google sign-in (OAuth)** — one-tap Google login to avoid the clunky email-confirmation flow on mobile and improve onboarding/conversion.
+3. **In-app account deletion** — a "Delete account" button + server endpoint (Supabase service-role) that removes the user and all rows (currently request-by-email via `/delete-account`).
+
+✅ **Done:** Password reset (forgot-password email + in-app update-password flow).
+
+---
+
 ## 🗺️ Feature Roadmap & Backlog
 
 ### Phase 2: Core Wearable & API Integrations
@@ -46,7 +58,8 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 
 ### Social / Account
 * **OAuth sign-in** (Google / Apple) in addition to email/password.
-* **Password reset** and account management (change email, delete account).
+* ✅ **Password reset** — shipped (forgot-password email + in-app update flow).
+* **Account management** — change email, in-app account deletion.
 
 ---
 
