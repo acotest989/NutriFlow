@@ -5,7 +5,7 @@ import {
   Scan,
   Dumbbell,
   TrendingUp,
-  Info,
+  Star,
   Sparkles,
   Sun,
   Moon,
@@ -331,13 +331,32 @@ export default function App() {
         </div>
       )}
 
-      {/* Unified Platform Description Footer */}
-      <footer className="text-center text-[#64748B] text-xs font-sans mt-8 px-6 pb-8 space-y-1 select-none">
-        <div className="flex justify-center items-center gap-1.5 text-[#94A3B8] text-[10px] uppercase font-mono tracking-widest">
-          <Info className="w-3.5 h-3.5 text-[#818CF8]" /> Technical Architecture
+      {/* Footer: useful links + brand. Extra bottom padding on mobile clears the fixed nav bar. */}
+      <footer className="text-center font-sans mt-10 px-6 pb-28 lg:pb-10 select-none">
+        <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-[12px]">
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-white transition-colors">
+            Privacy Policy
+          </a>
+          <span className="text-[#334155]">·</span>
+          <a href="/delete-account" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-white transition-colors">
+            Delete Account
+          </a>
+          <span className="text-[#334155]">·</span>
+          <a href="mailto:chillibrimedia@gmail.com" className="text-[#94A3B8] hover:text-white transition-colors">
+            Contact
+          </a>
+          <span className="text-[#334155]">·</span>
+          <a
+            href="https://play.google.com/store/apps/details?id=app.nutriflow.twa"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#818CF8] hover:text-[#a5b4fc] transition-colors inline-flex items-center gap-1"
+          >
+            <Star className="w-3.5 h-3.5" /> Rate on Play
+          </a>
         </div>
-        <p className="max-w-2xl mx-auto leading-relaxed text-[11px] text-[#64748B]">
-          NutriFlow is fully responsive. This page uses tailwind grid and flexible viewport hook, rendering a gorgeous native tab bar on mobile phones and a complete multi-column workspace layout on desktop displays.
+        <p className="text-[11px] text-[#64748B] mt-3">
+          NutriFlow · AI diet, hydration &amp; exercise tracker · © 2026
         </p>
       </footer>
     </div>

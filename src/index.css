@@ -6,6 +6,16 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+/* Interactive elements show a pointer cursor (Tailwind's reset doesn't add one) */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+a {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* HIGH CONTRAST LIGHT ACCESSIBILITY THEME OVERRIDES */
 .theme-high-contrast-light {
   background-color: #F8FAFC !important;

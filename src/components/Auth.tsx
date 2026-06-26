@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Flame, Loader2, Mail, Lock, LogIn, UserPlus, CheckCircle, KeyRound } from "lucide-react";
+import { Flame, Loader2, Mail, Lock, LogIn, UserPlus, CheckCircle, KeyRound, Eye, EyeOff } from "lucide-react";
 import { useStore } from "../store";
 
 type Mode = "signin" | "signup" | "reset";
@@ -15,6 +15,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +72,7 @@ export default function Auth() {
       <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="flex flex-col items-center mb-8 select-none">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-lg shadow-[#6366F1]/20 mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-linear-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-lg shadow-[#6366F1]/20 mb-3">
             <Flame className="w-7 h-7" />
           </div>
           <h1 className="font-sans font-black text-2xl tracking-tight text-white">
@@ -81,7 +82,7 @@ export default function Auth() {
         </div>
 
         {/* Card */}
-        <div className="bg-[#141923] border border-white/5 rounded-[24px] p-6 shadow-xl">
+        <div className="bg-[#141923] border border-white/5 rounded-3xl p-6 shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-4 font-sans">
             <div>
               <label className="text-xs text-[#94A3B8] block mb-1.5">Email</label>
@@ -119,15 +120,23 @@ export default function Auth() {
                   <Lock className="w-4 h-4 text-[#64748B] absolute left-3 top-3" />
                   <input
                     id="auth_password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete={mode === "signin" ? "current-password" : "new-password"}
                     required
                     minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
-                    className="w-full bg-[#0B0E14] border border-white/10 rounded-xl pl-10 pr-3 py-2.5 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+                    className="w-full bg-[#0B0E14] border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-2.5 text-[#64748B] hover:text-[#94A3B8] transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             )}
