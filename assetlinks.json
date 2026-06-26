@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "app.nutriflow.twa",
       "sha256_cert_fingerprints": [
-        "6B:A1:2D:D0:3A:65:A5:BA:08:77:5C:EB:26:35:0B:3A:27:2A:79:EB:EE:96:6B:9C:F9:1B:06:6E:80:CA:A0:29"
+        "6B:A1:2D:D0:3A:65:A5:BA:08:77:5C:EB:26:35:0B:3A:27:2A:79:EB:EE:96:6B:9C:F9:1B:06:6E:80:CA:A0:29",
+        "32:BD:AE:93:8F:92:03:EA:4E:F7:D3:54:0B:EB:D4:8A:1A:DF:EE:88:8A:F8:91:3A:97:9F:63:69:EF:6C:C5:9E"
       ]
     }
   }
