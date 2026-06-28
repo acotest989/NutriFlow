@@ -16,8 +16,8 @@
   "startUrl": "/",
   "iconUrl": "https://nutriflow-623241712044.europe-west1.run.app/icons/icon-512.png",
   "maskableIconUrl": "https://nutriflow-623241712044.europe-west1.run.app/icons/icon-maskable-512.png",
-  "appVersionName": "1.0.1",
-  "appVersionCode": 2,
+  "appVersionName": "1.0.2",
+  "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://nutriflow-623241712044.europe-west1.run.app/manifest.json",
@@ -35,7 +35,7 @@
   "fingerprints": [],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
-  "appVersion": "1.0.1",
+  "appVersion": "1.0.2",
   "signingKey": {
     "path": "C:\\Users\\Infomedia\\Desktop\\NutriFlow\\play-package\\signing.keystore",
     "alias": "my-key-alias"
