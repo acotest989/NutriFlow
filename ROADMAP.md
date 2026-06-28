@@ -39,6 +39,17 @@ Prioritized post-launch work:
 * **Password reset** — forgot-password email + in-app update-password flow.
 * **AI reliability** — the AI helper (`generateJSON` in `server.ts`) now retries transient Gemini errors (503/overloaded/429/500/timeout, plus empty/garbled responses) with exponential backoff + jitter, then **falls back to the next model in a chain** instead of hammering the overloaded one. The chain is env-configurable via `GEMINI_MODELS` (default `gemini-3.5-flash,gemini-2.5-flash`); an unavailable fallback model is skipped safely.
 * **In-app account deletion** — a "Delete account" button (footer → confirmation modal, type `DELETE`) calls `DELETE /api/account`, which verifies the caller's token and uses the Supabase **service-role** key to delete the user; all rows cascade-delete via the FKs. Requires server env vars `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
+* **Branded startup splash** — instant pre-React boot splash in `index.html` (gradient flame mark + wordmark + animated bar, auto-replaced on mount) and a matching `authReady` loader in `App.tsx`; body background set to kill the white flash.
+* **Native Android splash (rounded)** — the TWA splash now renders a rounded icon tile instead of a hard square (icon source is a rounded transparent-corner tile). Shipped as versionCode 3 / 1.0.2 via Bubblewrap.
+
+### ⏳ Pending manual steps (no code)
+* **Publish the Google OAuth consent screen** (Google Auth Platform → Audience → Publish app) so *any* user can sign in with Google — in Testing mode only added test users can. Non-sensitive scopes ⇒ no verification needed, no "unverified" warning.
+* **Promote the app to Production** in Play Console when ready (currently Internal testing).
+
+### 🌐 Needs a custom domain (deferred)
+NutriFlow currently runs on the default Cloud Run URL (`…run.app`) — not a domain we own. Buying a real domain (~$10/yr) and mapping it to Cloud Run would unlock:
+* **Verified OAuth logo** — Google only shows the consent-screen logo after *brand verification*, which requires a domain you can verify in Search Console. (`run.app`/`supabase.co` can't be verified, so the flame logo won't show publicly until then; the app name still shows.)
+* **Branded auth redirect URL** — the `…supabase.co` URL during Google sign-in can only be rebranded via Supabase's **Custom Domain** add-on (paid), which also needs an owned domain.
 
 ---
 

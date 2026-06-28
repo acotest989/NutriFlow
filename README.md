@@ -121,8 +121,11 @@ The app ships as a single container (see `Dockerfile`) that serves both the API 
 
 ## 🤖 Android / Google Play (TWA)
 
-NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin Android wrapper (`app.nutriflow.twa`) around the live Cloud Run site, generated with [PWABuilder](https://www.pwabuilder.com).
+NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin Android wrapper (`app.nutriflow.twa`) around the live Cloud Run site.
 
+* **Builds:** generated with **[Bubblewrap CLI](https://github.com/GoogleChromeLabs/bubblewrap)**. Config is version-controlled in `twa/twa-manifest.json` (the rest of the generated `twa/` Android project is gitignored). The original v1 was made with PWABuilder, which uses Bubblewrap under the hood, so they're compatible. Current: versionName 1.0.2 / versionCode 3.
+  * Build flow: `cd twa` → `bubblewrap update` (bump `appVersionCode`) → `bubblewrap build` (prompts for keystore passwords) → upload `play-package/NutriFlow.aab`.
+  * The native splash image is generated from the app icon (`public/icons/icon.svg`), which is a **rounded tile on a transparent background** so the splash shows a rounded icon, not a square. The full-bleed `icon-maskable.svg` drives the adaptive home-screen icon. Because Bubblewrap fetches icons from the live site, deploy icon changes to Cloud Run *before* rebuilding.
 * **Domain verification:** `assetlinks.json` (served at `/.well-known/assetlinks.json` by `server.ts`) lists both the upload-key and Play App Signing SHA-256 fingerprints, so the app runs full-screen with no browser address bar.
 * **Required pages:** `/privacy` and `/delete-account` (served from `privacy.html` / `delete-account.html`).
 * **Store assets:** app icon, feature graphic, and phone/tablet screenshots live in `store-assets/`. Screenshots are generated from the real app via `scripts/gen-screenshots*.mjs` (Playwright).
