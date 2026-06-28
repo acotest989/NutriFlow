@@ -29,7 +29,11 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 
 Prioritized post-launch work:
 
-1. **Google sign-in (OAuth)** — one-tap Google login to avoid the clunky email-confirmation flow on mobile and improve onboarding/conversion.
+1. **Onboarding quiz (personalization)** — new users currently start with a clean slate and a generic goal (`DEFAULT_GOAL` 2000/130/220/65); the food/exercise lists are just pickable catalogs, not seeded data. Add a one-time first-run quiz that captures: primary goal (lose/maintain/gain/build muscle), sex, age, height, weight, target weight, activity level, dietary preferences/restrictions, and workout preferences. Use it to compute a personalized calorie + macro goal (e.g. Mifflin-St Jeor BMR × activity factor ± goal adjustment) instead of the static default, and to tailor AI meal/workout suggestions later.
+   * Gate it in `App.tsx` (like the `recoveryMode` gate) so it shows once after first sign-up, before the dashboard.
+   * Persist answers + a `has_onboarded` flag in a new Supabase `profiles` table (migration `0003_profiles.sql`, RLS own-row, cascade on `auth.users`); drive gating off that flag so it doesn't reappear across devices.
+   * Seed the user's initial `goals` row from the answers; allow editing/re-taking later from a profile/settings screen.
+2. **Google sign-in (OAuth)** — one-tap Google login to avoid the clunky email-confirmation flow on mobile and improve onboarding/conversion.
 
 ✅ **Done:**
 * **Password reset** — forgot-password email + in-app update-password flow.
