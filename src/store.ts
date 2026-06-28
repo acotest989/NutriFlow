@@ -58,6 +58,7 @@ interface AppState {
   initAuth: () => () => void;
   signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
@@ -131,6 +132,19 @@ export const useStore = create<AppState>()(
 
       signIn: async (email, password) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
+        return { error: error?.message ?? null };
+      },
+
+      signInWithGoogle: async () => {
+        // Redirects the browser to Google, then back to the app origin. The
+        // session is picked up on return via detectSessionInUrl + onAuthStateChange.
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: window.location.origin,
+            queryParams: { prompt: "select_account" },
+          },
+        });
         return { error: error?.message ?? null };
       },
 
