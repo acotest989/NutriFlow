@@ -33,9 +33,9 @@ Prioritized post-launch work:
    * Gate it in `App.tsx` (like the `recoveryMode` gate) so it shows once after first sign-up, before the dashboard.
    * Persist answers + a `has_onboarded` flag in a new Supabase `profiles` table (migration `0003_profiles.sql`, RLS own-row, cascade on `auth.users`); drive gating off that flag so it doesn't reappear across devices.
    * Seed the user's initial `goals` row from the answers; allow editing/re-taking later from a profile/settings screen.
-2. **Google sign-in (OAuth)** — one-tap Google login to avoid the clunky email-confirmation flow on mobile and improve onboarding/conversion.
 
 ✅ **Done:**
+* **Google sign-in (OAuth)** — "Continue with Google" on the auth screen via `supabase.auth.signInWithOAuth`; redirects back to the app origin and resumes the session via `detectSessionInUrl`. Google Cloud OAuth client + Supabase Google provider configured. Works on web and in the Android TWA (Chrome Custom Tab).
 * **Password reset** — forgot-password email + in-app update-password flow.
 * **AI reliability** — the AI helper (`generateJSON` in `server.ts`) now retries transient Gemini errors (503/overloaded/429/500/timeout, plus empty/garbled responses) with exponential backoff + jitter, then **falls back to the next model in a chain** instead of hammering the overloaded one. The chain is env-configurable via `GEMINI_MODELS` (default `gemini-3.5-flash,gemini-2.5-flash`); an unavailable fallback model is skipped safely.
 * **In-app account deletion** — a "Delete account" button (footer → confirmation modal, type `DELETE`) calls `DELETE /api/account`, which verifies the caller's token and uses the Supabase **service-role** key to delete the user; all rows cascade-delete via the FKs. Requires server env vars `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
@@ -62,7 +62,7 @@ Prioritized post-launch work:
 * **Community Challenges**: Optional shared lobbies where users can join team hydration or steps challenges.
 
 ### Social / Account
-* **OAuth sign-in** (Google / Apple) in addition to email/password.
+* ✅ **OAuth sign-in** — Google shipped (`signInWithOAuth`); Apple still optional/future.
 * ✅ **Password reset** — shipped (forgot-password email + in-app update flow).
 * **Account management** — change email. (✅ in-app account deletion shipped.)
 

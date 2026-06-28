@@ -11,7 +11,7 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 ## 🌟 Key Features
 
 ### 1. 🔐 Accounts & Cloud Sync
-* **Email/password authentication** via Supabase — each user has a private account.
+* **Email/password + Google sign-in** via Supabase — each user has a private account ("Continue with Google" OAuth on web and in the Android TWA).
 * **Password reset**: forgot-password email link + in-app update-password flow.
 * **In-app account deletion**: a "Delete account" action permanently removes the user and all their data (server-verified, service-role; rows cascade-delete).
 * **Cloud persistence**: meals, exercises, goals, and hydration are stored per-user in Supabase and sync across devices.
