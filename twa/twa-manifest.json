@@ -1,0 +1,43 @@
+{
+  "packageId": "app.nutriflow.twa",
+  "host": "nutriflow-623241712044.europe-west1.run.app",
+  "name": "NutriFlow",
+  "launcherName": "NutriFlow",
+  "display": "standalone",
+  "themeColor": "#141923",
+  "themeColorDark": "#141923",
+  "navigationColor": "#0B0E14",
+  "navigationColorDark": "#0B0E14",
+  "navigationDividerColor": "#0B0E14",
+  "navigationDividerColorDark": "#0B0E14",
+  "backgroundColor": "#0B0E14",
+  "enableNotifications": false,
+  "splashScreenFadeOutDuration": 300,
+  "startUrl": "/",
+  "iconUrl": "https://nutriflow-623241712044.europe-west1.run.app/icons/icon-512.png",
+  "maskableIconUrl": "https://nutriflow-623241712044.europe-west1.run.app/icons/icon-maskable-512.png",
+  "appVersionName": "1.0.1",
+  "appVersionCode": 2,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://nutriflow-623241712044.europe-west1.run.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://nutriflow-623241712044.europe-west1.run.app/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "1.0.1",
+  "signingKey": {
+    "path": "C:\\Users\\Infomedia\\Desktop\\NutriFlow\\play-package\\signing.keystore",
+    "alias": "my-key-alias"
+  }
+}

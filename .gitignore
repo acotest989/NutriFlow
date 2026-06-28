@@ -12,3 +12,7 @@ coverage/
 *.keystore
 *.jks
 play-package/signing-key-info.txt
+
+# Bubblewrap TWA build project — keep only the config; the rest is generated
+twa/*
+!twa/twa-manifest.json
