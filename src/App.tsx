@@ -71,11 +71,24 @@ export default function App() {
   // Mobile viewport current bottom navigation tab
   const [activeMobileTab, setActiveMobileTab] = useState<"dashboard" | "meals" | "exercises" | "charts" | "scanner" | "coach">("dashboard");
 
-  // While the initial session check runs, show a lightweight splash.
+  // While the initial session check runs, show a branded splash (mirrors the
+  // pre-React boot splash in index.html for a seamless startup).
   if (!authReady) {
     return (
-      <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-[#818CF8] animate-spin" />
+      <div className="min-h-screen bg-[#0B0E14] flex flex-col items-center justify-center gap-5 antialiased select-none">
+        <div className="relative">
+          <div className="w-18 h-18 rounded-3xl bg-linear-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-xl shadow-[#6366F1]/40 animate-pulse">
+            <Flame className="w-9 h-9" />
+          </div>
+          <div className="absolute inset-0 rounded-3xl bg-[#6366F1]/25 blur-2xl -z-10" />
+        </div>
+        <h1 className="font-sans font-black text-xl tracking-tight text-white">
+          Nutri<span className="text-[#818CF8]">Flow</span>
+        </h1>
+        <div className="flex items-center gap-2 text-[#64748B]">
+          <Loader2 className="w-4 h-4 text-[#818CF8] animate-spin" />
+          <span className="text-xs font-sans">Loading your workspace…</span>
+        </div>
       </div>
     );
   }
