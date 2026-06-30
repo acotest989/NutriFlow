@@ -14,6 +14,7 @@ import {
   Dumbbell
 } from "lucide-react";
 import { useStore } from "../store";
+import { aiPrefs } from "../lib/prefs";
 
 interface Recipe {
   name: string;
@@ -42,6 +43,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
   const currentDate = useStore((s) => s.currentDate);
   const entries = useStore((s) => s.entries);
   const goal = useStore((s) => s.goal);
+  const profile = useStore((s) => s.profile);
   const onAddEntry = useStore((s) => s.addEntry);
   const [activeTab, setActiveTab] = useState<"coach" | "chef">("coach");
 
@@ -74,6 +76,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
           entries: todaysLogs,
           goal,
           date: currentDate,
+          prefs: aiPrefs(profile),
         }),
       });
 
@@ -104,7 +107,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
       const response = await fetch("/api/generate-recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients }),
+        body: JSON.stringify({ ingredients, prefs: aiPrefs(profile) }),
       });
 
       if (!response.ok) {

@@ -217,8 +217,19 @@ const barcodeSchema = z.object({
 const searchSchema = z.object({
   query: z.string().min(1, "Search query is required.").max(200),
 });
+// Optional personalization sent by the client (built from the user's profile).
+const prefsSchema = z
+  .object({
+    goalType: z.string().max(40).optional(),
+    diet: z.string().max(40).optional(),
+    restrictions: z.array(z.string().max(60)).max(30).optional(),
+    workouts: z.array(z.string().max(60)).max(30).optional(),
+    activity: z.string().max(40).optional(),
+  })
+  .optional();
 const recipesSchema = z.object({
   ingredients: z.string().min(1, "Ingredients are required.").max(500),
+  prefs: prefsSchema,
 });
 const coachSchema = z.object({
   entries: z.array(z.any()).max(500),
@@ -229,7 +240,27 @@ const coachSchema = z.object({
     fat: z.number(),
   }),
   date: z.string().max(40).optional(),
+  prefs: prefsSchema,
 });
+
+// Format the prefs payload into a prompt snippet the model can act on.
+type Prefs = z.infer<typeof prefsSchema>;
+function prefsText(p: Prefs): string {
+  if (!p) return "";
+  const goalMap: Record<string, string> = {
+    lose: "lose weight",
+    maintain: "maintain weight",
+    gain: "gain weight",
+    build_muscle: "build muscle",
+  };
+  const parts: string[] = [];
+  if (p.goalType) parts.push(`their primary goal is to ${goalMap[p.goalType] ?? p.goalType}`);
+  if (p.diet) parts.push(`they follow a ${p.diet.replace(/_/g, " ")} diet`);
+  if (p.restrictions?.length) parts.push(`they must avoid (allergies/restrictions): ${p.restrictions.join(", ")}`);
+  if (p.workouts?.length) parts.push(`they prefer these workouts: ${p.workouts.join(", ")}`);
+  if (p.activity) parts.push(`activity level: ${p.activity}`);
+  return parts.length ? ` User profile — ${parts.join("; ")}.` : "";
+}
 
 // 1. API Route: Estimate food nutrition from a custom text description
 app.post("/api/estimate", async (req, res) => {
@@ -462,7 +493,7 @@ app.post("/api/generate-recipes", async (req, res) => {
   const body = parseBody(recipesSchema, req, res);
   if (!body) return;
 
-  const prompt = `Based on these ingredients available: "${body.ingredients}", generate 3 distinct, delicious, healthy recipe recommendations. Calculate exact nutritional values (calories, protein, carbs, fat) and specify instructions, preparation time (mins), and difficulty.`;
+  const prompt = `Based on these ingredients available: "${body.ingredients}", generate 3 distinct, delicious, healthy recipe recommendations. Calculate exact nutritional values (calories, protein, carbs, fat) and specify instructions, preparation time (mins), and difficulty.${prefsText(body.prefs)} IMPORTANT: every recipe MUST comply with the user's dietary preference and MUST NOT contain any of their restricted/allergen ingredients; lean the recipes toward their goal.`;
 
   try {
     const result = await generateJSON({
@@ -500,13 +531,13 @@ app.post("/api/generate-recipes", async (req, res) => {
 app.post("/api/coach-analysis", async (req, res) => {
   const body = parseBody(coachSchema, req, res);
   if (!body) return;
-  const { entries, goal, date } = body;
+  const { entries, goal, date, prefs } = body;
 
   const prompt = `Analyze the logged diet and exercise entries for date "${date || 'Today'}".
 Current Daily Goals: ${JSON.stringify(goal)}.
-Daily Logs: ${JSON.stringify(entries)}.
+Daily Logs: ${JSON.stringify(entries)}.${prefsText(prefs)}
 
-Evaluate their calorie balance (consumed vs. burned), macronutrient balance (protein, carbs, fat target vs actual), and physical activity. Give a constructive analysis.`;
+Evaluate their calorie balance (consumed vs. burned), macronutrient balance (protein, carbs, fat target vs actual), and physical activity. Give a constructive analysis. Tailor your summary and the 3 suggestions to the user's profile above — align advice with their goal, respect their dietary preference, never suggest foods that conflict with their restrictions/allergies, and prefer their favored workout types.`;
 
   try {
     const result = await generateJSON({
