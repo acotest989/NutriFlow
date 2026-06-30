@@ -19,6 +19,7 @@ import type {
   DietPreference,
   Units,
   OnboardingData,
+  Profile,
 } from "../types";
 
 const GOALS: { value: GoalType; label: string; hint: string }[] = [
@@ -63,33 +64,44 @@ const num = (s: string): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-export default function Onboarding() {
+// When `onClose` is provided the component runs in "edit" mode (pre-filled from
+// `initial`, with a Cancel button); otherwise it's the first-run quiz.
+export default function Onboarding({ initial = null, onClose }: { initial?: Profile | null; onClose?: () => void }) {
   const completeOnboarding = useStore((s) => s.completeOnboarding);
   const signOut = useStore((s) => s.signOut);
+  const editing = !!onClose;
 
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Answers
-  const [goalType, setGoalType] = useState<GoalType | null>(null);
-  const [sex, setSex] = useState<Sex | null>(null);
-  const [age, setAge] = useState("");
-  const [units, setUnits] = useState<Units>("metric");
-  const [activity, setActivity] = useState<ActivityLevel | null>(null);
-  const [diet, setDiet] = useState<DietPreference>("none");
-  const [restrictions, setRestrictions] = useState<string[]>([]);
-  const [workouts, setWorkouts] = useState<string[]>([]);
+  // Answers (pre-filled from an existing profile when editing)
+  const [goalType, setGoalType] = useState<GoalType | null>(initial?.goalType ?? null);
+  const [sex, setSex] = useState<Sex | null>(initial?.sex ?? null);
+  const [age, setAge] = useState(initial ? String(initial.age) : "");
+  const [units, setUnits] = useState<Units>(initial?.units ?? "metric");
+  const [activity, setActivity] = useState<ActivityLevel | null>(initial?.activity ?? null);
+  const [diet, setDiet] = useState<DietPreference>(initial?.diet ?? "none");
+  const [restrictions, setRestrictions] = useState<string[]>(initial?.restrictions ?? []);
+  const [workouts, setWorkouts] = useState<string[]>(initial?.workouts ?? []);
 
+  // Body fields are stored in metric on the profile; show them in the profile's
+  // unit. The opposite unit's fields fill in on toggle (toMetric/conversion).
+  const initMetric = initial?.units === "metric" ? initial : null;
+  const initImp = initial?.units === "imperial" ? initial : null;
   // Body — metric fields
-  const [cm, setCm] = useState("");
-  const [kg, setKg] = useState("");
-  const [targetKg, setTargetKg] = useState("");
+  const [cm, setCm] = useState(initMetric ? String(Math.round(initMetric.heightCm)) : "");
+  const [kg, setKg] = useState(initMetric ? String(initMetric.weightKg) : "");
+  const [targetKg, setTargetKg] = useState(
+    initMetric && initMetric.targetWeightKg != null ? String(initMetric.targetWeightKg) : ""
+  );
   // Body — imperial fields
-  const [ft, setFt] = useState("");
-  const [inch, setInch] = useState("");
-  const [lb, setLb] = useState("");
-  const [targetLb, setTargetLb] = useState("");
+  const [ft, setFt] = useState(initImp ? String(cmToFtIn(initImp.heightCm).ft) : "");
+  const [inch, setInch] = useState(initImp ? String(cmToFtIn(initImp.heightCm).in) : "");
+  const [lb, setLb] = useState(initImp ? String(Math.round(kgToLb(initImp.weightKg))) : "");
+  const [targetLb, setTargetLb] = useState(
+    initImp && initImp.targetWeightKg != null ? String(Math.round(kgToLb(initImp.targetWeightKg))) : ""
+  );
 
   const toggleUnits = (to: Units) => {
     if (to === units) return;
@@ -162,8 +174,11 @@ export default function Onboarding() {
     if (error) {
       setError(error);
       setSaving(false);
+      return;
     }
-    // On success the store flips hasOnboarded -> App renders the dashboard.
+    // First-run: the store flips hasOnboarded -> App renders the dashboard.
+    // Editing: hasOnboarded is already true, so close the overlay manually.
+    if (onClose) onClose();
   };
 
   return (
@@ -176,7 +191,7 @@ export default function Onboarding() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-black text-white font-sans tracking-tight">
-              Let’s personalize NutriFlow
+              {editing ? "Edit your profile" : "Let’s personalize NutriFlow"}
             </p>
             <p className="text-[11px] text-[#64748B] font-sans">
               Step {step + 1} of {STEPS.length} · {STEPS[step]}
@@ -402,7 +417,7 @@ export default function Onboarding() {
                   </>
                 ) : (
                   <>
-                    <Check className="w-4 h-4" /> Start tracking
+                    <Check className="w-4 h-4" /> {editing ? "Save changes" : "Start tracking"}
                   </>
                 )}
               </button>
@@ -411,10 +426,10 @@ export default function Onboarding() {
         </div>
 
         <button
-          onClick={() => signOut()}
+          onClick={() => (editing ? onClose?.() : signOut())}
           className="w-full text-center text-[11px] text-[#64748B] hover:text-[#94A3B8] transition-colors mt-4"
         >
-          Sign out
+          {editing ? "Cancel" : "Sign out"}
         </button>
       </div>
     </div>

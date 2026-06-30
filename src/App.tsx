@@ -32,6 +32,7 @@ export default function App() {
   // Automatically switches between layouts responsively!
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [showProfileEdit, setShowProfileEdit] = useState<boolean>(false);
 
   useEffect(() => {
     const checkResponsive = () => {
@@ -52,6 +53,7 @@ export default function App() {
   const user = useStore((s) => s.user);
   const recoveryMode = useStore((s) => s.recoveryMode);
   const hasOnboarded = useStore((s) => s.hasOnboarded);
+  const profile = useStore((s) => s.profile);
   const initAuth = useStore((s) => s.initAuth);
   const signOut = useStore((s) => s.signOut);
 
@@ -368,6 +370,13 @@ export default function App() {
           </a>
           <span className="text-[#334155]">·</span>
           <button
+            onClick={() => setShowProfileEdit(true)}
+            className="text-[#94A3B8] hover:text-white transition-colors"
+          >
+            Edit Profile
+          </button>
+          <span className="text-[#334155]">·</span>
+          <button
             onClick={() => setShowDeleteModal(true)}
             className="text-[#94A3B8] hover:text-rose-400 transition-colors"
           >
@@ -393,6 +402,10 @@ export default function App() {
       </footer>
 
       {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
+
+      {showProfileEdit && profile && (
+        <Onboarding initial={profile} onClose={() => setShowProfileEdit(false)} />
+      )}
     </div>
   );
 }
