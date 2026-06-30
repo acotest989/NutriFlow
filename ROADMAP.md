@@ -29,12 +29,11 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 
 Prioritized post-launch work:
 
-1. **Onboarding quiz (personalization)** — new users currently start with a clean slate and a generic goal (`DEFAULT_GOAL` 2000/130/220/65); the food/exercise lists are just pickable catalogs, not seeded data. Add a one-time first-run quiz that captures: primary goal (lose/maintain/gain/build muscle), sex, age, height, weight, target weight, activity level, dietary preferences/restrictions, and workout preferences. Use it to compute a personalized calorie + macro goal (e.g. Mifflin-St Jeor BMR × activity factor ± goal adjustment) instead of the static default, and to tailor AI meal/workout suggestions later.
-   * Gate it in `App.tsx` (like the `recoveryMode` gate) so it shows once after first sign-up, before the dashboard.
-   * Persist answers + a `has_onboarded` flag in a new Supabase `profiles` table (migration `0003_profiles.sql`, RLS own-row, cascade on `auth.users`); drive gating off that flag so it doesn't reappear across devices.
-   * Seed the user's initial `goals` row from the answers; allow editing/re-taking later from a profile/settings screen.
+1. **Tailor AI suggestions to the profile** — feed the onboarding answers (diet preference, restrictions, workout prefs, goal) into the Gemini prompts (coach / recipes / search) so suggestions respect the user's preferences.
+2. **Edit profile / re-take quiz** — a settings screen to update measurements & preferences (re-runs `completeOnboarding`, recomputes the goal).
 
 ✅ **Done:**
+* **Onboarding quiz (personalization)** — first-run multi-step quiz (`src/components/Onboarding.tsx`): goal, sex/age, body (metric/imperial toggle), activity, diet, restrictions + workout prefs. Computes a personalized calorie + macro goal via Mifflin–St Jeor (`src/lib/goal.ts`) and seeds the user's `goals` row. Answers persist in the Supabase `profiles` table (migration `0003_profiles.sql`, RLS own-row, cascade); a `has_onboarded` flag gates it in `App.tsx`. Shown once after sign-in (also catches existing users with no profile).
 * **Google sign-in (OAuth)** — "Continue with Google" on the auth screen via `supabase.auth.signInWithOAuth`; redirects back to the app origin and resumes the session via `detectSessionInUrl`. Google Cloud OAuth client + Supabase Google provider configured. Works on web and in the Android TWA (Chrome Custom Tab).
 * **Password reset** — forgot-password email + in-app update-password flow.
 * **AI reliability** — the AI helper (`generateJSON` in `server.ts`) now retries transient Gemini errors (503/overloaded/429/500/timeout, plus empty/garbled responses) with exponential backoff + jitter, then **falls back to the next model in a chain** instead of hammering the overloaded one. The chain is env-configurable via `GEMINI_MODELS` (default `gemini-3.5-flash,gemini-2.5-flash`); an unavailable fallback model is skipped safely.
