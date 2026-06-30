@@ -88,6 +88,7 @@ interface AppState {
   // Data actions
   loadData: () => Promise<void>;
   completeOnboarding: (data: OnboardingData) => Promise<{ error: string | null }>;
+  resetData: () => Promise<{ error: string | null }>;
   addEntry: (entry: Omit<LogEntry, "id" | "timestamp">) => Promise<void>;
   removeEntry: (id: string) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;
@@ -307,6 +308,27 @@ export const useStore = create<AppState>()(
         if (gErr) console.error("Failed to save computed goal:", gErr);
 
         set({ profile: { ...data, hasOnboarded: true }, hasOnboarded: true });
+        return { error: null };
+      },
+
+      resetData: async () => {
+        const user = get().user;
+        if (!user) return { error: "You're not signed in." };
+
+        const prevEntries = get().entries;
+        const prevHydration = get().hydration;
+        set({ entries: [], hydration: {} }); // optimistic
+
+        // Delete all logged meals/exercises + hydration (keeps account, profile, goal).
+        const [entriesRes, hydrationRes] = await Promise.all([
+          supabase.from("entries").delete().eq("user_id", user.id),
+          supabase.from("hydration").delete().eq("user_id", user.id),
+        ]);
+        if (entriesRes.error || hydrationRes.error) {
+          set({ entries: prevEntries, hydration: prevHydration }); // roll back
+          console.error("Failed to reset data:", entriesRes.error ?? hydrationRes.error);
+          return { error: "Couldn't reset your data. Please try again." };
+        }
         return { error: null };
       },
 

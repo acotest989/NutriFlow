@@ -25,6 +25,7 @@ import WaterTracker from "./components/WaterTracker";
 import Auth from "./components/Auth";
 import UpdatePassword from "./components/UpdatePassword";
 import DeleteAccountModal from "./components/DeleteAccountModal";
+import ResetDataModal from "./components/ResetDataModal";
 import Onboarding from "./components/Onboarding";
 import { stashPendingOnboarding } from "./lib/onboarding";
 import { useStore } from "./store";
@@ -33,6 +34,7 @@ export default function App() {
   // Automatically switches between layouts responsively!
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [showResetModal, setShowResetModal] = useState<boolean>(false);
 
   // Minimal client-side routing so the quiz is its own full-screen page (own URL,
   // shareable, reusable as a promo entry point) rather than an inline section.
@@ -417,6 +419,13 @@ export default function App() {
           </button>
           <span className="text-[#334155]">·</span>
           <button
+            onClick={() => setShowResetModal(true)}
+            className="text-[#94A3B8] hover:text-amber-400 transition-colors"
+          >
+            Reset Data
+          </button>
+          <span className="text-[#334155]">·</span>
+          <button
             onClick={() => setShowDeleteModal(true)}
             className="text-[#94A3B8] hover:text-rose-400 transition-colors"
           >
@@ -442,6 +451,7 @@ export default function App() {
       </footer>
 
       {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
+      {showResetModal && <ResetDataModal onClose={() => setShowResetModal(false)} />}
     </div>
   );
 }
