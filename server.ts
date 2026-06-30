@@ -318,13 +318,73 @@ app.post("/api/estimate", async (req, res) => {
 });
 
 // 2. API Route: Scan and parse barcode
+// Look up a real product by barcode from Open Food Facts (free, no API key).
+// Returns our nutrition shape, or null if not found / no usable data so the
+// caller can fall back to the demo list or an AI estimate.
+async function lookupOpenFoodFacts(barcode: string): Promise<Record<string, unknown> | null> {
+  const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(
+    barcode
+  )}.json?fields=product_name,brands,nutriments,serving_quantity`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4000); // don't let a slow lookup hang the request
+  try {
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { "User-Agent": "NutriFlow/1.0 (chillibrimedia@gmail.com)" },
+    });
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    if (data?.status !== 1 || !data.product) return null;
+
+    const p = data.product;
+    const n = p.nutriments ?? {};
+    // Build a clean "Product · Brand" name. OFF's `brands` is a messy comma list,
+    // so take the first brand and skip it if the product name already includes it.
+    const productName = String(p.product_name ?? "").trim();
+    const firstBrand = String(p.brands ?? "").split(",")[0].trim();
+    const name =
+      firstBrand && !productName.toLowerCase().includes(firstBrand.toLowerCase())
+        ? `${productName} · ${firstBrand}`
+        : productName;
+    if (!name) return null;
+
+    const toNum = (v: unknown) => (typeof v === "number" ? v : Number(v)) || 0;
+    const round1 = (v: number) => Math.round(v * 10) / 10;
+    const servingQ = toNum(p.serving_quantity);
+    // Prefer per-serving values when a serving size is known; otherwise per 100 g.
+    const perServing = n["energy-kcal_serving"] != null && servingQ > 0;
+    const cal = perServing ? n["energy-kcal_serving"] : n["energy-kcal_100g"];
+    if (cal == null) return null; // no usable energy value -> let the caller fall back
+
+    return {
+      name,
+      calories: Math.round(toNum(cal)),
+      protein: round1(toNum(perServing ? n["proteins_serving"] : n["proteins_100g"])),
+      carbs: round1(toNum(perServing ? n["carbohydrates_serving"] : n["carbohydrates_100g"])),
+      fat: round1(toNum(perServing ? n["fat_serving"] : n["fat_100g"])),
+      servingSize: perServing ? Math.round(servingQ) : 100,
+      servingUnit: "g",
+    };
+  } catch {
+    return null; // network error / timeout / abort -> fall back
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 app.post("/api/barcode", async (req, res) => {
   const body = parseBody(barcodeSchema, req, res);
   if (!body) return;
   const { barcode } = body;
 
-  // Handled pre-defined list for immediate and robust offline simulation in app,
-  // otherwise use AI to guess or simulate product details.
+  // 1) Real product database (Open Food Facts) — free, no key required.
+  const offProduct = await lookupOpenFoodFacts(barcode);
+  if (offProduct) {
+    res.json(offProduct);
+    return;
+  }
+
+  // 2) Known demo barcodes — instant, offline-friendly fallback.
   const mockBarcodes: Record<string, any> = {
     "49000000443": {
       name: "Coca-Cola Classic (12 oz)",

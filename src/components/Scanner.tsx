@@ -205,13 +205,13 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
         )}
       </div>
 
-      {/* Database Quick Code / Simulation Helper */}
+      {/* Database Quick Code / Lookup Helper */}
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
         <h4 className="font-sans font-bold text-white flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-[#818CF8]" /> Simulated Barcode Console
+          <Sparkles className="w-4 h-4 text-[#818CF8]" /> Barcode Lookup
         </h4>
         <p className="text-xs text-[#94A3B8] font-sans">
-          Select any of these realistic preset items to simulate a laser swipe, or type any custom UPC code to trigger the AI Decoder!
+          Type any real UPC/EAN to look it up in the Open Food Facts database, or tap a preset below. Unknown codes fall back to an AI estimate.
         </p>
 
         {/* Preset scan chips */}
