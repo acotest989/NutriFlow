@@ -32,7 +32,14 @@ export default function App() {
   // Automatically switches between layouts responsively!
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-  const [showProfileEdit, setShowProfileEdit] = useState<boolean>(false);
+
+  // Minimal client-side routing so the quiz is its own full-screen page (own URL,
+  // shareable, reusable as a promo entry point) rather than an inline section.
+  const [path, setPath] = useState<string>(typeof window !== "undefined" ? window.location.pathname : "/");
+  const navigate = (to: string) => {
+    window.history.pushState({}, "", to);
+    setPath(to);
+  };
 
   useEffect(() => {
     const checkResponsive = () => {
@@ -64,6 +71,13 @@ export default function App() {
 
   // Initialize the auth session listener once on mount.
   useEffect(() => initAuth(), [initAuth]);
+
+  // Keep the route in sync with browser back/forward.
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   // Auto-dismiss the error toast after a few seconds.
   useEffect(() => {
@@ -116,6 +130,12 @@ export default function App() {
   // First-run: personalize goals via the onboarding quiz.
   if (!hasOnboarded) {
     return <Onboarding />;
+  }
+
+  // Dedicated full-screen quiz page (edit profile / re-take). Own URL so it's a
+  // real page you can't scroll past — and a reusable entry point later.
+  if (path === "/quiz") {
+    return <Onboarding initial={profile} onClose={() => navigate("/")} />;
   }
 
   return (
@@ -370,7 +390,7 @@ export default function App() {
           </a>
           <span className="text-[#334155]">·</span>
           <button
-            onClick={() => setShowProfileEdit(true)}
+            onClick={() => navigate("/quiz")}
             className="text-[#94A3B8] hover:text-white transition-colors"
           >
             Edit Profile
@@ -402,10 +422,6 @@ export default function App() {
       </footer>
 
       {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
-
-      {showProfileEdit && profile && (
-        <Onboarding initial={profile} onClose={() => setShowProfileEdit(false)} />
-      )}
     </div>
   );
 }
