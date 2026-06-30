@@ -29,9 +29,10 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 
 Prioritized post-launch work:
 
-1. **Edit profile / re-take quiz** — a settings screen to update measurements & preferences (re-runs `completeOnboarding`, recomputes the goal).
+_All near-term personalization items shipped. Next ideas live in the backlog below (e.g. tighter keto macro split, Apple/Health sync, barcode lookup)._
 
 ✅ **Done:**
+* **Edit profile / re-take quiz** — the `Onboarding` component doubles as an edit screen (pre-filled, "Save changes", recomputes the goal); opened from the footer "Edit Profile" link.
 * **Profile-aware AI** — the client sends a compact prefs payload (goal, diet, restrictions, workouts, activity) from the user's profile to the coach + recipe endpoints (`aiPrefs` in `src/lib/prefs.ts`); the server weaves it into the prompts (`prefsText` in `server.ts`). Recipes must comply with the diet and exclude restricted/allergen ingredients; coach advice aligns with the goal/diet/preferred workouts.
 * **Onboarding quiz (personalization)** — first-run multi-step quiz (`src/components/Onboarding.tsx`): goal, sex/age, body (metric/imperial toggle), activity, diet, restrictions + workout prefs. Computes a personalized calorie + macro goal via Mifflin–St Jeor (`src/lib/goal.ts`) and seeds the user's `goals` row. Answers persist in the Supabase `profiles` table (migration `0003_profiles.sql`, RLS own-row, cascade); a `has_onboarded` flag gates it in `App.tsx`. Shown once after sign-in (also catches existing users with no profile).
 * **Google sign-in (OAuth)** — "Continue with Google" on the auth screen via `supabase.auth.signInWithOAuth`; redirects back to the app origin and resumes the session via `detectSessionInUrl`. Google Cloud OAuth client + Supabase Google provider configured. Works on web and in the Android TWA (Chrome Custom Tab).
