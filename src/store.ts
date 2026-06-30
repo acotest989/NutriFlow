@@ -5,6 +5,7 @@ import { LogEntry, Goal, OnboardingData, Profile } from "./types";
 import { DEFAULT_GOAL } from "./data";
 import { supabase } from "./lib/supabase";
 import { computeGoal } from "./lib/goal";
+import { readPendingOnboarding, clearPendingOnboarding } from "./lib/onboarding";
 
 export type Theme = "deep-midnight" | "high-contrast-light";
 
@@ -238,6 +239,10 @@ export const useStore = create<AppState>()(
 
         const profile = profileRes.data ? rowToProfile(profileRes.data as Record<string, unknown>) : null;
 
+        // A logged-out visitor may have completed the promo quiz before signing
+        // up — apply those stashed answers now (for not-yet-onboarded users).
+        const pending = !profile?.hasOnboarded ? readPendingOnboarding() : null;
+
         set({
           entries: (entriesRes.data ?? []).map((r) => rowToEntry(r as EntryRow)),
           goal: goalRow
@@ -250,9 +255,19 @@ export const useStore = create<AppState>()(
             : DEFAULT_GOAL,
           hydration,
           profile,
-          hasOnboarded: profile?.hasOnboarded ?? false,
+          // Keep the splash up (null) while applying pending answers to avoid
+          // flashing the blank first-run quiz.
+          hasOnboarded: pending ? null : profile?.hasOnboarded ?? false,
           dataLoading: false,
         });
+
+        if (pending) {
+          clearPendingOnboarding();
+          const res = await get().completeOnboarding(pending);
+          // On success completeOnboarding sets hasOnboarded=true; on failure,
+          // fall back to the first-run quiz so the user isn't stuck on the splash.
+          if (res.error) set({ hasOnboarded: false });
+        }
       },
 
       completeOnboarding: async (data) => {

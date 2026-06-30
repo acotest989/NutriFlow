@@ -64,9 +64,28 @@ const num = (s: string): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-// When `onClose` is provided the component runs in "edit" mode (pre-filled from
-// `initial`, with a Cancel button); otherwise it's the first-run quiz.
-export default function Onboarding({ initial = null, onClose }: { initial?: Profile | null; onClose?: () => void }) {
+// Modes:
+//  - first-run (no props): saves via completeOnboarding, gates into the app.
+//  - edit (onClose): pre-filled from `initial`, Cancel returns via onClose.
+//  - promo (onSubmit + secondaryLabel/onSecondary): logged-out; onSubmit stashes
+//    the answers + redirects to sign-up instead of saving to the DB.
+export default function Onboarding({
+  initial = null,
+  onClose,
+  onSubmit,
+  submitLabel,
+  title,
+  secondaryLabel,
+  onSecondary,
+}: {
+  initial?: Profile | null;
+  onClose?: () => void;
+  onSubmit?: (data: OnboardingData) => Promise<{ error: string | null }>;
+  submitLabel?: string;
+  title?: string;
+  secondaryLabel?: string;
+  onSecondary?: () => void;
+}) {
   const completeOnboarding = useStore((s) => s.completeOnboarding);
   const signOut = useStore((s) => s.signOut);
   const editing = !!onClose;
@@ -170,14 +189,15 @@ export default function Onboarding({ initial = null, onClose }: { initial?: Prof
   const finish = async () => {
     setError("");
     setSaving(true);
-    const { error } = await completeOnboarding(toMetric());
+    const submit = onSubmit ?? completeOnboarding;
+    const { error } = await submit(toMetric());
     if (error) {
       setError(error);
       setSaving(false);
       return;
     }
-    // First-run: the store flips hasOnboarded -> App renders the dashboard.
-    // Editing: hasOnboarded is already true, so close the overlay manually.
+    // First-run: completeOnboarding flips hasOnboarded -> App renders the dashboard.
+    // Edit/promo: the caller's onClose/onSubmit handles navigation.
     if (onClose) onClose();
   };
 
@@ -191,7 +211,7 @@ export default function Onboarding({ initial = null, onClose }: { initial?: Prof
           </div>
           <div className="flex-1">
             <p className="text-sm font-black text-white font-sans tracking-tight">
-              {editing ? "Edit your profile" : "Let’s personalize NutriFlow"}
+              {title ?? (editing ? "Edit your profile" : "Let’s personalize NutriFlow")}
             </p>
             <p className="text-[11px] text-[#64748B] font-sans">
               Step {step + 1} of {STEPS.length} · {STEPS[step]}
@@ -417,7 +437,7 @@ export default function Onboarding({ initial = null, onClose }: { initial?: Prof
                   </>
                 ) : (
                   <>
-                    <Check className="w-4 h-4" /> {editing ? "Save changes" : "Start tracking"}
+                    <Check className="w-4 h-4" /> {submitLabel ?? (editing ? "Save changes" : "Start tracking")}
                   </>
                 )}
               </button>
@@ -426,10 +446,10 @@ export default function Onboarding({ initial = null, onClose }: { initial?: Prof
         </div>
 
         <button
-          onClick={() => (editing ? onClose?.() : signOut())}
+          onClick={() => (secondaryLabel ? onSecondary?.() : editing ? onClose?.() : signOut())}
           className="w-full text-center text-[11px] text-[#64748B] hover:text-[#94A3B8] transition-colors mt-4"
         >
-          {editing ? "Cancel" : "Sign out"}
+          {secondaryLabel ?? (editing ? "Cancel" : "Sign out")}
         </button>
       </div>
     </div>

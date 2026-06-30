@@ -26,6 +26,7 @@ import Auth from "./components/Auth";
 import UpdatePassword from "./components/UpdatePassword";
 import DeleteAccountModal from "./components/DeleteAccountModal";
 import Onboarding from "./components/Onboarding";
+import { stashPendingOnboarding } from "./lib/onboarding";
 import { useStore } from "./store";
 
 export default function App() {
@@ -116,6 +117,25 @@ export default function App() {
   // Arrived via a password-reset link -> show the update-password screen.
   if (recoveryMode) {
     return <UpdatePassword />;
+  }
+
+  // Public promo quiz: a logged-out visitor at /quiz can take the quiz and see
+  // their plan, then create an account to save it. Answers are stashed and
+  // auto-applied on first sign-in (see store.loadData).
+  if (!user && path === "/quiz") {
+    return (
+      <Onboarding
+        title="Build your free nutrition plan"
+        submitLabel="Create account to save"
+        onSubmit={async (data) => {
+          stashPendingOnboarding(data);
+          navigate("/");
+          return { error: null };
+        }}
+        secondaryLabel="I already have an account"
+        onSecondary={() => navigate("/")}
+      />
+    );
   }
 
   // Not signed in -> show the auth screen.
