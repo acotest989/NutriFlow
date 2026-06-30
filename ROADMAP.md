@@ -76,6 +76,7 @@ NutriFlow currently runs on the default Cloud Run URL (`…run.app`) — not a d
 * ✅ **OAuth sign-in** — Google shipped (`signInWithOAuth`); Apple still optional/future.
 * ✅ **Password reset** — shipped (forgot-password email + in-app update flow).
 * **Account management** — change email. (✅ in-app account deletion shipped.)
+* **Public promo quiz** — the quiz now lives at its own `/quiz` route (full-screen page). Future growth play: let **logged-out** visitors take it, see their computed plan, then "Sign up to save" (stash answers in `localStorage` → apply on first sign-in). Currently `/quiz` is gated to signed-in users (edit/re-take).
 
 ---
 
