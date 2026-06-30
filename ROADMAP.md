@@ -87,7 +87,7 @@ NutriFlow currently runs on the default Cloud Run URL (`…run.app`) — not a d
 - [x] **Cloud persistence & auth** — Supabase with RLS.
 - [x] **API hardening** — validation, rate limiting, security headers, health check.
 - [ ] **Unit & Integration Tests**: Set up a test runner (Vitest) with a request layer (supertest/MSW) to cover the backend API routes and store actions.
-- [ ] **True Barcode Lookup**: Replace the simulated mock database in `Scanner.tsx` with a live request to an open food database (e.g., Open Food Facts).
+- [x] **True Barcode Lookup**: `/api/barcode` queries **Open Food Facts** (free, no key) first — per-serving values when available, else per 100 g, 4 s timeout — then falls back to the demo list, then an AI estimate.
 - [ ] **Bundle size**: Code-split the client (the JS bundle is ~1 MB) to improve first-load performance.
 - [x] **AI reliability**: retry transient Gemini errors with exponential backoff + jitter and fall back through a configurable model chain (`GEMINI_MODELS`) when the primary is overloaded.
 - [ ] **Tighten CSP**: `helmet`'s Content-Security-Policy is currently disabled; define a tailored policy for the SPA.
