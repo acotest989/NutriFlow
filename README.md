@@ -14,28 +14,34 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 * **Email/password + Google sign-in** via Supabase — each user has a private account ("Continue with Google" OAuth on web and in the Android TWA).
 * **Password reset**: forgot-password email link + in-app update-password flow.
 * **In-app account deletion**: a "Delete account" action permanently removes the user and all their data (server-verified, service-role; rows cascade-delete).
+* **Reset logged data**: a "Reset Data" action clears all logged meals/exercises/hydration while keeping the account, profile, and goal.
 * **Cloud persistence**: meals, exercises, goals, and hydration are stored per-user in Supabase and sync across devices.
 * **Row-Level Security**: every row is gated so users can only ever read/write their own data.
 
-### 2. 📊 Interactive Dashboard & Analytics
+### 2. 🎯 Personalized Onboarding & Goals
+* **First-run quiz**: a multi-step quiz (goal, body stats with metric/imperial toggle, activity, diet, restrictions, workout prefs) computes a personalized calorie + macro goal via **Mifflin–St Jeor** (`src/lib/goal.ts`) instead of a generic default.
+* **Profile-aware AI**: the coach and recipe generator respect the user's goal, dietary preference, allergies/restrictions, and preferred workouts.
+* **Editable & shareable**: re-take or edit anytime from the footer; the quiz has its own `/quiz` route that doubles as a public "build your free plan" promo for logged-out visitors (answers carry through sign-up).
+
+### 3. 📊 Interactive Dashboard & Analytics
 * **Macro Calorie Budgeting**: Track consumed calories against an adjustable daily allowance with live percentage gauges.
 * **Macronutrient Breakdown**: Visual progress rings mapping Protein, Carbs, and Fats so users can stay inside their target zone.
 * **Time-Series Trends**: Embedded charts plotting historic intake and expenditure over the last 7 days.
 
-### 3. ⚡ AI Daily Coach Review
+### 4. ⚡ AI Daily Coach Review
 * **Instant Evaluation**: Analyzes daily logged food items, exercises, and target goals at the click of a button.
 * **Intelligent Feedback**: Returns an overall daily "grade" (e.g., A, B+, C), a highly motivating summary, and three actionable athletic suggestions.
 
-### 4. 🍳 Pantry Recipe Generator (AI Chef)
+### 5. 🍳 Pantry Recipe Generator (AI Chef)
 * **Custom Meal Crafting**: Input any combination of ingredients sitting in your fridge or pantry.
 * **Detailed Formulations**: Gemini instantly formulates three high-macro healthy recipes complete with calories, precise protein/carb/fat content, and prep times.
 * **One-Click Logging**: Directly log any generated recipe into your daily meals without manual data entry.
 
-### 5. 💧 Dynamic Hydration Tracker
+### 6. 💧 Dynamic Hydration Tracker
 * **Visual Cup Indicator**: Interactive liquid visual container with smooth spring height physics based on water logged.
 * **Preset Additions**: Fast increment buttons (`+250ml`, `+500ml`) and a reduction button to manage baseline daily hydration.
 
-### 6. 🔍 Smart Nutrition Search & Barcode Simulator
+### 7. 🔍 Smart Nutrition Search & Barcode Simulator
 * **Natural Language Queries**: Search for common meals, raw ingredients, or complex items to get accurate nutritional estimates.
 * **UPC Barcode Scanner**: Simulates camera scanner interactions with realistic viewport crosshairs and preset product scans to easily test barcode lookups.
 
@@ -146,19 +152,26 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 ├── privacy.html / delete-account.html  # Play-required policy pages
 ├── supabase/migrations/            # SQL schema + RLS policies (run in Supabase SQL Editor)
 ├── store-assets/                   # Play listing assets: icon source, feature graphic, screenshots
-├── play-package/                   # PWABuilder Android output (.aab/.apk; keystore gitignored)
+├── twa/                            # Bubblewrap TWA project (twa-manifest.json tracked; rest gitignored)
+├── play-package/                   # Built Android output (.aab/.apk; keystore gitignored)
 ├── scripts/                        # Icon + screenshot generators (sharp / playwright)
 ├── src/
 │   ├── main.tsx                    # React entry (wrapped in ErrorBoundary)
-│   ├── App.tsx                     # Cross-platform layout shell + auth gating
-│   ├── store.ts                    # Zustand store: auth + cloud data + UI state
+│   ├── App.tsx                     # Layout shell, auth + onboarding gating, /quiz route
+│   ├── store.ts                    # Zustand store: auth, profile/onboarding, cloud data, UI state
 │   ├── types.ts                    # Global TypeScript interfaces
-│   ├── lib/supabase.ts             # Supabase client
+│   ├── lib/
+│   │   ├── supabase.ts             # Supabase client
+│   │   ├── goal.ts                 # Mifflin–St Jeor goal/macro computation + unit conversions
+│   │   ├── prefs.ts                # builds the AI personalization payload from the profile
+│   │   └── onboarding.ts           # stash/apply pending promo-quiz answers (localStorage)
 │   ├── index.css                   # Tailwind imports & theme declarations
 │   └── components/
 │       ├── Auth.tsx                # Sign-in / sign-up / forgot-password screen
 │       ├── UpdatePassword.tsx      # Set-new-password screen (password-reset flow)
+│       ├── Onboarding.tsx          # Personalization quiz (first-run / edit / public promo)
 │       ├── DeleteAccountModal.tsx  # Confirm-and-delete-account modal
+│       ├── ResetDataModal.tsx      # Confirm-and-reset-logged-data modal
 │       ├── ErrorBoundary.tsx       # Graceful render-error fallback
 │       ├── Dashboard.tsx           # Calorie progress, goal edits & summary
 │       ├── FoodSearch.tsx          # Natural-language food lookup & additions
