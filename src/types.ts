@@ -37,6 +37,42 @@ export interface Goal {
   fat: number;
 }
 
+// ----- Onboarding / personalization -----
+export type GoalType = "lose" | "maintain" | "gain" | "build_muscle";
+export type Sex = "male" | "female" | "other";
+export type ActivityLevel = "sedentary" | "light" | "moderate" | "very" | "extra";
+export type DietPreference =
+  | "none"
+  | "high_protein"
+  | "low_carb"
+  | "keto"
+  | "vegetarian"
+  | "vegan"
+  | "mediterranean"
+  | "paleo";
+export type Units = "metric" | "imperial";
+
+// Canonical onboarding answers. Body measurements are always stored in metric
+// (cm / kg); `units` only controls how they're displayed/entered.
+export interface OnboardingData {
+  goalType: GoalType;
+  sex: Sex;
+  age: number;
+  heightCm: number;
+  weightKg: number;
+  targetWeightKg: number | null;
+  activity: ActivityLevel;
+  diet: DietPreference;
+  restrictions: string[];
+  workouts: string[];
+  units: Units;
+}
+
+// Shape of a row in the Supabase `profiles` table.
+export interface Profile extends OnboardingData {
+  hasOnboarded: boolean;
+}
+
 export interface DailySummary {
   date: string;
   consumedCalories: number;

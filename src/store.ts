@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Session, User } from "@supabase/supabase-js";
-import { LogEntry, Goal } from "./types";
+import { LogEntry, Goal, OnboardingData, Profile } from "./types";
 import { DEFAULT_GOAL } from "./data";
 import { supabase } from "./lib/supabase";
+import { computeGoal } from "./lib/goal";
 
 export type Theme = "deep-midnight" | "high-contrast-light";
 
@@ -22,6 +23,21 @@ type EntryRow = {
   quantity: number;
   created_at: string;
 };
+
+const rowToProfile = (r: Record<string, unknown>): Profile => ({
+  hasOnboarded: !!r.has_onboarded,
+  goalType: r.goal_type as Profile["goalType"],
+  sex: r.sex as Profile["sex"],
+  age: Number(r.age),
+  heightCm: Number(r.height_cm),
+  weightKg: Number(r.weight_kg),
+  targetWeightKg: r.target_weight_kg == null ? null : Number(r.target_weight_kg),
+  activity: r.activity as Profile["activity"],
+  diet: (r.diet as Profile["diet"]) ?? "none",
+  restrictions: (r.restrictions as string[]) ?? [],
+  workouts: (r.workouts as string[]) ?? [],
+  units: (r.units as Profile["units"]) ?? "metric",
+});
 
 const rowToEntry = (r: EntryRow): LogEntry => ({
   id: r.id,
@@ -49,6 +65,10 @@ interface AppState {
   hydration: Record<string, number>; // date (YYYY-MM-DD) -> consumed ml
   dataLoading: boolean;
 
+  // Onboarding / personalization
+  profile: Profile | null;
+  hasOnboarded: boolean | null; // null = not yet determined (still loading)
+
   // UI
   currentDate: string;
   theme: Theme;
@@ -66,6 +86,7 @@ interface AppState {
 
   // Data actions
   loadData: () => Promise<void>;
+  completeOnboarding: (data: OnboardingData) => Promise<{ error: string | null }>;
   addEntry: (entry: Omit<LogEntry, "id" | "timestamp">) => Promise<void>;
   removeEntry: (id: string) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;
@@ -91,6 +112,9 @@ export const useStore = create<AppState>()(
       goal: DEFAULT_GOAL,
       hydration: {},
       dataLoading: false,
+
+      profile: null,
+      hasOnboarded: null,
 
       currentDate: todayStr(),
       theme: "deep-midnight",
@@ -118,7 +142,7 @@ export const useStore = create<AppState>()(
             // Only (re)load when the user actually changes, not on token refresh.
             if (session.user.id !== prevUserId) get().loadData();
           } else {
-            set({ entries: [], goal: DEFAULT_GOAL, hydration: {} });
+            set({ entries: [], goal: DEFAULT_GOAL, hydration: {}, profile: null, hasOnboarded: null });
           }
         });
 
@@ -150,7 +174,7 @@ export const useStore = create<AppState>()(
 
       signOut: async () => {
         await supabase.auth.signOut();
-        set({ entries: [], goal: DEFAULT_GOAL, hydration: {}, recoveryMode: false });
+        set({ entries: [], goal: DEFAULT_GOAL, hydration: {}, recoveryMode: false, profile: null, hasOnboarded: null });
       },
 
       resetPassword: async (email) => {
@@ -181,7 +205,7 @@ export const useStore = create<AppState>()(
           }
           // Account is gone — clear the local session and in-memory data.
           await supabase.auth.signOut();
-          set({ entries: [], goal: DEFAULT_GOAL, hydration: {}, recoveryMode: false });
+          set({ entries: [], goal: DEFAULT_GOAL, hydration: {}, recoveryMode: false, profile: null, hasOnboarded: null });
           return { error: null };
         } catch {
           return { error: "Network error. Please check your connection and try again." };
@@ -191,14 +215,18 @@ export const useStore = create<AppState>()(
       // ---------- Data ----------
       loadData: async () => {
         set({ dataLoading: true });
-        const [entriesRes, goalRes, hydrationRes] = await Promise.all([
+        const [entriesRes, goalRes, hydrationRes, profileRes] = await Promise.all([
           supabase.from("entries").select("*").order("created_at", { ascending: false }),
           supabase.from("goals").select("*").maybeSingle(),
           supabase.from("hydration").select("date, consumed_ml"),
+          supabase.from("profiles").select("*").maybeSingle(),
         ]);
 
-        if (entriesRes.error || goalRes.error || hydrationRes.error) {
-          console.error("Failed to load data:", entriesRes.error ?? goalRes.error ?? hydrationRes.error);
+        if (entriesRes.error || goalRes.error || hydrationRes.error || profileRes.error) {
+          console.error(
+            "Failed to load data:",
+            entriesRes.error ?? goalRes.error ?? hydrationRes.error ?? profileRes.error
+          );
           set({ error: "Couldn't load your data. Check your connection and refresh." });
         }
 
@@ -207,6 +235,8 @@ export const useStore = create<AppState>()(
         for (const row of hydrationRes.data ?? []) {
           hydration[(row as { date: string }).date] = Number((row as { consumed_ml: number }).consumed_ml);
         }
+
+        const profile = profileRes.data ? rowToProfile(profileRes.data as Record<string, unknown>) : null;
 
         set({
           entries: (entriesRes.data ?? []).map((r) => rowToEntry(r as EntryRow)),
@@ -219,8 +249,50 @@ export const useStore = create<AppState>()(
               }
             : DEFAULT_GOAL,
           hydration,
+          profile,
+          hasOnboarded: profile?.hasOnboarded ?? false,
           dataLoading: false,
         });
+      },
+
+      completeOnboarding: async (data) => {
+        const user = get().user;
+        if (!user) return { error: "You're not signed in." };
+
+        const goal = computeGoal(data);
+        const prevGoal = get().goal;
+        set({ goal }); // optimistic — dashboard reflects the new target immediately
+
+        const { error: pErr } = await supabase.from("profiles").upsert({
+          user_id: user.id,
+          has_onboarded: true,
+          goal_type: data.goalType,
+          sex: data.sex,
+          age: data.age,
+          height_cm: data.heightCm,
+          weight_kg: data.weightKg,
+          target_weight_kg: data.targetWeightKg,
+          activity: data.activity,
+          diet: data.diet,
+          restrictions: data.restrictions,
+          workouts: data.workouts,
+          units: data.units,
+          updated_at: new Date().toISOString(),
+        });
+        if (pErr) {
+          set({ goal: prevGoal });
+          console.error("Failed to save profile:", pErr);
+          return { error: "Couldn't save your profile. Please try again." };
+        }
+
+        // Persist the computed goal too (best-effort; the dashboard already has it).
+        const { error: gErr } = await supabase
+          .from("goals")
+          .upsert({ user_id: user.id, ...goal, updated_at: new Date().toISOString() });
+        if (gErr) console.error("Failed to save computed goal:", gErr);
+
+        set({ profile: { ...data, hasOnboarded: true }, hasOnboarded: true });
+        return { error: null };
       },
 
       addEntry: async (entryData) => {
