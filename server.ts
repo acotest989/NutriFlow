@@ -217,6 +217,12 @@ const barcodeSchema = z.object({
 const searchSchema = z.object({
   query: z.string().min(1, "Search query is required.").max(200),
 });
+const photoSchema = z.object({
+  // Base64 JPEG (no data: prefix needed — we strip it if present). The global
+  // 1 MB JSON body limit is the real guard; the client compresses before upload.
+  image: z.string().min(1, "Image data is required.").max(9_000_000),
+  mimeType: z.string().max(40).optional(),
+});
 // Optional personalization sent by the client (built from the user's profile).
 const prefsSchema = z
   .object({
@@ -487,6 +493,62 @@ app.post("/api/barcode", async (req, res) => {
     res.json(result);
   } catch (error) {
     sendAiError(res, error, "Failed to parse barcode.");
+  }
+});
+
+// 2b. API Route: Analyze a meal photo with Gemini vision.
+// Estimates the total calories + macros for everything on the plate so the user
+// can review and log it. Reuses the same retry/fallback model chain as the other
+// AI routes (gemini-3.5-flash supports image input).
+app.post("/api/analyze-photo", async (req, res) => {
+  const body = parseBody(photoSchema, req, res);
+  if (!body) return;
+
+  // Accept either a raw base64 string or a full data URL (strip the prefix).
+  const base64 = body.image.includes(",") ? body.image.split(",")[1] : body.image;
+  const mimeType = body.mimeType || "image/jpeg";
+
+  const prompt =
+    "Analyze this meal photo. Identify the distinct food and drink items visible, then estimate the TOTAL nutrition for everything shown as a single meal. Assume typical single-serving portions when the size is ambiguous, and give realistic values. If the photo contains no food, set name to 'No food detected', items to an empty array, and every number to 0.";
+
+  try {
+    const result = await generateJSON({
+      contents: [
+        { text: prompt },
+        { inlineData: { mimeType, data: base64 } },
+      ],
+      config: {
+        systemInstruction:
+          "You are a nutrition vision expert. You estimate calories and macronutrients from meal photos. Be realistic and concise, and always return a single structured JSON object describing the whole plate.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: {
+              type: Type.STRING,
+              description: "Short name for the whole meal, e.g. 'Grilled chicken with rice and salad'.",
+            },
+            items: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "The distinct foods/drinks detected in the photo.",
+            },
+            calories: { type: Type.INTEGER, description: "Total energy for the plate in kcal." },
+            protein: { type: Type.NUMBER, description: "Total protein in grams." },
+            carbs: { type: Type.NUMBER, description: "Total carbohydrates in grams." },
+            fat: { type: Type.NUMBER, description: "Total fat in grams." },
+            note: {
+              type: Type.STRING,
+              description: "One short caveat about portion/assumptions, or '' if none.",
+            },
+          },
+          required: ["name", "items", "calories", "protein", "carbs", "fat"],
+        },
+      },
+    });
+    res.json(result);
+  } catch (error) {
+    sendAiError(res, error, "Failed to analyze the meal photo.");
   }
 });
 

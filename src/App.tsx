@@ -18,6 +18,7 @@ import {
 import Dashboard from "./components/Dashboard";
 import FoodSearch from "./components/FoodSearch";
 import Scanner from "./components/Scanner";
+import PhotoAnalyzer from "./components/PhotoAnalyzer";
 import ExerciseTracker from "./components/ExerciseTracker";
 import ProgressCharts from "./components/ProgressCharts";
 import AiCoach from "./components/AiCoach";
@@ -242,7 +243,12 @@ export default function App() {
 
             {activeMobileTab === "charts" && <ProgressCharts isCompact={true} />}
 
-            {activeMobileTab === "scanner" && <Scanner isCompact={true} />}
+            {activeMobileTab === "scanner" && (
+              <div className="space-y-6">
+                <PhotoAnalyzer isCompact={true} />
+                <Scanner isCompact={true} />
+              </div>
+            )}
 
             {activeMobileTab === "coach" && <AiCoach isCompact={true} />}
           </div>
@@ -394,6 +400,9 @@ export default function App() {
 
             {/* Right side bento block - Food Logger, Scanner & Barcode details */}
             <div className="lg:col-span-4 space-y-6">
+              {/* Snap-a-meal AI photo analyzer */}
+              <PhotoAnalyzer />
+
               {/* Barcode scanner device */}
               <Scanner />
 
