@@ -9,7 +9,6 @@ import {
   Scale, 
   Loader2, 
   Check, 
-  HelpCircle,
   Database
 } from "lucide-react";
 import { FoodItem } from "../types";
@@ -66,15 +65,18 @@ export default function FoodSearch() {
     e.preventDefault();
     if (!manualName.trim()) return;
 
+    const size = parseInt(manualServingSize) || 100;
+    const unit = manualServingUnit.trim();
     onAddEntry({
       date: currentDate,
       type: "meal",
-      name: manualName,
+      // No unit column on entries, so preserve the serving in the name.
+      name: unit ? `${manualName} (${size} ${unit})` : manualName,
       calories: parseInt(manualCalories) || 0,
       protein: parseFloat(manualProtein) || 0,
       carbs: parseFloat(manualCarbs) || 0,
       fat: parseFloat(manualFat) || 0,
-      quantity: parseInt(manualServingSize) || 100,
+      quantity: size,
     });
 
     // Reset Form
@@ -422,6 +424,30 @@ export default function FoodSearch() {
                     placeholder="e.g. Vanilla Yogurt Cup"
                     value={manualName}
                     onChange={e => setManualName(e.target.value)}
+                    className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-[#94A3B8] block mb-1">Serving Size</label>
+                  <input
+                    id="input_manual_serving_size"
+                    type="number"
+                    placeholder="e.g. 150"
+                    value={manualServingSize}
+                    onChange={e => setManualServingSize(e.target.value)}
+                    className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-[#94A3B8] block mb-1">Unit</label>
+                  <input
+                    id="input_manual_serving_unit"
+                    type="text"
+                    placeholder="g"
+                    value={manualServingUnit}
+                    onChange={e => setManualServingUnit(e.target.value)}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
                   />
                 </div>
