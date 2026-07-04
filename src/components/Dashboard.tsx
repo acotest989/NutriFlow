@@ -8,7 +8,6 @@ import {
   ChevronRight, 
   CheckCircle, 
   Utensils, 
-  Dumbbell,
   Target,
   Plus
 } from "lucide-react";

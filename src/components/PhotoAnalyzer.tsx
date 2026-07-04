@@ -200,8 +200,9 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
       {/* Hidden gallery/file picker (camera uses getUserMedia, below). */}
       <input ref={inputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
 
-      {/* Camera / preview / picker area */}
-      <div className="relative bg-[#0B0E14] rounded-2xl aspect-video overflow-hidden border border-white/5 flex items-center justify-center text-white">
+      {/* Camera / preview / picker area — 16:9 for the live camera or a captured
+          photo; sized to content for the idle buttons so they aren't crammed. */}
+      <div className={`relative bg-[#0B0E14] rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center text-white ${cameraActive || preview ? "aspect-video" : "min-h-52"}`}>
         {cameraActive ? (
           <>
             <video

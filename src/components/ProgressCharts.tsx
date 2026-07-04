@@ -1,7 +1,5 @@
-import React from "react";
-import { 
-  BarChart, 
-  Bar, 
+import {
+  Bar,
   XAxis, 
   YAxis, 
   CartesianGrid, 

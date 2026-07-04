@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from "motion/react";
-import { Droplet, Plus, Trash2, Award, Volume2 } from "lucide-react";
+import { motion } from "motion/react";
+import { Droplet, Plus, Trash2, Award } from "lucide-react";
 import { useStore } from "../store";
 
 interface WaterTrackerProps {
