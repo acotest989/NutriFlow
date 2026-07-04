@@ -1,19 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Camera, 
-  Sparkles, 
-  Check, 
-  HelpCircle, 
-  Loader2, 
-  X, 
-  AlertCircle,
-  Maximize,
-  Search,
-  Scan
-} from "lucide-react";
+import { Camera, Check, Loader2, X, AlertCircle, Search, Scan } from "lucide-react";
 import { FoodItem } from "../types";
-import { SAMPLE_BARCODES } from "../data";
 import { useStore } from "../store";
 
 interface ScannerProps {
@@ -178,12 +166,20 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
     <div id="barcode_scanner_panel" className="space-y-6">
       {/* Viewport Frame Box / Visual Camera Feedback */}
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
-        <h3 className="font-sans font-bold text-white flex items-center gap-2">
-          <Scan className="w-5 h-5 text-[#818CF8]" /> Multi-Platform Barcode Scanner
-        </h3>
+        <div>
+          <h3 className="font-sans font-bold text-white flex items-center gap-2">
+            <Scan className="w-5 h-5 text-[#818CF8]" /> Barcode Scanner
+          </h3>
+          <p className="text-xs text-[#94A3B8] font-sans mt-1">
+            {scanSupported
+              ? "Scan a product barcode with your camera, or enter it manually. Looked up in Open Food Facts — unknown codes fall back to an AI estimate."
+              : "Enter a product's UPC/EAN barcode to look it up in Open Food Facts. Unknown codes fall back to an AI estimate."}
+          </p>
+        </div>
 
-        {/* Viewfinder box */}
-        <div className="relative bg-[#0B0E14] rounded-2xl aspect-video overflow-hidden border border-white/5 flex flex-col items-center justify-center text-white">
+        {/* Viewfinder box — 16:9 only while the camera is live; otherwise size to
+            content so the idle icon/text/button aren't crammed on narrow screens. */}
+        <div className={`relative bg-[#0B0E14] rounded-2xl overflow-hidden border border-white/5 flex flex-col items-center justify-center text-white ${isCameraActive ? "aspect-video" : "min-h-52"}`}>
           {isCameraActive ? (
             <>
               <video
@@ -263,39 +259,10 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
             <span>{scanError}</span>
           </div>
         )}
-      </div>
-
-      {/* Database Quick Code / Lookup Helper */}
-      <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
-        <h4 className="font-sans font-bold text-white flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-[#818CF8]" /> Barcode Lookup
-        </h4>
-        <p className="text-xs text-[#94A3B8] font-sans">
-          Type any real UPC/EAN to look it up in the Open Food Facts database, or tap a preset below. Unknown codes fall back to an AI estimate.
-        </p>
-
-        {/* Preset scan chips */}
-        <div className="grid grid-cols-2 gap-2">
-          {SAMPLE_BARCODES.map((item) => (
-            <button
-              key={item.barcode}
-              onClick={() => {
-                setBarcodeInput(item.barcode);
-                handleBarcodeSubmit(item.barcode);
-              }}
-              className="p-2 border border-white/5 hover:border-[#6366F1]/30 hover:bg-[#6366F1]/10 bg-[#0B0E14] rounded-xl text-left font-sans transition-all"
-            >
-              <span className="text-[10px] uppercase font-bold text-[#818CF8] block">{item.brand}</span>
-              <span className="text-xs font-bold text-[#E2E8F0] truncate block">{item.name}</span>
-              <span className="text-[9px] font-mono text-[#64748B] block">{item.barcode}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Custom Input Search Barcode */}
+        {/* Manual barcode entry */}
         <div className="border-t border-dashed border-white/5 pt-4">
           <label className="text-xs font-semibold text-[#94A3B8] font-sans block mb-1">
-            Manual Barcode ID Entry
+            Or enter the barcode manually
           </label>
           <div className="flex gap-2 font-sans">
             <input
@@ -315,9 +282,9 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
               {isSearching ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Maximize className="w-3.5 h-3.5" />
+                <Search className="w-3.5 h-3.5" />
               )}
-              Scan Code
+              Look up
             </button>
           </div>
         </div>

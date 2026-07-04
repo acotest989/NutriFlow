@@ -116,11 +116,3 @@ export const PRESET_EXERCISES: ExerciseItem[] = [
   { id: "e19", name: "Pilates", caloriesPerMinute: 4.0 },
   { id: "e21", name: "Stretching / Mobility", caloriesPerMinute: 2.5 },
 ];
-
-export const SAMPLE_BARCODES = [
-  { barcode: "070569005077", name: "Rolled Oats", brand: "Quaker" },
-  { barcode: "011110038364", name: "Greek Yogurt", brand: "Kroger" },
-  { barcode: "021130070519", name: "Whole Wheat Bread", brand: "Lucerne" },
-  { barcode: "074570610053", name: "Whey Protein", brand: "Gold Standard" },
-  { barcode: "49000000443", name: "Coca-Cola Classic", brand: "Coca-Cola" },
-];
