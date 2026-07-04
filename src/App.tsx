@@ -31,6 +31,17 @@ import Onboarding from "./components/Onboarding";
 import { stashPendingOnboarding } from "./lib/onboarding";
 import { useStore } from "./store";
 
+// Desktop top-nav tabs — mirror the mobile bottom nav so both views share the
+// same sections, driven by the same `activeMobileTab` state.
+const DESKTOP_TABS = [
+  { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { id: "meals", label: "Meals", Icon: Apple },
+  { id: "exercises", label: "Active", Icon: Dumbbell },
+  { id: "coach", label: "AI Coach", Icon: Sparkles },
+  { id: "charts", label: "Trends", Icon: TrendingUp },
+  { id: "scanner", label: "UPC Scan", Icon: Scan },
+] as const;
+
 export default function App() {
   // Automatically switches between layouts responsively!
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -214,8 +225,8 @@ export default function App() {
                 )}
               </button>
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] font-mono font-bold tracking-wider text-[#94A3B8] uppercase">Sync On</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="text-[9px] font-mono font-bold tracking-wider text-[#94A3B8] uppercase leading-none">Sync On</span>
               </div>
               <button
                 id="mobile_sign_out"
@@ -373,42 +384,68 @@ export default function App() {
             </div>
           </div>
 
-          {/* Main Web Bento Grid */}
-          <div className="grid lg:grid-cols-12 gap-6 bg-[#141923]/50 rounded-3xl p-6 border border-white/10 backdrop-blur-md">
-            {/* Left side bento block - Interactive Main Controller */}
-            <div className="lg:col-span-8 space-y-6">
-              
-              {/* Top Row: Date select and general metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-6">
-                
-                {/* Dashboard summary component */}
-                <Dashboard isCompact={false} />
+          {/* Desktop tab navigation — mirrors the mobile tabs so both views share
+              the same sections (driven by the same activeMobileTab state). */}
+          <nav className="bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl p-2 flex items-center gap-1 shadow-lg overflow-x-auto">
+            {DESKTOP_TABS.map(({ id, label, Icon }) => {
+              const active = activeMobileTab === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setActiveMobileTab(id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-sans font-semibold transition-all whitespace-nowrap ${
+                    active
+                      ? "bg-[#6366F1] text-white shadow-md"
+                      : "text-[#94A3B8] hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" /> {label}
+                </button>
+              );
+            })}
+          </nav>
 
-                {/* Progress charts component */}
-                <ProgressCharts isCompact={false} />
+          {/* Tabbed content — mirrors the mobile view's section grouping. No panel
+              card here: each component brings its own card(s), so single-card
+              components (AI Coach, Water) don't become a card-inside-a-card. */}
+          <div className="min-h-[60vh]">
+            {activeMobileTab === "dashboard" && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-fadeIn">
+                <Dashboard />
+                <WaterTracker />
               </div>
+            )}
 
-              {/* Middle Row: Hydration and AI Coach reviews */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <WaterTracker isCompact={false} />
-                <AiCoach isCompact={false} />
+            {activeMobileTab === "meals" && (
+              <div className="max-w-3xl mx-auto animate-fadeIn">
+                <FoodSearch />
               </div>
+            )}
 
-              {/* Bottom Row: Exercise panel */}
-              <ExerciseTracker />
-            </div>
+            {activeMobileTab === "exercises" && (
+              <div className="max-w-3xl mx-auto animate-fadeIn">
+                <ExerciseTracker />
+              </div>
+            )}
 
-            {/* Right side bento block - Food Logger, Scanner & Barcode details */}
-            <div className="lg:col-span-4 space-y-6">
-              {/* Snap-a-meal AI photo analyzer */}
-              <PhotoAnalyzer />
+            {activeMobileTab === "coach" && (
+              <div className="max-w-3xl mx-auto animate-fadeIn">
+                <AiCoach />
+              </div>
+            )}
 
-              {/* Barcode scanner device */}
-              <Scanner />
+            {activeMobileTab === "charts" && (
+              <div className="animate-fadeIn">
+                <ProgressCharts />
+              </div>
+            )}
 
-              {/* Food searching component */}
-              <FoodSearch />
-            </div>
+            {activeMobileTab === "scanner" && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-fadeIn">
+                <PhotoAnalyzer />
+                <Scanner />
+              </div>
+            )}
           </div>
         </div>
       )}
