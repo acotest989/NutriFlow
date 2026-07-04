@@ -1,6 +1,6 @@
 # NutriFlow AI
 
-**NutriFlow** is an elegant, high-performance personal diet, hydration, and exercise tracker. It features a unique cross-platform presentation layout, pairing a responsive modern web dashboard on desktop with an immersive, interactive mobile smartphone simulator on smaller screens.
+**NutriFlow** is an elegant, high-performance personal diet, hydration, and exercise tracker. It features a unique cross-platform presentation layout, pairing a focused, tabbed desktop workspace with an immersive, interactive mobile smartphone simulator on smaller screens — both driven by the same section tabs (Dashboard, Meals, Active, AI Coach, Trends, Scan).
 
 It is a full multi-user cloud application: a **Node.js Express backend** (a secured Gemini AI proxy) and a **Vite + React 19** frontend, with **Supabase** providing authentication and per-user data storage, and the **Google Gemini AI SDK** powering intelligent features like pantry-based recipe generation and diet-coaching feedback.
 
@@ -43,7 +43,7 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 
 ### 7. 🔍 Smart Logging: Search, Barcode & Photo
 * **Natural Language Queries**: Search for common meals, raw ingredients, or complex items to get accurate nutritional estimates.
-* **Real Barcode Scanning**: Point the device camera at a product barcode — it's read on-device via the native `BarcodeDetector` API (Chrome/Android, including the TWA), then looked up against **Open Food Facts** (falling back to a demo list, then an AI estimate). Manual code entry and preset chips work everywhere as a fallback.
+* **Real Barcode Scanning**: Point the device camera at a product barcode — it's read on-device via the native `BarcodeDetector` API (Chrome/Android, including the TWA), then looked up against **Open Food Facts** (falling back to a demo list, then an AI estimate). Manual code entry works everywhere as a fallback. Scanning and lookup live in a single unified card.
 * **📸 Snap a Meal (AI photo analysis)**: Take or upload a photo of your plate — **Gemini vision** estimates the foods and total calories/macros, which you review, adjust, and log (`POST /api/analyze-photo`).
 * **Quick-pick catalog**: a curated starter list of common foods and workouts (`src/data.ts`) for one-tap logging.
 
