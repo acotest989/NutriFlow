@@ -33,8 +33,16 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scanIntervalRef = useRef<number | null>(null);
+  const detectingRef = useRef(false);
+  const [scanSupported, setScanSupported] = useState(false);
 
-  // Stop camera on unmount
+  // Native barcode scanning is available on Chrome/Android (incl. our TWA).
+  useEffect(() => {
+    setScanSupported(typeof (window as any).BarcodeDetector !== "undefined");
+  }, []);
+
+  // Stop camera + scan loop on unmount
   useEffect(() => {
     return () => {
       stopCamera();
@@ -43,6 +51,7 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
 
   const startCamera = async () => {
     setScanError("");
+    setScanResult(null);
     try {
       setIsCameraActive(true);
       setStatusMessage("Starting camera view...");
@@ -53,15 +62,62 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-      setStatusMessage("Camera live! Line up a barcode in the viewfinder frame.");
+      if (scanSupported) {
+        setStatusMessage("Point the camera at a barcode — it scans automatically.");
+        startScanLoop();
+      } else {
+        setStatusMessage("Live scanning isn't supported on this browser — enter the code manually below.");
+      }
     } catch (err: any) {
       console.error("Camera access failed:", err);
       setIsCameraActive(false);
-      setScanError("Camera permission denied or not supported in this frame. Please use Simulated Scanner instead.");
+      setScanError("Camera permission was denied or is unavailable. You can still enter the barcode number manually below.");
     }
   };
 
+  // Poll the live video for a barcode with the native BarcodeDetector API. On a
+  // hit, stop the camera and run the same lookup as manual entry.
+  const startScanLoop = () => {
+    const BD = (window as any).BarcodeDetector;
+    if (!BD) return;
+    let detector: any;
+    try {
+      detector = new BD({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"] });
+    } catch {
+      return; // formats unsupported → stay on manual entry
+    }
+    detectingRef.current = false;
+    scanIntervalRef.current = window.setInterval(async () => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2 || detectingRef.current) return;
+      detectingRef.current = true;
+      try {
+        const codes = await detector.detect(video);
+        const value = codes?.[0]?.rawValue ? String(codes[0].rawValue).trim() : "";
+        if (value) {
+          stopScanLoop();
+          setBarcodeInput(value);
+          stopCamera();
+          handleBarcodeSubmit(value); // reuse the existing, working lookup
+        }
+      } catch {
+        // detect() can throw on a not-yet-ready frame — ignore and keep polling.
+      } finally {
+        detectingRef.current = false;
+      }
+    }, 400);
+  };
+
+  const stopScanLoop = () => {
+    if (scanIntervalRef.current != null) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+    detectingRef.current = false;
+  };
+
   const stopCamera = () => {
+    stopScanLoop();
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -163,9 +219,13 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
                 <Camera className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#E2E8F0]">Camera Scanner Ready</p>
+                <p className="text-sm font-semibold text-[#E2E8F0]">
+                  {scanSupported ? "Camera Scanner Ready" : "Manual Entry Recommended"}
+                </p>
                 <p className="text-xs text-[#94A3B8] max-w-xs mt-1">
-                  Access your mobile or desktop camera to scan grocery barcodes in real-time.
+                  {scanSupported
+                    ? "Point your camera at a product barcode — it scans and looks it up automatically."
+                    : "Live scanning isn't available on this browser. You can still type the barcode number below."}
                 </p>
               </div>
               <button
