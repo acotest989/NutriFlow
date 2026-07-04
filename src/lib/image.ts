@@ -60,3 +60,29 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.src = src;
   });
 }
+
+// Grab the current frame of a live <video> as a compressed JPEG. Used by the
+// in-page camera capture (same getUserMedia stream the barcode scanner uses).
+export function captureVideoFrame(
+  video: HTMLVideoElement,
+  maxDim = 1024,
+  quality = 0.7
+): { base64: string; dataUrl: string } {
+  const vw = video.videoWidth || 1;
+  const vh = video.videoHeight || 1;
+  const scale = Math.min(1, maxDim / Math.max(vw, vh));
+  const w = Math.max(1, Math.round(vw * scale));
+  const h = Math.max(1, Math.round(vh * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Couldn't capture the photo on this device.");
+  ctx.drawImage(video, 0, 0, w, h);
+
+  const dataUrl = canvas.toDataURL("image/jpeg", quality);
+  const base64 = dataUrl.split(",")[1] ?? "";
+  if (!base64) throw new Error("Couldn't capture the photo. Try again.");
+  return { base64, dataUrl };
+}

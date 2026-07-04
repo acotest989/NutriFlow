@@ -9,9 +9,10 @@ import {
   AlertCircle,
   RotateCcw,
   Utensils,
+  ImagePlus,
 } from "lucide-react";
 import { useStore } from "../store";
-import { fileToAnalyzableImage } from "../lib/image";
+import { fileToAnalyzableImage, captureVideoFrame } from "../lib/image";
 
 interface PhotoAnalyzerProps {
   isCompact?: boolean;
@@ -32,23 +33,36 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
   const addEntry = useStore((s) => s.addEntry);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const previewRef = useRef<string | null>(null);
+  const previewRef = useRef<string | null>(null); // object URL to revoke (uploads only)
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
+  const [cameraActive, setCameraActive] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<PhotoResult | null>(null);
   const [logged, setLogged] = useState(false);
 
-  // Revoke the last object URL on unmount to avoid leaks.
+  // Clean up camera + object URL on unmount.
   useEffect(
     () => () => {
+      stopCamera();
       if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     },
     []
   );
 
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+  };
+
   const reset = () => {
+    stopCamera();
     if (previewRef.current) {
       URL.revokeObjectURL(previewRef.current);
       previewRef.current = null;
@@ -61,25 +75,69 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
     if (inputRef.current) inputRef.current.value = "";
   };
 
-  const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Live camera via getUserMedia — the same mechanism the barcode scanner uses,
+  // which works on both desktop and Android/TWA (unlike a file-input `capture`).
+  const startCamera = async () => {
+    setError("");
+    setResult(null);
+    setLogged(false);
+    setPreview(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      streamRef.current = stream;
+      setCameraActive(true);
+    } catch (err) {
+      console.error("Camera access failed:", err);
+      setError("Camera permission was denied or is unavailable. Use Upload instead.");
+    }
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      const { base64, dataUrl } = captureVideoFrame(video);
+      stopCamera();
+      void runAnalysis(base64, "image/jpeg", dataUrl, false);
+    } catch (err: any) {
+      setError(err?.message || "Couldn't capture the photo. Try again.");
+    }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    try {
+      const img = await fileToAnalyzableImage(file);
+      await runAnalysis(img.base64, img.mimeType, img.previewUrl, true);
+    } catch (err: any) {
+      setError(err?.message || "Couldn't read that image. Please try another.");
+    }
+  };
+
+  // Shared: show the picked/captured image, POST it, and surface the estimate.
+  const runAnalysis = async (
+    base64: string,
+    mimeType: string,
+    previewUrl: string,
+    isObjectUrl: boolean
+  ) => {
     setError("");
     setResult(null);
     setLogged(false);
 
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    previewRef.current = isObjectUrl ? previewUrl : null;
+    setPreview(previewUrl);
+
     try {
       setAnalyzing(true);
-      const img = await fileToAnalyzableImage(file);
-
-      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-      previewRef.current = img.previewUrl;
-      setPreview(img.previewUrl);
-
       const res = await fetch("/api/analyze-photo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: img.base64, mimeType: img.mimeType }),
+        body: JSON.stringify({ image: base64, mimeType }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({} as { error?: string }));
@@ -139,18 +197,38 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
         </p>
       </div>
 
-      {/* Hidden native picker. No `capture` attr → mobile shows Camera + Photo Library. */}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        onChange={handlePick}
-        className="hidden"
-      />
+      {/* Hidden gallery/file picker (camera uses getUserMedia, below). */}
+      <input ref={inputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
 
-      {/* Picker / preview area */}
+      {/* Camera / preview / picker area */}
       <div className="relative bg-[#0B0E14] rounded-2xl aspect-video overflow-hidden border border-white/5 flex items-center justify-center text-white">
-        {preview ? (
+        {cameraActive ? (
+          <>
+            <video
+              ref={(el) => {
+                videoRef.current = el;
+                if (el && streamRef.current) el.srcObject = streamRef.current;
+              }}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+            <button
+              onClick={stopCamera}
+              className="absolute top-3 right-3 bg-black/60 p-1.5 rounded-full text-white hover:bg-rose-500 transition-colors"
+              title="Close camera"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <button
+              onClick={capturePhoto}
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 px-5 py-2 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 font-sans"
+            >
+              <Camera className="w-4 h-4" /> Capture
+            </button>
+          </>
+        ) : preview ? (
           <>
             <img src={preview} alt="Meal preview" className="w-full h-full object-cover" />
             {!logged && (
@@ -170,23 +248,31 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
             )}
           </>
         ) : (
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="flex flex-col items-center justify-center p-6 text-center space-y-3 font-sans w-full h-full hover:bg-white/[0.02] transition-colors"
-          >
+          <div className="flex flex-col items-center justify-center p-6 text-center space-y-3 font-sans w-full h-full">
             <div className="w-14 h-14 rounded-full bg-[#141923] border border-white/5 flex items-center justify-center text-[#818CF8]">
               <Camera className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#E2E8F0]">Take or upload a photo</p>
+              <p className="text-sm font-semibold text-[#E2E8F0]">Snap or upload a meal</p>
               <p className="text-xs text-[#94A3B8] max-w-xs mt-1">
-                Point your camera at your plate, or pick an existing photo from your gallery.
+                Use your camera to photograph your plate, or pick an existing photo from your gallery.
               </p>
             </div>
-            <span className="px-5 py-2 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-md">
-              <Camera className="w-4 h-4" /> Choose Photo
-            </span>
-          </button>
+            <div className="flex gap-2">
+              <button
+                onClick={startCamera}
+                className="px-4 py-2 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-md"
+              >
+                <Camera className="w-4 h-4" /> Take Photo
+              </button>
+              <button
+                onClick={() => inputRef.current?.click()}
+                className="px-4 py-2 bg-[#0B0E14] hover:bg-white/5 border border-white/10 text-[#E2E8F0] rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+              >
+                <ImagePlus className="w-4 h-4" /> Upload
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
