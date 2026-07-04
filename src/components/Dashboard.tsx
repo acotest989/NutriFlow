@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Goal } from "../types";
 import { useStore } from "../store";
+import { todayStr, addDays } from "../lib/date";
 
 interface DashboardProps {
   isCompact?: boolean;
@@ -57,25 +58,14 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
 
   // Helper to format date beautifully
   const formatDateLabel = (dateStr: string) => {
-    const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
-    
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-    if (dateStr === todayStr) return "Today";
-    if (dateStr === yesterdayStr) return "Yesterday";
+    if (dateStr === todayStr()) return "Today";
+    if (dateStr === addDays(todayStr(), -1)) return "Yesterday";
 
     const d = new Date(dateStr + "T00:00:00");
     return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   };
 
-  const changeDate = (days: number) => {
-    const d = new Date(currentDate + "T00:00:00");
-    d.setDate(d.getDate() + days);
-    setCurrentDate(d.toISOString().split("T")[0]);
-  };
+  const changeDate = (days: number) => setCurrentDate(addDays(currentDate, days));
 
   const handleSaveGoal = (e: React.FormEvent) => {
     e.preventDefault();

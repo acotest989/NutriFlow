@@ -6,10 +6,9 @@ import { DEFAULT_GOAL } from "./data";
 import { supabase } from "./lib/supabase";
 import { computeGoal } from "./lib/goal";
 import { readPendingOnboarding, clearPendingOnboarding } from "./lib/onboarding";
+import { todayStr } from "./lib/date";
 
 export type Theme = "deep-midnight" | "high-contrast-light";
-
-const todayStr = (): string => new Date().toISOString().split("T")[0];
 
 // Shape of a row in the Supabase `entries` table.
 type EntryRow = {

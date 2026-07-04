@@ -15,6 +15,7 @@ import {
 import { FoodItem } from "../types";
 import { COMMON_FOOD_ITEMS } from "../data";
 import { useStore } from "../store";
+import { todayStr, addDays } from "../lib/date";
 
 export default function FoodSearch() {
   const currentDate = useStore((s) => s.currentDate);
@@ -536,14 +537,8 @@ export default function FoodSearch() {
   );
 
   function formatDateLabel(dateStr: string) {
-    const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-    if (dateStr === todayStr) return "today";
-    if (dateStr === yesterdayStr) return "yesterday";
+    if (dateStr === todayStr()) return "today";
+    if (dateStr === addDays(todayStr(), -1)) return "yesterday";
     return dateStr;
   }
 }

@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { Activity, Award, TrendingUp, CircleAlert } from "lucide-react";
 import { useStore } from "../store";
+import { todayStr, addDays } from "../lib/date";
 
 interface ProgressChartsProps {
   isCompact?: boolean;
@@ -27,12 +28,11 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
   // 1. Generate 7 days of trend data ending today
   const getTrendData = () => {
     const data = [];
-    const today = new Date();
 
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
+      // Local calendar date for this bucket (matches how entries are dated).
+      const dateStr = addDays(todayStr(), -i);
+      const d = new Date(dateStr + "T00:00:00");
 
       // Format date label (e.g. "Mon 23")
       const label = d.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
@@ -63,8 +63,8 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
 
   // 2. Generate Macronutrient distribution for current date entries
   const getMacroDistribution = () => {
-    const todayStr = new Date().toISOString().split("T")[0];
-    const dayEntries = entries.filter(e => e.date === todayStr && e.type === "meal");
+    const today = todayStr();
+    const dayEntries = entries.filter(e => e.date === today && e.type === "meal");
 
     const protein = dayEntries.reduce((sum, e) => sum + e.protein, 0);
     const carbs = dayEntries.reduce((sum, e) => sum + e.carbs, 0);
