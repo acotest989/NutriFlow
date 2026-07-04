@@ -41,9 +41,11 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 * **Visual Cup Indicator**: Interactive liquid visual container with smooth spring height physics based on water logged.
 * **Preset Additions**: Fast increment buttons (`+250ml`, `+500ml`) and a reduction button to manage baseline daily hydration.
 
-### 7. 🔍 Smart Nutrition Search & Barcode Simulator
+### 7. 🔍 Smart Logging: Search, Barcode & Photo
 * **Natural Language Queries**: Search for common meals, raw ingredients, or complex items to get accurate nutritional estimates.
-* **UPC Barcode Scanner**: Simulates camera scanner interactions with realistic viewport crosshairs and preset product scans to easily test barcode lookups.
+* **Real Barcode Scanning**: Point the device camera at a product barcode — it's read on-device via the native `BarcodeDetector` API (Chrome/Android, including the TWA), then looked up against **Open Food Facts** (falling back to a demo list, then an AI estimate). Manual code entry and preset chips work everywhere as a fallback.
+* **📸 Snap a Meal (AI photo analysis)**: Take or upload a photo of your plate — **Gemini vision** estimates the foods and total calories/macros, which you review, adjust, and log (`POST /api/analyze-photo`).
+* **Quick-pick catalog**: a curated starter list of common foods and workouts (`src/data.ts`) for one-tap logging.
 
 ---
 
@@ -73,6 +75,7 @@ npm install
 2. In the Supabase **SQL Editor**, run the migrations in order:
    * `supabase/migrations/0001_init.sql` (entries + goals)
    * `supabase/migrations/0002_hydration.sql` (hydration)
+   * `supabase/migrations/0003_profiles.sql` (onboarding profiles)
 3. From **Project Settings → API**, copy your **Project URL** and **anon / publishable key**.
 
 ### 3. Configure environment variables
@@ -145,7 +148,8 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 
 ```text
 ├── server.ts                       # Express backend: Gemini proxy (retry + model fallback), validation,
-│                                   #   rate-limit, DELETE /api/account, /health,
+│                                   #   rate-limit, barcode lookup (Open Food Facts), photo analysis
+│                                   #   (Gemini vision), DELETE /api/account, /health,
 │                                   #   /.well-known/assetlinks.json, /privacy, /delete-account
 ├── Dockerfile                      # Cloud Run container build
 ├── assetlinks.json                 # Digital Asset Links (TWA domain verification)
@@ -164,7 +168,9 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 │   │   ├── supabase.ts             # Supabase client
 │   │   ├── goal.ts                 # Mifflin–St Jeor goal/macro computation + unit conversions
 │   │   ├── prefs.ts                # builds the AI personalization payload from the profile
-│   │   └── onboarding.ts           # stash/apply pending promo-quiz answers (localStorage)
+│   │   ├── onboarding.ts           # stash/apply pending promo-quiz answers (localStorage)
+│   │   ├── date.ts                 # local-timezone date helpers (avoids UTC day-shift bugs)
+│   │   └── image.ts                # client-side photo compression for meal-photo upload
 │   ├── index.css                   # Tailwind imports & theme declarations
 │   └── components/
 │       ├── Auth.tsx                # Sign-in / sign-up / forgot-password screen
@@ -176,7 +182,8 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 │       ├── Dashboard.tsx           # Calorie progress, goal edits & summary
 │       ├── FoodSearch.tsx          # Natural-language food lookup & additions
 │       ├── ExerciseTracker.tsx     # Cardio/strength logger & burned stats
-│       ├── Scanner.tsx             # Simulated barcode camera viewfinder
+│       ├── Scanner.tsx             # Barcode scanner (live camera via BarcodeDetector + manual lookup)
+│       ├── PhotoAnalyzer.tsx       # Snap-a-meal AI photo analysis (Gemini vision) → review → log
 │       ├── ProgressCharts.tsx      # 7-day trend & macro distribution charts
 │       ├── AiCoach.tsx             # AI Chef pantry recipes & coach review
 │       └── WaterTracker.tsx        # Hydration water-glass visual

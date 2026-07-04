@@ -29,9 +29,13 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 
 Prioritized post-launch work:
 
-_All near-term personalization items shipped. Next ideas live in the backlog below (e.g. tighter keto macro split, Apple/Health sync, barcode lookup)._
+_All near-term personalization items shipped. Next ideas live in the backlog below (e.g. tighter keto macro split, Apple/Health sync, a real food-database API, gamification/streaks)._
 
 ✅ **Done:**
+* **AI meal-photo analysis ("Snap a Meal")** — take or upload a plate photo → `POST /api/analyze-photo` runs **Gemini vision** → estimates the foods + total calories/macros → editable review card → log to the diary (`src/components/PhotoAnalyzer.tsx`). The client compresses the image first (`src/lib/image.ts`) to stay under the body limit; the endpoint reuses the same retry + model-fallback chain as the other AI routes. Fulfils the "Gemini Photo Plate Analysis" backlog item.
+* **Real barcode camera scanning** — the scanner now reads barcodes live from the camera via the native `BarcodeDetector` API (Chrome/Android, incl. the TWA), feeding the existing Open Food Facts → demo → AI lookup. Previously the camera was a decorative viewfinder; manual entry / preset chips remain as the cross-browser fallback.
+* **Expanded quick-pick catalog** — the `src/data.ts` starter lists grew to **41 foods + 21 workouts** (international staples), with realistic macros and MET-based burn rates. (Still a static in-bundle catalog; see the food-database-API backlog item for the dynamic version.)
+* **Timezone date fix** — all calendar-date math (day stepper, Today/Yesterday labels, 7-day chart buckets) now uses a shared **local-date** helper (`src/lib/date.ts`) instead of `toISOString()`, which shifted the day for non-UTC users. Symptom fixed: a meal logged for a past day now lines up with the correct chart bar (previously it could land on the wrong bar or skip a day).
 * **Reset logged data** — footer "Reset Data" → confirmation modal → `resetData` deletes all the user's meals/exercises/hydration (keeps account, profile, and goal); optimistic with rollback.
 * **Edit profile / re-take quiz** — the `Onboarding` component doubles as an edit screen (pre-filled, "Save changes", recomputes the goal); opened from the footer "Edit Profile" link.
 * **Profile-aware AI** — the client sends a compact prefs payload (goal, diet, restrictions, workouts, activity) from the user's profile to the coach + recipe endpoints (`aiPrefs` in `src/lib/prefs.ts`); the server weaves it into the prompts (`prefsText` in `server.ts`). Recipes must comply with the diet and exclude restricted/allergen ingredients; coach advice aligns with the goal/diet/preferred workouts.
@@ -64,7 +68,7 @@ NutriFlow currently runs on the default Cloud Run URL (`…run.app`) — not a d
 * **Smart Hydration Bluetooth Cups**: Read actual physical ounces consumed from supported IoT water bottles.
 
 ### Phase 3: Advanced AI Capabilities
-* **Gemini Photo Plate Analysis**: Leverage Gemini's vision capability to analyze raw food photos (uploaded via webcam or mobile camera) to automatically estimate meal portion sizes, ingredients, and total macronutrients.
+* ✅ **Gemini Photo Plate Analysis** — *shipped* (see "Snap a Meal" in the near-term Done list): analyzes a meal photo to estimate the foods + total calories/macros for review and logging. Possible follow-ups: per-item macro breakdown, portion-size refinement, and profile-aware notes (e.g. flag allergens).
 * **Personalized AI Meal Prep Calendar**: A weekly calendar scheduler that formulates custom grocery lists and dietary schedules based on user allergies, favorite recipes, and macro goals.
 * **Voice-Logged Meals**: Use speech-to-text allowing users to log meals naturally: *"I had a double-shot latte and two scrambled eggs for breakfast."*
 
@@ -88,6 +92,7 @@ NutriFlow currently runs on the default Cloud Run URL (`…run.app`) — not a d
 - [x] **API hardening** — validation, rate limiting, security headers, health check.
 - [ ] **Unit & Integration Tests**: Set up a test runner (Vitest) with a request layer (supertest/MSW) to cover the backend API routes and store actions.
 - [x] **True Barcode Lookup**: `/api/barcode` queries **Open Food Facts** (free, no key) first — per-serving values when available, else per 100 g, 4 s timeout — then falls back to the demo list, then an AI estimate.
+- [ ] **Searchable food-database API**: today the quick-pick foods/workouts are a hardcoded catalog in `src/data.ts` (baked into the bundle, edited-then-deployed). Later, back the food search with a real nutrition database instead of / alongside the static list. Free options: **USDA FoodData Central** (free API key; best for generic whole foods) as the primary search source, complementing the already-integrated **Open Food Facts** (branded/barcode) and the AI estimate as the final fallback. Freemium alternatives if natural-language parsing is wanted: **Nutritionix** / **Edamam** (verify free-tier limits at build time). For workouts, **wger** (free, open REST API) for a larger exercise catalog; keep the existing MET-based `caloriesPerMinute` burn math.
 - [ ] **Bundle size**: Code-split the client (the JS bundle is ~1 MB) to improve first-load performance.
 - [x] **AI reliability**: retry transient Gemini errors with exponential backoff + jitter and fall back through a configurable model chain (`GEMINI_MODELS`) when the primary is overloaded.
 - [ ] **Tighten CSP**: `helmet`'s Content-Security-Policy is currently disabled; define a tailored policy for the SPA.
