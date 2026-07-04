@@ -157,7 +157,33 @@ export const COMMON_FOOD_ITEMS: FoodItem[] = [
     fat: 8,
     servingSize: 244,
     servingUnit: "ml (1 cup)",
-  }
+  },
+  { id: "f16", name: "Ground Beef (85% Lean, Cooked)", calories: 250, protein: 26, carbs: 0, fat: 17, servingSize: 100, servingUnit: "g" },
+  { id: "f17", name: "Turkey Breast (Roasted)", calories: 135, protein: 30, carbs: 0, fat: 1, servingSize: 100, servingUnit: "g" },
+  { id: "f18", name: "Canned Tuna (in Water)", calories: 116, protein: 26, carbs: 0, fat: 1, servingSize: 100, servingUnit: "g" },
+  { id: "f19", name: "Cooked Shrimp", calories: 99, protein: 24, carbs: 0.2, fat: 0.3, servingSize: 100, servingUnit: "g" },
+  { id: "f20", name: "Firm Tofu", calories: 144, protein: 15, carbs: 3, fat: 8, servingSize: 100, servingUnit: "g" },
+  { id: "f21", name: "Cottage Cheese (Low-fat)", calories: 72, protein: 12, carbs: 3, fat: 1, servingSize: 100, servingUnit: "g" },
+  { id: "f22", name: "Egg White", calories: 17, protein: 3.6, carbs: 0.2, fat: 0.1, servingSize: 1, servingUnit: "large white" },
+  { id: "f23", name: "Lentils (Cooked)", calories: 116, protein: 9, carbs: 20, fat: 0.4, servingSize: 100, servingUnit: "g" },
+  { id: "f24", name: "Black Beans (Cooked)", calories: 132, protein: 9, carbs: 24, fat: 0.5, servingSize: 100, servingUnit: "g" },
+  { id: "f25", name: "Chickpeas (Cooked)", calories: 164, protein: 9, carbs: 27, fat: 2.6, servingSize: 100, servingUnit: "g" },
+  { id: "f26", name: "Quinoa (Cooked)", calories: 120, protein: 4.4, carbs: 21, fat: 1.9, servingSize: 100, servingUnit: "g" },
+  { id: "f27", name: "Whole Wheat Bread", calories: 80, protein: 4, carbs: 14, fat: 1, servingSize: 1, servingUnit: "slice" },
+  { id: "f28", name: "Pasta (Cooked)", calories: 158, protein: 6, carbs: 31, fat: 0.9, servingSize: 100, servingUnit: "g" },
+  { id: "f29", name: "Potato (Boiled)", calories: 87, protein: 1.9, carbs: 20, fat: 0.1, servingSize: 100, servingUnit: "g" },
+  { id: "f30", name: "Apple", calories: 95, protein: 0.5, carbs: 25, fat: 0.3, servingSize: 1, servingUnit: "medium apple" },
+  { id: "f31", name: "Orange", calories: 62, protein: 1.2, carbs: 15, fat: 0.2, servingSize: 1, servingUnit: "medium orange" },
+  { id: "f32", name: "Blueberries", calories: 57, protein: 0.7, carbs: 14, fat: 0.3, servingSize: 100, servingUnit: "g" },
+  { id: "f33", name: "Strawberries", calories: 32, protein: 0.7, carbs: 7.7, fat: 0.3, servingSize: 100, servingUnit: "g" },
+  { id: "f34", name: "Spinach (Raw)", calories: 23, protein: 2.9, carbs: 3.6, fat: 0.4, servingSize: 100, servingUnit: "g" },
+  { id: "f35", name: "Carrot (Raw)", calories: 41, protein: 0.9, carbs: 10, fat: 0.2, servingSize: 100, servingUnit: "g" },
+  { id: "f36", name: "Bell Pepper", calories: 31, protein: 1, carbs: 6, fat: 0.3, servingSize: 100, servingUnit: "g" },
+  { id: "f37", name: "Cheddar Cheese", calories: 113, protein: 7, carbs: 0.4, fat: 9, servingSize: 28, servingUnit: "g (1 oz)" },
+  { id: "f38", name: "Olive Oil", calories: 119, protein: 0, carbs: 0, fat: 14, servingSize: 15, servingUnit: "ml (1 tbsp)" },
+  { id: "f39", name: "Hummus", calories: 70, protein: 2, carbs: 6, fat: 5, servingSize: 30, servingUnit: "g (2 tbsp)" },
+  { id: "f40", name: "Dark Chocolate (70%)", calories: 170, protein: 2, carbs: 13, fat: 12, servingSize: 28, servingUnit: "g (1 oz)" },
+  { id: "f41", name: "Walnuts (Raw)", calories: 185, protein: 4.3, carbs: 3.9, fat: 18, servingSize: 28, servingUnit: "g (1 oz)" }
 ];
 
 export const PRESET_EXERCISES: ExerciseItem[] = [
@@ -170,6 +196,18 @@ export const PRESET_EXERCISES: ExerciseItem[] = [
   { id: "e7", name: "HIIT Workout", caloriesPerMinute: 13.5 },
   { id: "e8", name: "Yoga", caloriesPerMinute: 3.2 },
   { id: "e9", name: "Rowing Machine", caloriesPerMinute: 8.5 },
+  { id: "e10", name: "Jumping Rope", caloriesPerMinute: 12.0 },
+  { id: "e11", name: "Elliptical Trainer", caloriesPerMinute: 7.0 },
+  { id: "e12", name: "Stair Climbing", caloriesPerMinute: 9.0 },
+  { id: "e13", name: "Hiking (Uphill)", caloriesPerMinute: 7.3 },
+  { id: "e14", name: "Basketball", caloriesPerMinute: 8.0 },
+  { id: "e15", name: "Soccer (Casual)", caloriesPerMinute: 8.5 },
+  { id: "e16", name: "Tennis (Singles)", caloriesPerMinute: 8.0 },
+  { id: "e17", name: "Boxing (Heavy Bag)", caloriesPerMinute: 9.5 },
+  { id: "e18", name: "Aerobic Dance", caloriesPerMinute: 6.5 },
+  { id: "e19", name: "Pilates", caloriesPerMinute: 4.0 },
+  { id: "e20", name: "Bodyweight Circuit", caloriesPerMinute: 8.0 },
+  { id: "e21", name: "Stretching / Mobility", caloriesPerMinute: 2.5 },
 ];
 
 export const SAMPLE_BARCODES = [
