@@ -47,6 +47,11 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 * **📸 Snap a Meal (AI photo analysis)**: Take or upload a photo of your plate — **Gemini vision** estimates the foods and total calories/macros, which you review, adjust, and log (`POST /api/analyze-photo`).
 * **Quick-pick catalog**: a curated starter list of common foods and workouts (`src/data.ts`) for one-tap logging.
 
+### 8. 🔥 Streaks & Achievements
+* **Daily streak**: kept alive by logging *any* meal, exercise, or water each day; the Trends tab shows the current streak (with an alive-from-yesterday grace) and the longest run.
+* **Achievement badges**: 7 unlockable badges (first log, 3/7/14/30-day streaks, hydration, 100 logs) shown earned vs locked, each with a clear "how to earn" description.
+* Computed **entirely client-side** from existing logged data (`src/lib/streaks.ts`) — no schema change — and timezone-safe via the local-date helpers.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -170,7 +175,8 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 │   │   ├── prefs.ts                # builds the AI personalization payload from the profile
 │   │   ├── onboarding.ts           # stash/apply pending promo-quiz answers (localStorage)
 │   │   ├── date.ts                 # local-timezone date helpers (avoids UTC day-shift bugs)
-│   │   └── image.ts                # client-side photo compression for meal-photo upload
+│   │   ├── image.ts                # client-side photo compression for meal-photo upload
+│   │   └── streaks.ts              # logging-streak + achievement-badge computation
 │   ├── index.css                   # Tailwind imports & theme declarations
 │   └── components/
 │       ├── Auth.tsx                # Sign-in / sign-up / forgot-password screen

@@ -32,6 +32,7 @@ Prioritized post-launch work:
 _All near-term personalization items shipped. Next ideas live in the backlog below (e.g. tighter keto macro split, Apple/Health sync, a real food-database API, gamification/streaks)._
 
 ✅ **Done:**
+* **Streaks & badges (gamification)** — a daily **logging streak** (kept alive by any meal/exercise/water; alive-from-yesterday grace; timezone-safe) and **7 achievement badges** (`src/lib/streaks.ts`), computed entirely from existing `entries` + `hydration` (no schema change). Shown on the Trends tab as a compact gradient **streak hero** + a legible **Achievements card** (earned/locked, each with how-to-earn text). Streak logic unit-tested (14/14).
 * **Focused desktop tabs + UI polish** — the desktop view now mirrors the mobile bottom nav with a **top tab bar** (one section at a time, shared `activeMobileTab` state) instead of the all-at-once bento grid. This batch also: **live in-page camera capture** for Snap-a-Meal (`getUserMedia`, works on desktop + Android/TWA, replacing the unreliable file-input `capture`); the **barcode scanner + lookup merged** into one card with the demo presets removed; manual food entry now saves the **serving size + unit** (baked into the entry name); **flattened the AI Coach card nesting** to match the other tabs; aligned the Sync-On indicator; and a project-wide **unused-import cleanup** (the `--noUnusedLocals` scan is clean).
 * **AI meal-photo analysis ("Snap a Meal")** — take or upload a plate photo → `POST /api/analyze-photo` runs **Gemini vision** → estimates the foods + total calories/macros → editable review card → log to the diary (`src/components/PhotoAnalyzer.tsx`). The client compresses the image first (`src/lib/image.ts`) to stay under the body limit; the endpoint reuses the same retry + model-fallback chain as the other AI routes. Fulfils the "Gemini Photo Plate Analysis" backlog item.
 * **Real barcode camera scanning** — the scanner now reads barcodes live from the camera via the native `BarcodeDetector` API (Chrome/Android, incl. the TWA), feeding the existing Open Food Facts → demo → AI lookup. Previously the camera was a decorative viewfinder; manual entry / preset chips remain as the cross-browser fallback.
@@ -74,7 +75,7 @@ NutriFlow currently runs on the default Cloud Run URL (`…run.app`) — not a d
 * **Voice-Logged Meals**: Use speech-to-text allowing users to log meals naturally: *"I had a double-shot latte and two scrambled eggs for breakfast."*
 
 ### Phase 4: Gamification & Accountability
-* **Streak Badges**: Interactive milestone indicators for continuous water intake, workout consistency, and staying within budget.
+* ✅ **Streak Badges** — *shipped*: a daily logging **streak** (any meal/exercise/water keeps it alive) + **7 achievement badges**, computed client-side from existing data (no schema), shown on the Trends tab. Follow-ups: goal/within-budget streaks, push reminders to protect a streak.
 * **Coach Voice Over (TTS)**: Convert the daily AI coach review text into realistic voice notes using a text-to-speech engine to simulate a real personal trainer.
 * **Community Challenges**: Optional shared lobbies where users can join team hydration or steps challenges.
 
