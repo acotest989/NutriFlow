@@ -43,7 +43,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
   const goal = useStore((s) => s.goal);
   const profile = useStore((s) => s.profile);
   const onAddEntry = useStore((s) => s.addEntry);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<"coach" | "chef">("coach");
 
   // AI Coach States
@@ -76,6 +76,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
           goal,
           date: currentDate,
           prefs: aiPrefs(profile),
+          lang: i18n.language,
         }),
       });
 
@@ -106,7 +107,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
       const response = await fetch("/api/generate-recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients, prefs: aiPrefs(profile) }),
+        body: JSON.stringify({ ingredients, prefs: aiPrefs(profile), lang: i18n.language }),
       });
 
       if (!response.ok) {

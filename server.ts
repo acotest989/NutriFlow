@@ -208,20 +208,28 @@ function parseBody<T>(schema: ZodType<T>, req: Request, res: Response): T | null
 }
 
 // ----- Request body schemas -----
+// Active UI language (BCP-ish code from the client). Optional — absent means
+// English. Used to make the model reply in the user's language.
+const langField = z.string().max(8).optional();
+
 const estimateSchema = z.object({
   description: z.string().min(1, "Food description is required.").max(500),
+  lang: langField,
 });
 const barcodeSchema = z.object({
   barcode: z.string().min(1, "Barcode is required.").max(64),
+  lang: langField,
 });
 const searchSchema = z.object({
   query: z.string().min(1, "Search query is required.").max(200),
+  lang: langField,
 });
 const photoSchema = z.object({
   // Base64 JPEG (no data: prefix needed — we strip it if present). The global
   // 1 MB JSON body limit is the real guard; the client compresses before upload.
   image: z.string().min(1, "Image data is required.").max(9_000_000),
   mimeType: z.string().max(40).optional(),
+  lang: langField,
 });
 // Optional personalization sent by the client (built from the user's profile).
 const prefsSchema = z
@@ -236,6 +244,7 @@ const prefsSchema = z
 const recipesSchema = z.object({
   ingredients: z.string().min(1, "Ingredients are required.").max(500),
   prefs: prefsSchema,
+  lang: langField,
 });
 const coachSchema = z.object({
   entries: z.array(z.any()).max(500),
@@ -247,6 +256,7 @@ const coachSchema = z.object({
   }),
   date: z.string().max(40).optional(),
   prefs: prefsSchema,
+  lang: langField,
 });
 
 // Format the prefs payload into a prompt snippet the model can act on.
@@ -268,12 +278,25 @@ function prefsText(p: Prefs): string {
   return parts.length ? ` User profile — ${parts.join("; ")}.` : "";
 }
 
+// Ask the model to write its human-readable output in the user's language.
+// English is the default (no instruction needed). Serbian uses Latin script.
+const LANG_NAMES: Record<string, string> = {
+  sr: "Serbian (ekavian dialect, Latin script — no Cyrillic)",
+  hr: "Croatian",
+  bs: "Bosnian",
+};
+function langText(lang?: string): string {
+  const name = lang ? LANG_NAMES[lang] : undefined;
+  if (!name) return "";
+  return ` IMPORTANT: Write every human-readable text field (names, summaries, notes, suggestions, instructions, messages) in ${name}, using natural native phrasing. Keep numbers and measurement units (g, kcal, ml) unchanged.`;
+}
+
 // 1. API Route: Estimate food nutrition from a custom text description
 app.post("/api/estimate", async (req, res) => {
   const body = parseBody(estimateSchema, req, res);
   if (!body) return;
 
-  const prompt = `Estimate the nutritional facts (calories, protein, carbs, fat, typical serving size, and serving unit) for the following food item or meal description: "${body.description}". Provide the most realistic and accurate nutritional values possible.`;
+  const prompt = `Estimate the nutritional facts (calories, protein, carbs, fat, typical serving size, and serving unit) for the following food item or meal description: "${body.description}". Provide the most realistic and accurate nutritional values possible.${langText(body.lang)}`;
 
   try {
     const result = await generateJSON({
@@ -446,7 +469,7 @@ app.post("/api/barcode", async (req, res) => {
 
   // If it's a custom or unknown barcode, let's ask Gemini to intelligently guess/simulate a realistic grocery product
   // associated with the barcode numbers to make scanning other barcodes incredibly fun and engaging!
-  const prompt = `Identify or realistically estimate the grocery item and nutritional facts for barcode/UPC/EAN numbers: "${barcode}". If the barcode is real, identify it. If unknown, generate a highly realistic, typical grocery item (like protein bars, chips, soups, or snacks) and provide exact nutrients.`;
+  const prompt = `Identify or realistically estimate the grocery item and nutritional facts for barcode/UPC/EAN numbers: "${barcode}". If the barcode is real, identify it. If unknown, generate a highly realistic, typical grocery item (like protein bars, chips, soups, or snacks) and provide exact nutrients.${langText(body.lang)}`;
 
   try {
     const result = await generateJSON({
@@ -509,7 +532,8 @@ app.post("/api/analyze-photo", async (req, res) => {
   const mimeType = body.mimeType || "image/jpeg";
 
   const prompt =
-    "Analyze this meal photo. Identify the distinct food and drink items visible, then estimate the TOTAL nutrition for everything shown as a single meal. Assume typical single-serving portions when the size is ambiguous, and give realistic values. If the photo contains no food, set name to 'No food detected', items to an empty array, and every number to 0.";
+    "Analyze this meal photo. Identify the distinct food and drink items visible, then estimate the TOTAL nutrition for everything shown as a single meal. Assume typical single-serving portions when the size is ambiguous, and give realistic values. If the photo contains no food, set name to 'No food detected', items to an empty array, and every number to 0." +
+    langText(body.lang);
 
   try {
     const result = await generateJSON({
@@ -557,7 +581,7 @@ app.post("/api/search-ai", async (req, res) => {
   const body = parseBody(searchSchema, req, res);
   if (!body) return;
 
-  const prompt = `Provide a list of 4 to 6 food items that match or are highly relevant to the search query: "${body.query}". For each food item, provide its typical serving size, serving unit, and exact nutritional content (calories, protein, carbs, fat).`;
+  const prompt = `Provide a list of 4 to 6 food items that match or are highly relevant to the search query: "${body.query}". For each food item, provide its typical serving size, serving unit, and exact nutritional content (calories, protein, carbs, fat).${langText(body.lang)}`;
 
   try {
     const result = await generateJSON({
@@ -615,7 +639,7 @@ app.post("/api/generate-recipes", async (req, res) => {
   const body = parseBody(recipesSchema, req, res);
   if (!body) return;
 
-  const prompt = `Based on these ingredients available: "${body.ingredients}", generate 3 distinct, delicious, healthy recipe recommendations. Calculate exact nutritional values (calories, protein, carbs, fat) and specify instructions, preparation time (mins), and difficulty.${prefsText(body.prefs)} IMPORTANT: every recipe MUST comply with the user's dietary preference and MUST NOT contain any of their restricted/allergen ingredients; lean the recipes toward their goal.`;
+  const prompt = `Based on these ingredients available: "${body.ingredients}", generate 3 distinct, delicious, healthy recipe recommendations. Calculate exact nutritional values (calories, protein, carbs, fat) and specify instructions, preparation time (mins), and difficulty.${prefsText(body.prefs)} IMPORTANT: every recipe MUST comply with the user's dietary preference and MUST NOT contain any of their restricted/allergen ingredients; lean the recipes toward their goal.${langText(body.lang)}`;
 
   try {
     const result = await generateJSON({
@@ -659,7 +683,7 @@ app.post("/api/coach-analysis", async (req, res) => {
 Current Daily Goals: ${JSON.stringify(goal)}.
 Daily Logs: ${JSON.stringify(entries)}.${prefsText(prefs)}
 
-Evaluate their calorie balance (consumed vs. burned), macronutrient balance (protein, carbs, fat target vs actual), and physical activity. Give a constructive analysis. Tailor your summary and the 3 suggestions to the user's profile above — align advice with their goal, respect their dietary preference, never suggest foods that conflict with their restrictions/allergies, and prefer their favored workout types.`;
+Evaluate their calorie balance (consumed vs. burned), macronutrient balance (protein, carbs, fat target vs actual), and physical activity. Give a constructive analysis. Tailor your summary and the 3 suggestions to the user's profile above — align advice with their goal, respect their dietary preference, never suggest foods that conflict with their restrictions/allergies, and prefer their favored workout types.${langText(body.lang)}`;
 
   try {
     const result = await generateJSON({

@@ -32,7 +32,7 @@ interface PhotoResult {
 export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps) {
   const currentDate = useStore((s) => s.currentDate);
   const addEntry = useStore((s) => s.addEntry);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const previewRef = useRef<string | null>(null); // object URL to revoke (uploads only)
@@ -139,7 +139,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
       const res = await fetch("/api/analyze-photo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mimeType }),
+        body: JSON.stringify({ image: base64, mimeType, lang: i18n.language }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({} as { error?: string }));

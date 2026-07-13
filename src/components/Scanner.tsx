@@ -12,7 +12,7 @@ interface ScannerProps {
 export default function Scanner({ isCompact = false }: ScannerProps) {
   const currentDate = useStore((s) => s.currentDate);
   const onAddEntry = useStore((s) => s.addEntry);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -130,7 +130,7 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
       const response = await fetch("/api/barcode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ barcode: barcodeToScan }),
+        body: JSON.stringify({ barcode: barcodeToScan, lang: i18n.language }),
       });
 
       if (!response.ok) {

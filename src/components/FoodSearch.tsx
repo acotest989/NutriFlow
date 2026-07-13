@@ -22,7 +22,7 @@ export default function FoodSearch() {
   const entries = useStore((s) => s.entries);
   const onAddEntry = useStore((s) => s.addEntry);
   const onRemoveEntry = useStore((s) => s.removeEntry);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [multiplier, setMultiplier] = useState(1);
@@ -104,7 +104,7 @@ export default function FoodSearch() {
       const response = await fetch("/api/estimate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: aiInput }),
+        body: JSON.stringify({ description: aiInput, lang: i18n.language }),
       });
 
       if (!response.ok) {
