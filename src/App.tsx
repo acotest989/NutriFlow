@@ -143,14 +143,14 @@ export default function App() {
   if (!user && path === "/quiz") {
     return (
       <Onboarding
-        title="Build your free nutrition plan"
-        submitLabel="Create account to save"
+        title={t("onboarding.promoTitle")}
+        submitLabel={t("onboarding.promoSubmit")}
         onSubmit={async (data) => {
           stashPendingOnboarding(data);
           navigate("/");
           return { error: null };
         }}
-        secondaryLabel="I already have an account"
+        secondaryLabel={t("onboarding.promoSecondary")}
         onSecondary={() => navigate("/")}
       />
     );
@@ -194,7 +194,7 @@ export default function App() {
             <button
               onClick={() => setError(null)}
               className="text-[#64748B] hover:text-white transition-colors shrink-0"
-              title="Dismiss"
+              title={t("common.dismiss")}
             >
               <X className="w-4 h-4" />
             </button>
@@ -237,7 +237,7 @@ export default function App() {
                 id="mobile_sign_out"
                 onClick={() => signOut()}
                 className="p-1.5 rounded-lg border border-white/10 hover:border-rose-500/40 bg-white/5 hover:bg-rose-500/10 transition-all text-[#94A3B8] hover:text-rose-400 flex items-center justify-center"
-                title="Sign out"
+                title={t("header.signOut")}
               >
                 <LogOut className="w-4 h-4" />
               </button>

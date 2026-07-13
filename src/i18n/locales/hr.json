@@ -36,7 +36,8 @@
     "add": "Dodaj",
     "delete": "Izbriši",
     "close": "Zatvori",
-    "loading": "Učitavanje…"
+    "loading": "Učitavanje…",
+    "dismiss": "Odbaci"
   },
   "dashboard": {
     "today": "Danas",
@@ -344,7 +345,10 @@
     "startTracking": "Počni praćenje",
     "signOut": "Odjava",
     "metric": "Metrički (kg/cm)",
-    "imperial": "Imperijalni (lb/ft)"
+    "imperial": "Imperijalni (lb/ft)",
+    "promoTitle": "Izradi svoj besplatan plan prehrane",
+    "promoSubmit": "Izradi račun za spremanje",
+    "promoSecondary": "Već imam račun"
   },
   "auth": {
     "subtitleSignin": "Dobro došao natrag. Prijavi se za nastavak.",

@@ -36,7 +36,8 @@
     "add": "Add",
     "delete": "Delete",
     "close": "Close",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "dismiss": "Dismiss"
   },
   "dashboard": {
     "today": "Today",
@@ -343,7 +344,10 @@
     "startTracking": "Start tracking",
     "signOut": "Sign out",
     "metric": "Metric (kg/cm)",
-    "imperial": "Imperial (lb/ft)"
+    "imperial": "Imperial (lb/ft)",
+    "promoTitle": "Build your free nutrition plan",
+    "promoSubmit": "Create account to save",
+    "promoSecondary": "I already have an account"
   },
   "auth": {
     "subtitleSignin": "Welcome back. Sign in to continue.",
