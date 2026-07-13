@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Flame, Loader2, Lock, Check, Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 
 export default function UpdatePassword() {
   const updatePassword = useStore((s) => s.updatePassword);
   const signOut = useStore((s) => s.signOut);
+  const { t } = useTranslation();
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -17,11 +19,11 @@ export default function UpdatePassword() {
     e.preventDefault();
     setError("");
     if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setError(t("password.errMinLength"));
       return;
     }
     if (password !== confirm) {
-      setError("Passwords don't match.");
+      setError(t("password.errMismatch"));
       return;
     }
     setLoading(true);
@@ -34,7 +36,7 @@ export default function UpdatePassword() {
         setDone(true);
       }
     } catch (err: any) {
-      setError(err?.message || "Could not update your password. Please try again.");
+      setError(err?.message || t("password.errGeneric"));
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ export default function UpdatePassword() {
           <h1 className="font-sans font-black text-2xl tracking-tight text-white">
             Nutri<span className="text-[#818CF8]">Flow</span>
           </h1>
-          <p className="text-xs text-[#94A3B8] font-sans mt-1">Choose a new password</p>
+          <p className="text-xs text-[#94A3B8] font-sans mt-1">{t("password.subtitle")}</p>
         </div>
 
         <div className="bg-[#141923] border border-white/5 rounded-3xl p-6 shadow-xl">
@@ -59,13 +61,13 @@ export default function UpdatePassword() {
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
                 <Check className="w-6 h-6" />
               </div>
-              <p className="text-sm text-white font-sans font-semibold">Password updated</p>
-              <p className="text-xs text-[#94A3B8] font-sans">You're all set — loading your dashboard…</p>
+              <p className="text-sm text-white font-sans font-semibold">{t("password.updated")}</p>
+              <p className="text-xs text-[#94A3B8] font-sans">{t("password.updatedNote")}</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 font-sans">
               <div>
-                <label className="text-xs text-[#94A3B8] block mb-1.5">New password</label>
+                <label className="text-xs text-[#94A3B8] block mb-1.5">{t("password.newPassword")}</label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-[#64748B] absolute left-3 top-3" />
                   <input
@@ -76,13 +78,13 @@ export default function UpdatePassword() {
                     minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder={t("password.newPlaceholder")}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
                   />
                   <button
                     type="button"
                     onClick={() => setShow((v) => !v)}
-                    aria-label={show ? "Hide password" : "Show password"}
+                    aria-label={show ? t("password.hidePassword") : t("password.showPassword")}
                     className="absolute right-3 top-2.5 text-[#64748B] hover:text-[#94A3B8] transition-colors"
                   >
                     {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -91,7 +93,7 @@ export default function UpdatePassword() {
               </div>
 
               <div>
-                <label className="text-xs text-[#94A3B8] block mb-1.5">Confirm new password</label>
+                <label className="text-xs text-[#94A3B8] block mb-1.5">{t("password.confirmLabel")}</label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-[#64748B] absolute left-3 top-3" />
                   <input
@@ -102,7 +104,7 @@ export default function UpdatePassword() {
                     minLength={6}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
-                    placeholder="Re-enter password"
+                    placeholder={t("password.confirmPlaceholder")}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl pl-10 pr-3 py-2.5 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
                   />
                 </div>
@@ -122,10 +124,10 @@ export default function UpdatePassword() {
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Updating…
+                    <Loader2 className="w-4 h-4 animate-spin" /> {t("password.updating")}
                   </>
                 ) : (
-                  "Update password"
+                  t("password.updateBtn")
                 )}
               </button>
 
@@ -134,7 +136,7 @@ export default function UpdatePassword() {
                 onClick={() => signOut()}
                 className="w-full text-xs text-[#94A3B8] hover:text-white transition-colors font-sans pt-1"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </form>
           )}

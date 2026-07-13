@@ -11,6 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import { useStore } from "../store";
+import { useTranslation } from "react-i18next";
 import { computeGoal, ftInToCm, lbToKg, cmToFtIn, kgToLb } from "../lib/goal";
 import type {
   GoalType,
@@ -57,7 +58,8 @@ const DIETS: { value: DietPreference; label: string }[] = [
 const RESTRICTIONS = ["Gluten", "Dairy", "Nuts", "Shellfish", "Eggs", "Soy", "Pork"];
 const WORKOUTS = ["Strength", "Cardio", "HIIT", "Running", "Cycling", "Yoga", "Swimming", "Walking"];
 
-const STEPS = ["Goal", "About you", "Body", "Activity", "Diet", "Preferences", "Review"];
+// Step keys — labels come from the active locale (onboarding.steps.*).
+const STEPS = ["goal", "about", "body", "activity", "diet", "prefs", "review"];
 
 const num = (s: string): number => {
   const n = parseFloat(s);
@@ -88,6 +90,7 @@ export default function Onboarding({
 }) {
   const completeOnboarding = useStore((s) => s.completeOnboarding);
   const signOut = useStore((s) => s.signOut);
+  const { t } = useTranslation();
   const editing = !!onClose;
 
   const [step, setStep] = useState(0);
@@ -211,10 +214,10 @@ export default function Onboarding({
           </div>
           <div className="flex-1">
             <p className="text-sm font-black text-white font-sans tracking-tight">
-              {title ?? (editing ? "Edit your profile" : "Let’s personalize NutriFlow")}
+              {title ?? (editing ? t("onboarding.editTitle") : t("onboarding.personalizeTitle"))}
             </p>
             <p className="text-[11px] text-[#64748B] font-sans">
-              Step {step + 1} of {STEPS.length} · {STEPS[step]}
+              {t("onboarding.stepOf", { current: step + 1, total: STEPS.length })} · {t(`onboarding.steps.${STEPS[step]}`)}
             </p>
           </div>
         </div>
@@ -228,12 +231,12 @@ export default function Onboarding({
         <div className="bg-[#141923] border border-white/5 rounded-3xl p-6 shadow-xl font-sans">
           {/* STEP 0 — Goal */}
           {step === 0 && (
-            <Section icon={<Target className="w-4 h-4" />} title="What’s your main goal?">
+            <Section icon={<Target className="w-4 h-4" />} title={t("onboarding.step0Title")}>
               <div className="grid grid-cols-2 gap-3">
                 {GOALS.map((g) => (
                   <Card key={g.value} active={goalType === g.value} onClick={() => setGoalType(g.value)}>
-                    <span className="text-sm font-bold text-white">{g.label}</span>
-                    <span className="text-[11px] text-[#94A3B8]">{g.hint}</span>
+                    <span className="text-sm font-bold text-white">{t(`onboarding.goals.${g.value}.label`)}</span>
+                    <span className="text-[11px] text-[#94A3B8]">{t(`onboarding.goals.${g.value}.hint`)}</span>
                   </Card>
                 ))}
               </div>
@@ -242,23 +245,23 @@ export default function Onboarding({
 
           {/* STEP 1 — About you */}
           {step === 1 && (
-            <Section icon={<Flame className="w-4 h-4" />} title="A bit about you">
+            <Section icon={<Flame className="w-4 h-4" />} title={t("onboarding.step1Title")}>
               <UnitToggle units={units} onChange={toggleUnits} />
-              <label className="text-xs text-[#94A3B8] block mb-1.5 mt-4">Sex (for calorie estimate)</label>
+              <label className="text-xs text-[#94A3B8] block mb-1.5 mt-4">{t("onboarding.sexLabel")}</label>
               <div className="grid grid-cols-3 gap-2">
                 {SEXES.map((s) => (
                   <Card key={s.value} active={sex === s.value} onClick={() => setSex(s.value)} compact>
-                    <span className="text-sm font-semibold text-white">{s.label}</span>
+                    <span className="text-sm font-semibold text-white">{t(`onboarding.sexes.${s.value}`)}</span>
                   </Card>
                 ))}
               </div>
-              <label className="text-xs text-[#94A3B8] block mb-1.5 mt-4">Age</label>
+              <label className="text-xs text-[#94A3B8] block mb-1.5 mt-4">{t("onboarding.ageLabel")}</label>
               <input
                 type="number"
                 inputMode="numeric"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                placeholder="e.g. 28"
+                placeholder={t("onboarding.agePlaceholder")}
                 className={inputCls}
               />
             </Section>
@@ -266,12 +269,12 @@ export default function Onboarding({
 
           {/* STEP 2 — Body */}
           {step === 2 && (
-            <Section icon={<Activity className="w-4 h-4" />} title="Your measurements">
+            <Section icon={<Activity className="w-4 h-4" />} title={t("onboarding.step2Title")}>
               <UnitToggle units={units} onChange={toggleUnits} />
               <div className="mt-4 space-y-4">
                 {/* Height */}
                 <div>
-                  <label className="text-xs text-[#94A3B8] block mb-1.5">Height</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1.5">{t("onboarding.heightLabel")}</label>
                   {units === "metric" ? (
                     <div className="relative">
                       <input type="number" inputMode="numeric" value={cm} onChange={(e) => setCm(e.target.value)} placeholder="175" className={inputCls} />
@@ -292,7 +295,7 @@ export default function Onboarding({
                 </div>
                 {/* Weight */}
                 <div>
-                  <label className="text-xs text-[#94A3B8] block mb-1.5">Current weight</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1.5">{t("onboarding.currentWeightLabel")}</label>
                   <div className="relative">
                     {units === "metric" ? (
                       <>
@@ -310,7 +313,7 @@ export default function Onboarding({
                 {/* Target weight (optional) */}
                 <div>
                   <label className="text-xs text-[#94A3B8] block mb-1.5">
-                    Target weight <span className="text-[#64748B]">(optional)</span>
+                    {t("onboarding.targetWeightLabel")} <span className="text-[#64748B]">{t("onboarding.optional")}</span>
                   </label>
                   <div className="relative">
                     {units === "metric" ? (
@@ -332,12 +335,12 @@ export default function Onboarding({
 
           {/* STEP 3 — Activity */}
           {step === 3 && (
-            <Section icon={<Activity className="w-4 h-4" />} title="How active are you?">
+            <Section icon={<Activity className="w-4 h-4" />} title={t("onboarding.step3Title")}>
               <div className="space-y-2">
                 {ACTIVITIES.map((a) => (
                   <Card key={a.value} active={activity === a.value} onClick={() => setActivity(a.value)} row>
-                    <span className="text-sm font-semibold text-white">{a.label}</span>
-                    <span className="text-[11px] text-[#94A3B8]">{a.hint}</span>
+                    <span className="text-sm font-semibold text-white">{t(`onboarding.activities.${a.value}.label`)}</span>
+                    <span className="text-[11px] text-[#94A3B8]">{t(`onboarding.activities.${a.value}.hint`)}</span>
                   </Card>
                 ))}
               </div>
@@ -346,11 +349,11 @@ export default function Onboarding({
 
           {/* STEP 4 — Diet */}
           {step === 4 && (
-            <Section icon={<Salad className="w-4 h-4" />} title="Dietary preference">
+            <Section icon={<Salad className="w-4 h-4" />} title={t("onboarding.step4Title")}>
               <div className="grid grid-cols-2 gap-2">
                 {DIETS.map((d) => (
                   <Card key={d.value} active={diet === d.value} onClick={() => setDiet(d.value)} compact>
-                    <span className="text-sm font-semibold text-white">{d.label}</span>
+                    <span className="text-sm font-semibold text-white">{t(`onboarding.diets.${d.value}`)}</span>
                   </Card>
                 ))}
               </div>
@@ -359,20 +362,20 @@ export default function Onboarding({
 
           {/* STEP 5 — Preferences */}
           {step === 5 && (
-            <Section icon={<Dumbbell className="w-4 h-4" />} title="Preferences">
-              <label className="text-xs text-[#94A3B8] block mb-2">Any restrictions / allergies?</label>
+            <Section icon={<Dumbbell className="w-4 h-4" />} title={t("onboarding.step5Title")}>
+              <label className="text-xs text-[#94A3B8] block mb-2">{t("onboarding.restrictionsLabel")}</label>
               <div className="flex flex-wrap gap-2 mb-5">
                 {RESTRICTIONS.map((r) => (
                   <Chip key={r} active={restrictions.includes(r)} onClick={() => toggleIn(restrictions, r, setRestrictions)}>
-                    {r}
+                    {t(`onboarding.restrictions.${r}`)}
                   </Chip>
                 ))}
               </div>
-              <label className="text-xs text-[#94A3B8] block mb-2">Workouts you enjoy</label>
+              <label className="text-xs text-[#94A3B8] block mb-2">{t("onboarding.workoutsLabel")}</label>
               <div className="flex flex-wrap gap-2">
                 {WORKOUTS.map((w) => (
                   <Chip key={w} active={workouts.includes(w)} onClick={() => toggleIn(workouts, w, setWorkouts)}>
-                    {w}
+                    {t(`onboarding.workouts.${w}`)}
                   </Chip>
                 ))}
               </div>
@@ -381,21 +384,21 @@ export default function Onboarding({
 
           {/* STEP 6 — Review */}
           {step === 6 && goal && (
-            <Section icon={<Check className="w-4 h-4" />} title="Your personalized daily targets">
+            <Section icon={<Check className="w-4 h-4" />} title={t("onboarding.step6Title")}>
               <div className="rounded-2xl bg-[#0B0E14] border border-white/10 p-5 text-center">
-                <p className="text-[11px] uppercase tracking-wider text-[#64748B]">Daily calories</p>
+                <p className="text-[11px] uppercase tracking-wider text-[#64748B]">{t("onboarding.dailyCalories")}</p>
                 <p className="text-4xl font-black text-white mt-1">
                   {goal.calories}
                   <span className="text-sm font-semibold text-[#64748B] ml-1">kcal</span>
                 </p>
                 <div className="grid grid-cols-3 gap-2 mt-5">
-                  <Macro label="Protein" value={goal.protein} color="text-emerald-400" />
-                  <Macro label="Carbs" value={goal.carbs} color="text-amber-400" />
-                  <Macro label="Fat" value={goal.fat} color="text-rose-400" />
+                  <Macro label={t("onboarding.protein")} value={goal.protein} color="text-emerald-400" />
+                  <Macro label={t("onboarding.carbs")} value={goal.carbs} color="text-amber-400" />
+                  <Macro label={t("onboarding.fat")} value={goal.fat} color="text-rose-400" />
                 </div>
               </div>
               <p className="text-[11px] text-[#64748B] mt-3 leading-relaxed text-center">
-                Calculated from your details (Mifflin–St Jeor). You can fine-tune these anytime from the dashboard.
+                {t("onboarding.reviewNote")}
               </p>
             </Section>
           )}
@@ -414,7 +417,7 @@ export default function Onboarding({
                 disabled={saving}
                 className="flex items-center gap-1 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[#94A3B8] hover:text-white text-sm font-semibold transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" /> Back
+                <ChevronLeft className="w-4 h-4" /> {t("onboarding.back")}
               </button>
             )}
             {!isLast ? (
@@ -423,7 +426,7 @@ export default function Onboarding({
                 disabled={!canNext()}
                 className="flex-1 bg-[#6366F1] hover:bg-[#818CF8] disabled:bg-white/5 disabled:text-[#64748B] text-white rounded-xl py-2.5 text-sm font-bold transition-colors flex items-center justify-center gap-2 shadow-md shadow-[#6366F1]/10"
               >
-                Continue <ChevronRight className="w-4 h-4" />
+                {t("onboarding.continue")} <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
               <button
@@ -433,11 +436,11 @@ export default function Onboarding({
               >
                 {saving ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Saving…
+                    <Loader2 className="w-4 h-4 animate-spin" /> {t("onboarding.saving")}
                   </>
                 ) : (
                   <>
-                    <Check className="w-4 h-4" /> {submitLabel ?? (editing ? "Save changes" : "Start tracking")}
+                    <Check className="w-4 h-4" /> {submitLabel ?? (editing ? t("onboarding.saveChanges") : t("onboarding.startTracking"))}
                   </>
                 )}
               </button>
@@ -449,7 +452,7 @@ export default function Onboarding({
           onClick={() => (secondaryLabel ? onSecondary?.() : editing ? onClose?.() : signOut())}
           className="w-full text-center text-[11px] text-[#64748B] hover:text-[#94A3B8] transition-colors mt-4"
         >
-          {secondaryLabel ?? (editing ? "Cancel" : "Sign out")}
+          {secondaryLabel ?? (editing ? t("common.cancel") : t("onboarding.signOut"))}
         </button>
       </div>
     </div>
@@ -519,6 +522,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
 }
 
 function UnitToggle({ units, onChange }: { units: Units; onChange: (u: Units) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="inline-flex bg-[#0B0E14] border border-white/10 rounded-xl p-1 text-xs font-semibold">
       {(["metric", "imperial"] as Units[]).map((u) => (
@@ -529,7 +533,7 @@ function UnitToggle({ units, onChange }: { units: Units; onChange: (u: Units) =>
             units === u ? "bg-[#6366F1] text-white" : "text-[#94A3B8] hover:text-white"
           }`}
         >
-          {u === "metric" ? "Metric (kg/cm)" : "Imperial (lb/ft)"}
+          {u === "metric" ? t("onboarding.metric") : t("onboarding.imperial")}
         </button>
       ))}
     </div>

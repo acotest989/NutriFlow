@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { AlertTriangle, Loader2, Trash2, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 
 export default function DeleteAccountModal({ onClose }: { onClose: () => void }) {
   const deleteAccount = useStore((s) => s.deleteAccount);
   const email = useStore((s) => s.user?.email);
+  const { t } = useTranslation();
 
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,23 +43,20 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("common.close")}
             className="text-[#64748B] hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <h2 className="text-lg font-black text-white font-sans tracking-tight">Delete account</h2>
+        <h2 className="text-lg font-black text-white font-sans tracking-tight">{t("modals.deleteTitle")}</h2>
         <p className="text-xs text-[#94A3B8] font-sans mt-2 leading-relaxed">
-          This permanently deletes{" "}
-          {email ? <span className="text-white font-semibold">{email}</span> : "your account"} and{" "}
-          <span className="text-white font-semibold">all your data</span> — meals, exercises, goals,
-          and hydration. This action cannot be undone.
+          {t("modals.deleteBody", { who: email || t("modals.deleteYourAccount") })}
         </p>
 
         <label className="text-xs text-[#94A3B8] block mt-5 mb-1.5 font-sans">
-          Type <span className="text-rose-300 font-bold font-mono">DELETE</span> to confirm
+          {t("modals.deleteConfirmPre")} <span className="text-rose-300 font-bold font-mono">DELETE</span> {t("modals.deleteConfirmPost")}
         </label>
         <input
           value={confirm}
@@ -80,7 +79,7 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
             disabled={loading}
             className="flex-1 bg-white/5 hover:bg-white/10 text-[#94A3B8] hover:text-white rounded-xl py-2.5 text-sm font-bold transition-colors font-sans disabled:opacity-50"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={handleDelete}
@@ -89,11 +88,11 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Deleting…
+                <Loader2 className="w-4 h-4 animate-spin" /> {t("modals.deleting")}
               </>
             ) : (
               <>
-                <Trash2 className="w-4 h-4" /> Delete
+                <Trash2 className="w-4 h-4" /> {t("modals.deleteBtn")}
               </>
             )}
           </button>

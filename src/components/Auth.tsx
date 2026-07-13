@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Flame, Loader2, Mail, Lock, LogIn, UserPlus, CheckCircle, KeyRound, Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 
 type Mode = "signin" | "signup" | "reset";
@@ -21,6 +22,7 @@ export default function Auth() {
   const signUp = useStore((s) => s.signUp);
   const signInWithGoogle = useStore((s) => s.signInWithGoogle);
   const resetPassword = useStore((s) => s.resetPassword);
+  const { t } = useTranslation();
 
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -61,7 +63,7 @@ export default function Auth() {
         if (error) {
           setError(error);
         } else if (needsConfirmation) {
-          setInfo("Account created! Check your email to confirm, then sign in.");
+          setInfo(t("auth.infoConfirm"));
           setMode("signin");
         }
       } else {
@@ -70,11 +72,11 @@ export default function Auth() {
         if (error) {
           setError(error);
         } else {
-          setInfo("If an account exists for that email, a password reset link is on its way. Check your inbox.");
+          setInfo(t("auth.infoReset"));
         }
       }
     } catch (err: any) {
-      setError(err?.message || "Something went wrong. Please try again.");
+      setError(err?.message || t("auth.errGeneric"));
     } finally {
       setLoading(false);
     }
@@ -88,10 +90,10 @@ export default function Auth() {
 
   const subtitle =
     mode === "signin"
-      ? "Welcome back. Sign in to continue."
+      ? t("auth.subtitleSignin")
       : mode === "signup"
-      ? "Create your account to get started."
-      : "Enter your email to reset your password.";
+      ? t("auth.subtitleSignup")
+      : t("auth.subtitleReset");
 
   return (
     <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center p-6 antialiased">
@@ -123,12 +125,12 @@ export default function Auth() {
                 ) : (
                   <GoogleIcon className="w-4 h-4" />
                 )}
-                Continue with Google
+                {t("auth.continueGoogle")}
               </button>
 
               <div className="flex items-center gap-3 my-4 select-none">
                 <span className="flex-1 h-px bg-white/10" />
-                <span className="text-[10px] uppercase tracking-wider text-[#64748B] font-sans">or</span>
+                <span className="text-[10px] uppercase tracking-wider text-[#64748B] font-sans">{t("auth.or")}</span>
                 <span className="flex-1 h-px bg-white/10" />
               </div>
             </>
@@ -136,7 +138,7 @@ export default function Auth() {
 
           <form onSubmit={handleSubmit} className="space-y-4 font-sans">
             <div>
-              <label className="text-xs text-[#94A3B8] block mb-1.5">Email</label>
+              <label className="text-xs text-[#94A3B8] block mb-1.5">{t("auth.email")}</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-[#64748B] absolute left-3 top-3" />
                 <input
@@ -146,7 +148,7 @@ export default function Auth() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={t("auth.emailPlaceholder")}
                   className="w-full bg-[#0B0E14] border border-white/10 rounded-xl pl-10 pr-3 py-2.5 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
                 />
               </div>
@@ -155,7 +157,7 @@ export default function Auth() {
             {mode !== "reset" && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs text-[#94A3B8]">Password</label>
+                  <label className="text-xs text-[#94A3B8]">{t("auth.password")}</label>
                   {mode === "signin" && (
                     <button
                       type="button"
@@ -163,7 +165,7 @@ export default function Auth() {
                       onClick={() => goTo("reset")}
                       className="text-[11px] text-[#818CF8] hover:text-[#a5b4fc] transition-colors font-sans"
                     >
-                      Forgot password?
+                      {t("auth.forgot")}
                     </button>
                   )}
                 </div>
@@ -177,13 +179,13 @@ export default function Auth() {
                     minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
+                    placeholder={mode === "signup" ? t("auth.passwordPlaceholderSignup") : t("auth.passwordPlaceholder")}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
                     className="absolute right-3 top-2.5 text-[#64748B] hover:text-[#94A3B8] transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -211,19 +213,19 @@ export default function Auth() {
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Please wait...
+                  <Loader2 className="w-4 h-4 animate-spin" /> {t("auth.pleaseWait")}
                 </>
               ) : mode === "signin" ? (
                 <>
-                  <LogIn className="w-4 h-4" /> Sign In
+                  <LogIn className="w-4 h-4" /> {t("auth.signIn")}
                 </>
               ) : mode === "signup" ? (
                 <>
-                  <UserPlus className="w-4 h-4" /> Create Account
+                  <UserPlus className="w-4 h-4" /> {t("auth.createAccount")}
                 </>
               ) : (
                 <>
-                  <KeyRound className="w-4 h-4" /> Send reset link
+                  <KeyRound className="w-4 h-4" /> {t("auth.sendReset")}
                 </>
               )}
             </button>
@@ -235,7 +237,7 @@ export default function Auth() {
                 onClick={() => goTo("signin")}
                 className="text-xs text-[#94A3B8] hover:text-white transition-colors font-sans"
               >
-                <span className="text-[#818CF8] font-semibold">Back to sign in</span>
+                <span className="text-[#818CF8] font-semibold">{t("auth.backToSignin")}</span>
               </button>
             ) : (
               <button
@@ -244,9 +246,9 @@ export default function Auth() {
                 className="text-xs text-[#94A3B8] hover:text-white transition-colors font-sans"
               >
                 {mode === "signin" ? (
-                  <>Don't have an account? <span className="text-[#818CF8] font-semibold">Sign up</span></>
+                  <>{t("auth.noAccount")} <span className="text-[#818CF8] font-semibold">{t("auth.signUp")}</span></>
                 ) : (
-                  <>Already have an account? <span className="text-[#818CF8] font-semibold">Sign in</span></>
+                  <>{t("auth.haveAccount")} <span className="text-[#818CF8] font-semibold">{t("auth.signInLink")}</span></>
                 )}
               </button>
             )}
@@ -254,7 +256,7 @@ export default function Auth() {
         </div>
 
         <p className="text-center text-[10px] text-[#64748B] font-sans mt-6 leading-relaxed">
-          Your data is private and secured per-account with row-level security.
+          {t("auth.privacyNote")}
         </p>
       </div>
     </div>
