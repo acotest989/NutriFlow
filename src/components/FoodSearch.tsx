@@ -15,12 +15,14 @@ import { FoodItem } from "../types";
 import { COMMON_FOOD_ITEMS } from "../data";
 import { useStore } from "../store";
 import { todayStr, addDays } from "../lib/date";
+import { useTranslation } from "react-i18next";
 
 export default function FoodSearch() {
   const currentDate = useStore((s) => s.currentDate);
   const entries = useStore((s) => s.entries);
   const onAddEntry = useStore((s) => s.addEntry);
   const onRemoveEntry = useStore((s) => s.removeEntry);
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [multiplier, setMultiplier] = useState(1);
@@ -113,7 +115,7 @@ export default function FoodSearch() {
       setAiResult(data);
     } catch (err: any) {
       console.error(err);
-      setAiError("Gemini was unable to estimate nutrition for this text. Try a clearer description.");
+      setAiError(t("food.aiError"));
     } finally {
       setIsAiLoading(false);
     }
@@ -150,7 +152,7 @@ export default function FoodSearch() {
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
-            <Database className="w-3.5 h-3.5" /> Database Lookup
+            <Database className="w-3.5 h-3.5" /> {t("food.dbLookup")}
           </div>
         </button>
         <button
@@ -161,7 +163,7 @@ export default function FoodSearch() {
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Manual & AI Log
+            <Plus className="w-3.5 h-3.5" /> {t("food.manualAiLog")}
           </div>
         </button>
       </div>
@@ -171,9 +173,9 @@ export default function FoodSearch() {
         /* Presets Search Database Panel */
         <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-sans font-bold text-white">Food Database Search</h3>
+            <h3 className="font-sans font-bold text-white">{t("food.dbSearchTitle")}</h3>
             <span className="text-[10px] font-mono bg-white/5 text-[#94A3B8] px-2 py-1 rounded-md border border-white/5">
-              {COMMON_FOOD_ITEMS.length} Items Loaded
+              {t("food.itemsLoaded", { n: COMMON_FOOD_ITEMS.length })}
             </span>
           </div>
 
@@ -182,7 +184,7 @@ export default function FoodSearch() {
             <input
               id="input_food_search"
               type="text"
-              placeholder="Search oatmeal, eggs, avocado..."
+              placeholder={t("food.searchPlaceholder")}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full bg-[#0B0E14] border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all font-sans text-white placeholder-[#64748B]"
@@ -205,7 +207,7 @@ export default function FoodSearch() {
                   <div className="font-sans">
                     <h4 className="text-sm font-semibold text-[#E2E8F0]">{food.name}</h4>
                     <p className="text-[10px] text-[#64748B] font-medium">
-                      Serving: {food.servingSize}{food.servingUnit} • P: {food.protein}g • C: {food.carbs}g • F: {food.fat}g
+                      {t("food.serving")} {food.servingSize}{food.servingUnit} • P: {food.protein}g • C: {food.carbs}g • F: {food.fat}g
                     </p>
                   </div>
                   <div className="text-right shrink-0">
@@ -217,7 +219,7 @@ export default function FoodSearch() {
               ))
             ) : (
               <div className="text-center py-6 text-[#64748B] text-xs font-sans">
-                No matching foods found in standard database. Switch to AI log!
+                {t("food.noMatch")}
               </div>
             )}
           </div>
@@ -232,9 +234,9 @@ export default function FoodSearch() {
                 className="bg-[#6366F1]/5 rounded-2xl p-4 border border-[#6366F1]/10 space-y-3 font-sans"
               >
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-[#818CF8]">Adjust Portion Multiplier</span>
+                  <span className="text-xs font-bold text-[#818CF8]">{t("food.adjustPortion")}</span>
                   <span className="text-xs text-[#94A3B8] font-mono">
-                    Total: <b>{Math.round(selectedFood.servingSize * multiplier)} {selectedFood.servingUnit}</b>
+                    {t("food.total")} <b>{Math.round(selectedFood.servingSize * multiplier)} {selectedFood.servingUnit}</b>
                   </span>
                 </div>
 
@@ -255,19 +257,19 @@ export default function FoodSearch() {
 
                 <div className="grid grid-cols-4 gap-2 text-center text-[10px] bg-[#0B0E14] border border-white/5 p-2 rounded-xl">
                   <div>
-                    <span className="text-[#64748B] block">Kcal</span>
+                    <span className="text-[#64748B] block">{t("food.kcal")}</span>
                     <b className="text-white text-xs">{Math.round(selectedFood.calories * multiplier)}</b>
                   </div>
                   <div>
-                    <span className="text-[#FB923C] block font-semibold">Protein</span>
+                    <span className="text-[#FB923C] block font-semibold">{t("food.protein")}</span>
                     <b className="text-white text-xs">{Math.round(selectedFood.protein * multiplier * 10) / 10}g</b>
                   </div>
                   <div>
-                    <span className="text-[#38BDF8] block font-semibold">Carbs</span>
+                    <span className="text-[#38BDF8] block font-semibold">{t("food.carbs")}</span>
                     <b className="text-white text-xs">{Math.round(selectedFood.carbs * multiplier * 10) / 10}g</b>
                   </div>
                   <div>
-                    <span className="text-[#FACC15] block font-semibold">Fat</span>
+                    <span className="text-[#FACC15] block font-semibold">{t("food.fat")}</span>
                     <b className="text-white text-xs">{Math.round(selectedFood.fat * multiplier * 10) / 10}g</b>
                   </div>
                 </div>
@@ -278,14 +280,14 @@ export default function FoodSearch() {
                     onClick={() => setSelectedFood(null)}
                     className="flex-1 bg-[#0B0E14] hover:bg-white/5 border border-white/10 text-[#94A3B8] rounded-xl py-2 text-xs font-semibold transition-all"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     id="btn_confirm_preset"
                     onClick={() => handleLogPreset(selectedFood)}
                     className="flex-1 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md"
                   >
-                    Log {selectedFood.name}
+                    {t("food.logNamed", { name: selectedFood.name })}
                   </button>
                 </div>
               </motion.div>
@@ -303,11 +305,11 @@ export default function FoodSearch() {
 
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-5 h-5 text-[#818CF8]" />
-              <h3 className="font-sans font-bold text-white text-base">Gemini AI Smart Assistant</h3>
+              <h3 className="font-sans font-bold text-white text-base">{t("food.aiTitle")}</h3>
             </div>
-            
+
             <p className="text-xs text-slate-300 font-sans leading-relaxed mb-4">
-              Type or speak any custom meal and get instant estimated nutrition. E.g., <i>"2 scrambled eggs with cheddar cheese and bacon slice"</i>
+              {t("food.aiDesc")} <i>"{t("food.aiExample")}"</i>
             </p>
 
             <form onSubmit={handleAiEstimate} className="space-y-3">
@@ -316,7 +318,7 @@ export default function FoodSearch() {
                 rows={2}
                 value={aiInput}
                 onChange={e => setAiInput(e.target.value)}
-                placeholder="What did you eat? Describe ingredients..."
+                placeholder={t("food.aiPlaceholder")}
                 className="w-full bg-[#0B0E14] border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#6366F1] font-sans placeholder-[#64748B] resize-none"
               />
               <button
@@ -328,12 +330,12 @@ export default function FoodSearch() {
                 {isAiLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-[#818CF8]" />
-                    Analyzing meal ingredients...
+                    {t("food.aiAnalyzing")}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 text-amber-300" />
-                    AI Estimate Calories & Macros
+                    {t("food.aiEstimateBtn")}
                   </>
                 )}
               </button>
@@ -357,11 +359,11 @@ export default function FoodSearch() {
                   <div className="flex justify-between items-start">
                     <div>
                       <span className="text-[9px] uppercase tracking-wider bg-[#6366F1]/20 text-[#818CF8] px-2 py-0.5 rounded-full font-sans font-semibold">
-                        AI Extracted Facts
+                        {t("food.aiExtracted")}
                       </span>
                       <h4 id="text_ai_food_name" className="text-sm font-bold text-white mt-1 font-sans">{aiResult.name}</h4>
                       <p className="text-[10px] text-[#94A3B8] font-sans">
-                        Portion size: {aiResult.servingSize}{aiResult.servingUnit}
+                        {t("food.portionSize")} {aiResult.servingSize}{aiResult.servingUnit}
                       </p>
                     </div>
                     <div className="text-right">
@@ -373,15 +375,15 @@ export default function FoodSearch() {
 
                   <div className="grid grid-cols-3 gap-2 text-center text-[10px] bg-white/5 p-2 rounded-xl border border-white/5">
                     <div>
-                      <span className="text-[#FB923C]/85 block font-medium">Protein</span>
+                      <span className="text-[#FB923C]/85 block font-medium">{t("food.protein")}</span>
                       <b id="text_ai_food_protein" className="text-white text-xs">{aiResult.protein}g</b>
                     </div>
                     <div>
-                      <span className="text-[#38BDF8]/85 block font-medium">Carbs</span>
+                      <span className="text-[#38BDF8]/85 block font-medium">{t("food.carbs")}</span>
                       <b id="text_ai_food_carbs" className="text-white text-xs">{aiResult.carbs}g</b>
                     </div>
                     <div>
-                      <span className="text-[#FACC15]/85 block font-medium">Fat</span>
+                      <span className="text-[#FACC15]/85 block font-medium">{t("food.fat")}</span>
                       <b id="text_ai_food_fat" className="text-white text-xs">{aiResult.fat}g</b>
                     </div>
                   </div>
@@ -392,14 +394,14 @@ export default function FoodSearch() {
                       onClick={() => setAiResult(null)}
                       className="flex-1 bg-transparent hover:bg-white/5 border border-white/10 text-white rounded-xl py-2 text-xs font-semibold font-sans transition-all"
                     >
-                      Discard
+                      {t("food.discard")}
                     </button>
                     <button
                       id="btn_log_ai"
                       onClick={handleLogAiResult}
                       className="flex-1 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl py-2 text-xs font-bold font-sans transition-all flex items-center justify-center gap-1"
                     >
-                      <Check className="w-3.5 h-3.5" /> Log AI Meal
+                      <Check className="w-3.5 h-3.5" /> {t("food.logAiMeal")}
                     </button>
                   </div>
                 </motion.div>
@@ -410,18 +412,18 @@ export default function FoodSearch() {
           {/* Standard Manual Log Form */}
           <div className="bg-[#141923] rounded-3xl p-6 shadow-sm border border-white/5 space-y-4">
             <h4 className="font-sans font-bold text-white flex items-center gap-2">
-              <Scale className="w-4 h-4 text-[#818CF8]" /> Manual Custom Entry
+              <Scale className="w-4 h-4 text-[#818CF8]" /> {t("food.manualTitle")}
             </h4>
 
             <form onSubmit={handleLogManual} className="space-y-3 font-sans">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className="text-xs text-[#94A3B8] block mb-1">Food Name *</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1">{t("food.foodName")}</label>
                   <input
                     id="input_manual_name"
                     type="text"
                     required
-                    placeholder="e.g. Vanilla Yogurt Cup"
+                    placeholder={t("food.phName")}
                     value={manualName}
                     onChange={e => setManualName(e.target.value)}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
@@ -429,11 +431,11 @@ export default function FoodSearch() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-[#94A3B8] block mb-1">Serving Size</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1">{t("food.servingSize")}</label>
                   <input
                     id="input_manual_serving_size"
                     type="number"
-                    placeholder="e.g. 150"
+                    placeholder={t("food.phServing")}
                     value={manualServingSize}
                     onChange={e => setManualServingSize(e.target.value)}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
@@ -441,7 +443,7 @@ export default function FoodSearch() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-[#94A3B8] block mb-1">Unit</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1">{t("food.unit")}</label>
                   <input
                     id="input_manual_serving_unit"
                     type="text"
@@ -453,11 +455,11 @@ export default function FoodSearch() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-[#94A3B8] block mb-1">Calories (kcal)</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1">{t("food.caloriesKcal")}</label>
                   <input
                     id="input_manual_calories"
                     type="number"
-                    placeholder="e.g. 150"
+                    placeholder={t("food.phCalories")}
                     value={manualCalories}
                     onChange={e => setManualCalories(e.target.value)}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
@@ -465,12 +467,12 @@ export default function FoodSearch() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-[#94A3B8] block mb-1">Protein (g)</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1">{t("food.proteinG")}</label>
                   <input
                     id="input_manual_protein"
                     type="number"
                     step="0.1"
-                    placeholder="e.g. 8"
+                    placeholder={t("food.phProtein")}
                     value={manualProtein}
                     onChange={e => setManualProtein(e.target.value)}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
@@ -478,12 +480,12 @@ export default function FoodSearch() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-[#94A3B8] block mb-1">Carbohydrates (g)</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1">{t("food.carbsG")}</label>
                   <input
                     id="input_manual_carbs"
                     type="number"
                     step="0.1"
-                    placeholder="e.g. 15"
+                    placeholder={t("food.phCarbs")}
                     value={manualCarbs}
                     onChange={e => setManualCarbs(e.target.value)}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
@@ -491,12 +493,12 @@ export default function FoodSearch() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-[#94A3B8] block mb-1">Fats (g)</label>
+                  <label className="text-xs text-[#94A3B8] block mb-1">{t("food.fatsG")}</label>
                   <input
                     id="input_manual_fat"
                     type="number"
                     step="0.1"
-                    placeholder="e.g. 2"
+                    placeholder={t("food.phFat")}
                     value={manualFat}
                     onChange={e => setManualFat(e.target.value)}
                     className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
@@ -511,7 +513,7 @@ export default function FoodSearch() {
                   disabled={!manualName.trim()}
                   className="w-full bg-[#6366F1] hover:bg-[#818CF8] disabled:bg-white/5 disabled:text-[#64748B] text-white font-semibold rounded-xl py-2.5 text-xs transition-colors shadow-sm"
                 >
-                  Log Custom Food
+                  {t("food.logCustomFood")}
                 </button>
               </div>
             </form>
@@ -522,7 +524,7 @@ export default function FoodSearch() {
       {/* Logged Foods List for Today */}
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5">
         <h3 className="font-sans font-bold text-white mb-4 flex items-center gap-2">
-          <Utensils className="w-4 h-4 text-[#818CF8]" /> Logged Meal History
+          <Utensils className="w-4 h-4 text-[#818CF8]" /> {t("food.historyTitle")}
         </h3>
 
         <div className="space-y-3">
@@ -535,7 +537,7 @@ export default function FoodSearch() {
                 <div className="font-sans flex-1 min-w-0 pr-2">
                   <h4 className="text-xs font-bold text-[#E2E8F0] truncate">{meal.name}</h4>
                   <p className="text-[9px] text-[#64748B] mt-0.5">
-                    Portion: {meal.quantity}g • P: {meal.protein}g • C: {meal.carbs}g • F: {meal.fat}g
+                    {t("food.portion")} {meal.quantity}g • P: {meal.protein}g • C: {meal.carbs}g • F: {meal.fat}g
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
@@ -545,7 +547,7 @@ export default function FoodSearch() {
                   <button
                     onClick={() => onRemoveEntry(meal.id)}
                     className="text-[#64748B] hover:text-rose-400 p-1.5 hover:bg-rose-500/10 rounded-lg transition-colors"
-                    title="Delete Entry"
+                    title={t("food.deleteEntry")}
                   >
                     <Trash2 className="w-4.5 h-4.5" />
                   </button>
@@ -554,7 +556,7 @@ export default function FoodSearch() {
             ))
           ) : (
             <div className="text-center py-8 text-[#64748B] text-xs font-sans">
-              No food logs completed for {formatDateLabel(currentDate)}.
+              {t("food.noLogs", { date: formatDateLabel(currentDate) })}
             </div>
           )}
         </div>
@@ -563,8 +565,8 @@ export default function FoodSearch() {
   );
 
   function formatDateLabel(dateStr: string) {
-    if (dateStr === todayStr()) return "today";
-    if (dateStr === addDays(todayStr(), -1)) return "yesterday";
+    if (dateStr === todayStr()) return t("food.todayLower");
+    if (dateStr === addDays(todayStr(), -1)) return t("food.yesterdayLower");
     return dateStr;
   }
 }

@@ -12,12 +12,14 @@ import {
 import { ExerciseItem } from "../types";
 import { PRESET_EXERCISES } from "../data";
 import { useStore } from "../store";
+import { useTranslation } from "react-i18next";
 
 export default function ExerciseTracker() {
   const currentDate = useStore((s) => s.currentDate);
   const entries = useStore((s) => s.entries);
   const onAddEntry = useStore((s) => s.addEntry);
   const onRemoveEntry = useStore((s) => s.removeEntry);
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedExercise, setSelectedExercise] = useState<ExerciseItem | null>(null);
   const [minutes, setMinutes] = useState(30);
@@ -85,7 +87,7 @@ export default function ExerciseTracker() {
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
-            <Dumbbell className="w-3.5 h-3.5" /> Preset Workouts
+            <Dumbbell className="w-3.5 h-3.5" /> {t("exercise.presetWorkouts")}
           </div>
         </button>
         <button
@@ -96,7 +98,7 @@ export default function ExerciseTracker() {
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Custom Workout
+            <Plus className="w-3.5 h-3.5" /> {t("exercise.customWorkout")}
           </div>
         </button>
       </div>
@@ -106,9 +108,9 @@ export default function ExerciseTracker() {
         /* Presets Search Database Panel */
         <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-sans font-bold text-white">Workout Catalog</h3>
+            <h3 className="font-sans font-bold text-white">{t("exercise.catalogTitle")}</h3>
             <span className="text-[10px] font-mono bg-white/5 text-[#94A3B8] px-2 py-1 rounded-md border border-white/5">
-              {PRESET_EXERCISES.length} Activities
+              {t("exercise.activities", { n: PRESET_EXERCISES.length })}
             </span>
           </div>
 
@@ -117,7 +119,7 @@ export default function ExerciseTracker() {
             <input
               id="input_exercise_search"
               type="text"
-              placeholder="Search running, swimming, lifting..."
+              placeholder={t("exercise.searchPlaceholder")}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full bg-[#0B0E14] border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4ADE80] transition-all font-sans text-white placeholder-[#64748B]"
@@ -143,7 +145,7 @@ export default function ExerciseTracker() {
                   <div>
                     <h4 className="text-sm font-semibold text-[#E2E8F0]">{ex.name}</h4>
                     <p className="text-[10px] text-[#64748B] font-medium">
-                      Est. Burn: ~{(ex.caloriesPerMinute * 30).toFixed(0)} kcal per 30 mins
+                      {t("exercise.estBurn", { kcal: (ex.caloriesPerMinute * 30).toFixed(0) })}
                     </p>
                   </div>
                 </div>
@@ -166,9 +168,9 @@ export default function ExerciseTracker() {
                 className="bg-[#4ADE80]/5 rounded-2xl p-4 border border-[#4ADE80]/10 space-y-3 font-sans"
               >
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-[#4ADE80]">Adjust Workout Duration</span>
+                  <span className="text-xs font-bold text-[#4ADE80]">{t("exercise.adjustDuration")}</span>
                   <span className="text-xs text-[#94A3B8] font-mono flex items-center gap-1">
-                    <Watch className="w-3.5 h-3.5 text-[#4ADE80]" /> <b>{minutes} minutes</b>
+                    <Watch className="w-3.5 h-3.5 text-[#4ADE80]" /> <b>{t("exercise.minutes", { n: minutes })}</b>
                   </span>
                 </div>
 
@@ -189,11 +191,11 @@ export default function ExerciseTracker() {
 
                 <div className="flex justify-between items-center bg-[#0B0E14] border border-white/5 p-3 rounded-xl">
                   <div>
-                    <span className="text-[#64748B] text-xs block">Active Minutes</span>
-                    <b className="text-white text-sm">{minutes} mins</b>
+                    <span className="text-[#64748B] text-xs block">{t("exercise.activeMinutes")}</span>
+                    <b className="text-white text-sm">{t("exercise.mins", { n: minutes })}</b>
                   </div>
                   <div className="text-right">
-                    <span className="text-[#4ADE80] text-xs block">Negative Calories</span>
+                    <span className="text-[#4ADE80] text-xs block">{t("exercise.negativeCalories")}</span>
                     <b className="text-[#4ADE80] text-base font-bold">-{Math.round(selectedExercise.caloriesPerMinute * minutes)} kcal</b>
                   </div>
                 </div>
@@ -204,14 +206,14 @@ export default function ExerciseTracker() {
                     onClick={() => setSelectedExercise(null)}
                     className="flex-1 bg-[#0B0E14] hover:bg-white/5 border border-white/10 text-[#94A3B8] rounded-xl py-2 text-xs font-semibold transition-all"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     id="btn_confirm_exercise"
                     onClick={() => handleLogPreset(selectedExercise)}
                     className="flex-1 bg-[#4ADE80] hover:bg-[#22C55E] text-[#0B0E14] rounded-xl py-2 text-xs font-bold transition-all shadow-md"
                   >
-                    Log Exercise
+                    {t("exercise.logExercise")}
                   </button>
                 </div>
               </motion.div>
@@ -222,17 +224,17 @@ export default function ExerciseTracker() {
         /* Manual Custom Exercise Panel */
         <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
           <h4 className="font-sans font-bold text-white flex items-center gap-2">
-            <Activity className="w-4 h-4 text-[#4ADE80]" /> Log Custom Workout
+            <Activity className="w-4 h-4 text-[#4ADE80]" /> {t("exercise.logCustomTitle")}
           </h4>
 
           <form onSubmit={handleLogCustom} className="space-y-3 font-sans">
             <div>
-              <label className="text-xs text-[#94A3B8] block mb-1">Exercise Description *</label>
+              <label className="text-xs text-[#94A3B8] block mb-1">{t("exercise.exerciseDesc")}</label>
               <input
                 id="input_custom_exercise_name"
                 type="text"
                 required
-                placeholder="e.g. Crossfit / Rock Climbing / Tennis"
+                placeholder={t("exercise.phExerciseName")}
                 value={customName}
                 onChange={e => setCustomName(e.target.value)}
                 className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
@@ -241,11 +243,11 @@ export default function ExerciseTracker() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-[#94A3B8] block mb-1">Calories Burned (kcal)</label>
+                <label className="text-xs text-[#94A3B8] block mb-1">{t("exercise.caloriesBurned")}</label>
                 <input
                   id="input_custom_exercise_calories"
                   type="number"
-                  placeholder="e.g. 240"
+                  placeholder={t("exercise.phCaloriesBurned")}
                   value={customCalories}
                   onChange={e => setCustomCalories(e.target.value)}
                   className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
@@ -253,11 +255,11 @@ export default function ExerciseTracker() {
               </div>
 
               <div>
-                <label className="text-xs text-[#94A3B8] block mb-1">Duration (minutes)</label>
+                <label className="text-xs text-[#94A3B8] block mb-1">{t("exercise.duration")}</label>
                 <input
                   id="input_custom_exercise_minutes"
                   type="number"
-                  placeholder="e.g. 30"
+                  placeholder={t("exercise.phDuration")}
                   value={customMinutes}
                   onChange={e => setCustomMinutes(e.target.value)}
                   className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
@@ -271,7 +273,7 @@ export default function ExerciseTracker() {
               disabled={!customName.trim()}
               className="w-full bg-[#4ADE80] hover:bg-[#22C55E] disabled:bg-white/5 disabled:text-[#64748B] text-[#0B0E14] font-bold rounded-xl py-2.5 text-xs transition-colors shadow-sm"
             >
-              Log Custom Workout
+              {t("exercise.logCustomBtn")}
             </button>
           </form>
         </div>
@@ -281,10 +283,10 @@ export default function ExerciseTracker() {
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-sans font-bold text-white flex items-center gap-2">
-            <Flame className="w-4 h-4 text-[#4ADE80]" /> Active Workout Log
+            <Flame className="w-4 h-4 text-[#4ADE80]" /> {t("exercise.activeLogTitle")}
           </h3>
           <span className="text-xs font-bold text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded-lg border border-[#4ADE80]/20">
-            -{totalBurnedToday} kcal Today
+            -{totalBurnedToday} {t("exercise.kcalToday")}
           </span>
         </div>
 
@@ -302,7 +304,7 @@ export default function ExerciseTracker() {
                   <div className="min-w-0 pr-2">
                     <h4 className="text-xs font-bold text-[#E2E8F0] truncate">{ex.name}</h4>
                     <p className="text-[9px] text-[#64748B] mt-0.5">
-                      Duration: {ex.quantity} minutes
+                      {t("exercise.durationValue", { n: ex.quantity })}
                     </p>
                   </div>
                 </div>
@@ -313,7 +315,7 @@ export default function ExerciseTracker() {
                   <button
                     onClick={() => onRemoveEntry(ex.id)}
                     className="text-[#64748B] hover:text-rose-400 p-1.5 hover:bg-rose-500/10 rounded-lg transition-colors"
-                    title="Delete Entry"
+                    title={t("exercise.deleteEntry")}
                   >
                     <Trash2 className="w-4.5 h-4.5" />
                   </button>
@@ -322,7 +324,7 @@ export default function ExerciseTracker() {
             ))
           ) : (
             <div className="text-center py-8 text-[#64748B] text-xs font-sans">
-              No negative calorie workouts logged yet today.
+              {t("exercise.noWorkouts")}
             </div>
           )}
         </div>
