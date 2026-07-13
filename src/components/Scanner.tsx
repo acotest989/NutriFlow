@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Camera, Check, Loader2, X, AlertCircle, Search, Scan } from "lucide-react";
 import { FoodItem } from "../types";
 import { useStore } from "../store";
+import { useTranslation } from "react-i18next";
 
 interface ScannerProps {
   isCompact?: boolean;
@@ -11,6 +12,7 @@ interface ScannerProps {
 export default function Scanner({ isCompact = false }: ScannerProps) {
   const currentDate = useStore((s) => s.currentDate);
   const onAddEntry = useStore((s) => s.addEntry);
+  const { t } = useTranslation();
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -42,7 +44,7 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
     setScanResult(null);
     try {
       setIsCameraActive(true);
-      setStatusMessage("Starting camera view...");
+      setStatusMessage(t("scanner.statusStarting"));
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" }
       });
@@ -51,15 +53,15 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
         videoRef.current.srcObject = stream;
       }
       if (scanSupported) {
-        setStatusMessage("Point the camera at a barcode — it scans automatically.");
+        setStatusMessage(t("scanner.statusPoint"));
         startScanLoop();
       } else {
-        setStatusMessage("Live scanning isn't supported on this browser — enter the code manually below.");
+        setStatusMessage(t("scanner.statusUnsupported"));
       }
     } catch (err: any) {
       console.error("Camera access failed:", err);
       setIsCameraActive(false);
-      setScanError("Camera permission was denied or is unavailable. You can still enter the barcode number manually below.");
+      setScanError(t("scanner.errCamera"));
     }
   };
 
@@ -139,7 +141,7 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
       setScanResult(foodData);
     } catch (err: any) {
       console.error(err);
-      setScanError("Barcode analysis failed. Try a pre-registered code or check environment.");
+      setScanError(t("scanner.errLookup"));
     } finally {
       setIsSearching(false);
     }
@@ -168,12 +170,10 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
         <div>
           <h3 className="font-sans font-bold text-white flex items-center gap-2">
-            <Scan className="w-5 h-5 text-[#818CF8]" /> Barcode Scanner
+            <Scan className="w-5 h-5 text-[#818CF8]" /> {t("scanner.title")}
           </h3>
           <p className="text-xs text-[#94A3B8] font-sans mt-1">
-            {scanSupported
-              ? "Scan a product barcode with your camera, or enter it manually. Looked up in Open Food Facts — unknown codes fall back to an AI estimate."
-              : "Enter a product's UPC/EAN barcode to look it up in Open Food Facts. Unknown codes fall back to an AI estimate."}
+            {scanSupported ? t("scanner.descSupported") : t("scanner.descManual")}
           </p>
         </div>
 
@@ -199,12 +199,12 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
               />
 
               <div className="absolute bottom-3 left-3 bg-black/75 px-3 py-1 rounded-lg text-[10px] font-mono text-[#818CF8] border border-white/5">
-                ● Live Viewport
+                ● {t("scanner.liveViewport")}
               </div>
               <button
                 onClick={stopCamera}
                 className="absolute top-3 right-3 bg-black/60 p-1.5 rounded-full text-white hover:bg-rose-500 transition-colors"
-                title="Stop Camera Feed"
+                title={t("scanner.stopCamera")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -216,12 +216,10 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-[#E2E8F0]">
-                  {scanSupported ? "Camera Scanner Ready" : "Manual Entry Recommended"}
+                  {scanSupported ? t("scanner.readyTitle") : t("scanner.manualTitle")}
                 </p>
                 <p className="text-xs text-[#94A3B8] max-w-xs mt-1">
-                  {scanSupported
-                    ? "Point your camera at a product barcode — it scans and looks it up automatically."
-                    : "Live scanning isn't available on this browser. You can still type the barcode number below."}
+                  {scanSupported ? t("scanner.readyDesc") : t("scanner.manualDesc")}
                 </p>
               </div>
               <button
@@ -229,7 +227,7 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
                 onClick={startCamera}
                 className="px-5 py-2 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-md"
               >
-                <Camera className="w-4 h-4" /> Use Device Camera
+                <Camera className="w-4 h-4" /> {t("scanner.useCamera")}
               </button>
             </div>
           )}
@@ -262,13 +260,13 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
         {/* Manual barcode entry */}
         <div className="border-t border-dashed border-white/5 pt-4">
           <label className="text-xs font-semibold text-[#94A3B8] font-sans block mb-1">
-            Or enter the barcode manually
+            {t("scanner.manualLabel")}
           </label>
           <div className="flex gap-2 font-sans">
             <input
               id="input_barcode_number"
               type="text"
-              placeholder="Enter numeric UPC/EAN code..."
+              placeholder={t("scanner.placeholder")}
               value={barcodeInput}
               onChange={(e) => setBarcodeInput(e.target.value)}
               className="flex-1 bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
@@ -284,7 +282,7 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
               ) : (
                 <Search className="w-3.5 h-3.5" />
               )}
-              Look up
+              {t("scanner.lookup")}
             </button>
           </div>
         </div>
@@ -301,11 +299,11 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
               <div className="flex justify-between items-start">
                 <div>
                   <span className="text-[9px] font-bold text-[#818CF8] uppercase tracking-widest bg-[#6366F1]/20 px-2.5 py-0.5 rounded-full inline-block">
-                    Match Scanned!
+                    {t("scanner.matchScanned")}
                   </span>
                   <h4 id="text_scanned_food_name" className="text-sm font-bold text-white mt-2 font-sans">{scanResult.name}</h4>
                   <p className="text-[10px] text-[#94A3B8]">
-                    Serving Quantity: {scanResult.servingSize} {scanResult.servingUnit}
+                    {t("scanner.servingQty", { size: scanResult.servingSize, unit: scanResult.servingUnit })}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
@@ -317,15 +315,15 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
 
               <div className="grid grid-cols-3 gap-2 text-center text-[10px] bg-[#0B0E14] border border-white/5 p-2 rounded-xl">
                 <div>
-                  <span className="text-[#FB923C] block font-semibold">Protein</span>
+                  <span className="text-[#FB923C] block font-semibold">{t("scanner.protein")}</span>
                   <b id="text_scanned_food_protein" className="text-white text-xs font-mono">{scanResult.protein}g</b>
                 </div>
                 <div>
-                  <span className="text-[#38BDF8] block font-semibold">Carbohydrates</span>
+                  <span className="text-[#38BDF8] block font-semibold">{t("scanner.carbs")}</span>
                   <b id="text_scanned_food_carbs" className="text-white text-xs font-mono">{scanResult.carbs}g</b>
                 </div>
                 <div>
-                  <span className="text-[#FACC15] block font-semibold">Fats</span>
+                  <span className="text-[#FACC15] block font-semibold">{t("scanner.fats")}</span>
                   <b id="text_scanned_food_fat" className="text-white text-xs font-mono">{scanResult.fat}g</b>
                 </div>
               </div>
@@ -336,14 +334,14 @@ export default function Scanner({ isCompact = false }: ScannerProps) {
                   onClick={() => setScanResult(null)}
                   className="flex-1 bg-[#0B0E14] hover:bg-white/5 border border-white/10 text-[#94A3B8] rounded-xl py-2 text-xs font-semibold transition-all"
                 >
-                  Clear
+                  {t("scanner.clear")}
                 </button>
                 <button
                   id="btn_confirm_scan"
                   onClick={handleLogScannedFood}
                   className="flex-1 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1"
                 >
-                  <Check className="w-4.5 h-4.5" /> Log to Meal Log
+                  <Check className="w-4.5 h-4.5" /> {t("scanner.logToLog")}
                 </button>
               </div>
             </motion.div>

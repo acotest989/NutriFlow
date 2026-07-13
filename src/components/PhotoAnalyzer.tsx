@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useStore } from "../store";
 import { fileToAnalyzableImage, captureVideoFrame } from "../lib/image";
+import { useTranslation } from "react-i18next";
 
 interface PhotoAnalyzerProps {
   isCompact?: boolean;
@@ -31,6 +32,7 @@ interface PhotoResult {
 export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps) {
   const currentDate = useStore((s) => s.currentDate);
   const addEntry = useStore((s) => s.addEntry);
+  const { t } = useTranslation();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const previewRef = useRef<string | null>(null); // object URL to revoke (uploads only)
@@ -90,7 +92,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
       setCameraActive(true);
     } catch (err) {
       console.error("Camera access failed:", err);
-      setError("Camera permission was denied or is unavailable. Use Upload instead.");
+      setError(t("photo.errCamera"));
     }
   };
 
@@ -102,7 +104,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
       stopCamera();
       void runAnalysis(base64, "image/jpeg", dataUrl, false);
     } catch (err: any) {
-      setError(err?.message || "Couldn't capture the photo. Try again.");
+      setError(err?.message || t("photo.errCapture"));
     }
   };
 
@@ -113,7 +115,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
       const img = await fileToAnalyzableImage(file);
       await runAnalysis(img.base64, img.mimeType, img.previewUrl, true);
     } catch (err: any) {
-      setError(err?.message || "Couldn't read that image. Please try another.");
+      setError(err?.message || t("photo.errRead"));
     }
   };
 
@@ -141,7 +143,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({} as { error?: string }));
-        throw new Error(body.error || "Analysis failed. Please try again.");
+        throw new Error(body.error || t("photo.errAnalysisDefault"));
       }
       const data = (await res.json()) as PhotoResult;
       setResult({
@@ -154,7 +156,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
         note: data.note?.trim() || "",
       });
     } catch (err: any) {
-      setError(err?.message || "Couldn't analyze that photo. Please try again.");
+      setError(err?.message || t("photo.errAnalyze"));
     } finally {
       setAnalyzing(false);
     }
@@ -190,10 +192,10 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
     <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
       <div>
         <h3 className="font-sans font-bold text-white flex items-center gap-2">
-          <Camera className="w-5 h-5 text-[#818CF8]" /> Snap a Meal
+          <Camera className="w-5 h-5 text-[#818CF8]" /> {t("photo.title")}
         </h3>
         <p className="text-xs text-[#94A3B8] font-sans mt-1">
-          Take or upload a food photo — AI estimates the calories and macros, then you review and log it.
+          {t("photo.desc")}
         </p>
       </div>
 
@@ -218,7 +220,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
             <button
               onClick={stopCamera}
               className="absolute top-3 right-3 bg-black/60 p-1.5 rounded-full text-white hover:bg-rose-500 transition-colors"
-              title="Close camera"
+              title={t("photo.closeCamera")}
             >
               <X className="w-4 h-4" />
             </button>
@@ -226,17 +228,17 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
               onClick={capturePhoto}
               className="absolute bottom-3 left-1/2 -translate-x-1/2 px-5 py-2 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 font-sans"
             >
-              <Camera className="w-4 h-4" /> Capture
+              <Camera className="w-4 h-4" /> {t("photo.capture")}
             </button>
           </>
         ) : preview ? (
           <>
-            <img src={preview} alt="Meal preview" className="w-full h-full object-cover" />
+            <img src={preview} alt={t("photo.previewAlt")} className="w-full h-full object-cover" />
             {!logged && (
               <button
                 onClick={reset}
                 className="absolute top-3 right-3 bg-black/60 p-1.5 rounded-full text-white hover:bg-rose-500 transition-colors"
-                title="Remove photo"
+                title={t("photo.removePhoto")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -244,7 +246,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
             {analyzing && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-2 font-sans">
                 <Loader2 className="w-6 h-6 animate-spin text-[#818CF8]" />
-                <p className="text-xs text-[#E2E8F0]">Analyzing your meal…</p>
+                <p className="text-xs text-[#E2E8F0]">{t("photo.analyzing")}</p>
               </div>
             )}
           </>
@@ -254,9 +256,9 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
               <Camera className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#E2E8F0]">Snap or upload a meal</p>
+              <p className="text-sm font-semibold text-[#E2E8F0]">{t("photo.idleTitle")}</p>
               <p className="text-xs text-[#94A3B8] max-w-xs mt-1">
-                Use your camera to photograph your plate, or pick an existing photo from your gallery.
+                {t("photo.idleDesc")}
               </p>
             </div>
             <div className="flex gap-2">
@@ -264,13 +266,13 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
                 onClick={startCamera}
                 className="px-4 py-2 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-md"
               >
-                <Camera className="w-4 h-4" /> Take Photo
+                <Camera className="w-4 h-4" /> {t("photo.takePhoto")}
               </button>
               <button
                 onClick={() => inputRef.current?.click()}
                 className="px-4 py-2 bg-[#0B0E14] hover:bg-white/5 border border-white/10 text-[#E2E8F0] rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
               >
-                <ImagePlus className="w-4 h-4" /> Upload
+                <ImagePlus className="w-4 h-4" /> {t("photo.upload")}
               </button>
             </div>
           </div>
@@ -295,13 +297,13 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
           >
             <span className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-300" />
-              No food detected. Try a clearer, closer shot of your plate.
+              {t("photo.noFood")}
             </span>
             <button
               onClick={reset}
               className="shrink-0 flex items-center gap-1 text-[#818CF8] hover:text-white font-semibold"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Retry
+              <RotateCcw className="w-3.5 h-3.5" /> {t("photo.retry")}
             </button>
           </motion.div>
         )}
@@ -316,7 +318,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
             exit={{ opacity: 0 }}
             className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-300 text-sm font-sans font-semibold flex items-center justify-center gap-2"
           >
-            <Check className="w-4.5 h-4.5" /> Logged to your diary!
+            <Check className="w-4.5 h-4.5" /> {t("photo.loggedDiary")}
           </motion.div>
         )}
       </AnimatePresence>
@@ -332,9 +334,9 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
           >
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-bold text-[#818CF8] uppercase tracking-widest bg-[#6366F1]/20 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> AI Estimate
+                <Sparkles className="w-3 h-3" /> {t("photo.aiEstimate")}
               </span>
-              <span className="text-[10px] text-[#64748B]">Review &amp; adjust before logging</span>
+              <span className="text-[10px] text-[#64748B]">{t("photo.reviewAdjust")}</span>
             </div>
 
             {/* Editable meal name */}
@@ -342,7 +344,7 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
               value={result.name}
               onChange={(e) => setField("name", e.target.value)}
               className="w-full bg-[#0B0E14] border border-white/10 rounded-xl px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-              placeholder="Meal name"
+              placeholder={t("photo.mealNamePlaceholder")}
             />
 
             {/* Detected items */}
@@ -361,10 +363,10 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
 
             {/* Editable calories + macros */}
             <div className="grid grid-cols-4 gap-2">
-              <Field label="Calories" color="text-[#818CF8]" value={result.calories} onChange={(v) => setField("calories", v)} />
-              <Field label="Protein g" color="text-[#FB923C]" value={result.protein} onChange={(v) => setField("protein", v)} />
-              <Field label="Carbs g" color="text-[#38BDF8]" value={result.carbs} onChange={(v) => setField("carbs", v)} />
-              <Field label="Fat g" color="text-[#FACC15]" value={result.fat} onChange={(v) => setField("fat", v)} />
+              <Field label={t("photo.calories")} color="text-[#818CF8]" value={result.calories} onChange={(v) => setField("calories", v)} />
+              <Field label={t("photo.proteinG")} color="text-[#FB923C]" value={result.protein} onChange={(v) => setField("protein", v)} />
+              <Field label={t("photo.carbsG")} color="text-[#38BDF8]" value={result.carbs} onChange={(v) => setField("carbs", v)} />
+              <Field label={t("photo.fatG")} color="text-[#FACC15]" value={result.fat} onChange={(v) => setField("fat", v)} />
             </div>
 
             {result.note && (
@@ -376,13 +378,13 @@ export default function PhotoAnalyzer({ isCompact = false }: PhotoAnalyzerProps)
                 onClick={reset}
                 className="flex-1 bg-[#0B0E14] hover:bg-white/5 border border-white/10 text-[#94A3B8] rounded-xl py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Try another
+                <RotateCcw className="w-3.5 h-3.5" /> {t("photo.tryAnother")}
               </button>
               <button
                 onClick={handleLog}
                 className="flex-1 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1"
               >
-                <Check className="w-4.5 h-4.5" /> Log meal
+                <Check className="w-4.5 h-4.5" /> {t("photo.logMeal")}
               </button>
             </div>
           </motion.div>

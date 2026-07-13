@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useStore } from "../store";
 import { aiPrefs } from "../lib/prefs";
+import { useTranslation } from "react-i18next";
 
 interface Recipe {
   name: string;
@@ -42,6 +43,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
   const goal = useStore((s) => s.goal);
   const profile = useStore((s) => s.profile);
   const onAddEntry = useStore((s) => s.addEntry);
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"coach" | "chef">("coach");
 
   // AI Coach States
@@ -78,13 +80,13 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get response from AI coach.");
+        throw new Error(t("coach.errCoach"));
       }
 
       const data = await response.json();
       setCoachData(data);
     } catch (err: any) {
-      setCoachError(err.message || "Something went wrong. Please check your internet connection.");
+      setCoachError(err.message || t("coach.errGeneric"));
     } finally {
       setIsCoachLoading(false);
     }
@@ -108,13 +110,13 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to cook up AI recipes.");
+        throw new Error(t("coach.errRecipes"));
       }
 
       const data = await response.json();
       setRecipes(data);
     } catch (err: any) {
-      setChefError(err.message || "Failed to generate recipes. Try adding more simple ingredient terms.");
+      setChefError(err.message || t("coach.errRecipesGeneric"));
     } finally {
       setIsChefLoading(false);
     }
@@ -156,7 +158,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
               : "text-[#94A3B8] hover:text-white"
           }`}
         >
-          <Activity className="w-4 h-4" /> AI Daily Coach
+          <Activity className="w-4 h-4" /> {t("coach.dailyCoachTab")}
         </button>
         <button
           onClick={() => setActiveTab("chef")}
@@ -166,7 +168,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
               : "text-[#94A3B8] hover:text-white"
           }`}
         >
-          <Utensils className="w-4 h-4" /> AI Chef Recipes
+          <Utensils className="w-4 h-4" /> {t("coach.chefTab")}
         </button>
       </div>
 
@@ -189,9 +191,9 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white leading-tight">Daily Coach Review</h4>
+                    <h4 className="text-sm font-bold text-white leading-tight">{t("coach.reviewTitle")}</h4>
                     <p className="text-[11px] text-[#94A3B8] mt-0.5 leading-relaxed">
-                      Analyze today's calories, proteins, exercises, and overall trend to optimize your fitness.
+                      {t("coach.reviewDesc")}
                     </p>
                   </div>
                 </div>
@@ -205,11 +207,11 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                   >
                     {isCoachLoading ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Cooking Analysis...
+                        <Loader2 className="w-4 h-4 animate-spin" /> {t("coach.analyzing")}
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-4 h-4" /> Run AI Coach Review
+                        <Sparkles className="w-4 h-4" /> {t("coach.runReview")}
                       </>
                     )}
                   </button>
@@ -234,13 +236,13 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                   {/* Top Grade Bar */}
                   <div className={`p-4 rounded-2xl border bg-linear-to-br ${getGradeColor(coachData.grade)} flex items-center gap-4`}>
                     <div className="w-14 h-14 rounded-2xl bg-black/20 border border-white/5 flex flex-col items-center justify-center shrink-0">
-                      <span className="text-[10px] font-mono tracking-widest text-[#94A3B8] uppercase font-bold">Grade</span>
+                      <span className="text-[10px] font-mono tracking-widest text-[#94A3B8] uppercase font-bold">{t("coach.grade")}</span>
                       <span className="text-2xl font-black leading-none mt-0.5">{coachData.grade}</span>
                     </div>
                     <div>
                       <div className="flex items-center gap-1">
                         <Award className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">Coach Rating</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">{t("coach.coachRating")}</span>
                       </div>
                       <p className="text-[11px] opacity-90 mt-1 leading-relaxed">
                         {coachData.streakMessage}
@@ -251,7 +253,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                   {/* Summary Segment */}
                   <div className="bg-[#141923] border border-white/5 p-4 rounded-2xl space-y-2">
                     <h5 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-[#818CF8]">
-                      <Activity className="w-3.5 h-3.5" /> Dietitian Summary
+                      <Activity className="w-3.5 h-3.5" /> {t("coach.dietitianSummary")}
                     </h5>
                     <p className="text-xs text-[#E2E8F0] leading-relaxed">
                       {coachData.summary}
@@ -261,7 +263,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                   {/* Tips Segment */}
                   <div className="bg-[#141923] border border-white/5 p-4 rounded-2xl space-y-3">
                     <h5 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-[#818CF8]">
-                      <Sparkles className="w-3.5 h-3.5" /> Direct Recommendations
+                      <Sparkles className="w-3.5 h-3.5" /> {t("coach.recommendations")}
                     </h5>
                     <ul className="space-y-2.5">
                       {coachData.suggestions.map((tip, idx) => (
@@ -293,9 +295,9 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                     <Utensils className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white leading-tight">Pantry Recipe Generator</h4>
+                    <h4 className="text-sm font-bold text-white leading-tight">{t("coach.pantryTitle")}</h4>
                     <p className="text-[11px] text-[#94A3B8] mt-0.5 leading-relaxed">
-                      Enter ingredients from your fridge/pantry to craft high-macro nutritious custom meals.
+                      {t("coach.pantryDesc")}
                     </p>
                   </div>
                 </div>
@@ -306,7 +308,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                     type="text"
                     value={ingredients}
                     onChange={(e) => setIngredients(e.target.value)}
-                    placeholder="e.g. Chicken breast, sweet potato, spinach, olive oil"
+                    placeholder={t("coach.pantryPlaceholder")}
                     className="w-full bg-[#0B0E14] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#475569] focus:outline-none focus:border-[#6366F1] transition-all"
                   />
                 </div>
@@ -319,11 +321,11 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                 >
                   {isChefLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Cooking Recipes...
+                      <Loader2 className="w-4 h-4 animate-spin" /> {t("coach.cookingRecipes")}
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4" /> Formulate 3 Recipes
+                      <Sparkles className="w-4 h-4" /> {t("coach.formulate")}
                     </>
                   )}
                 </button>
@@ -345,7 +347,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                   className="space-y-4"
                 >
                   <h5 className="text-[10px] font-mono font-bold tracking-widest text-[#94A3B8] uppercase px-1">
-                    Matched Meal Options
+                    {t("coach.matchedOptions")}
                   </h5>
 
                   {recipes.map((recipe, index) => {
@@ -363,7 +365,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                           <div>
                             <h6 className="text-xs font-bold text-white leading-snug">{recipe.name}</h6>
                             <span className="inline-flex items-center gap-3 text-[10px] text-[#94A3B8] font-mono mt-1">
-                              <span>⏱️ {recipe.prepTime} mins</span>
+                              <span>⏱️ {t("coach.mins", { n: recipe.prepTime })}</span>
                               <span>💪 {recipe.difficulty}</span>
                             </span>
                           </div>
@@ -379,11 +381,11 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                           >
                             {isLogged ? (
                               <>
-                                <Check className="w-3.5 h-3.5" /> Logged
+                                <Check className="w-3.5 h-3.5" /> {t("coach.logged")}
                               </>
                             ) : (
                               <>
-                                <Plus className="w-3.5 h-3.5" /> Log Meal
+                                <Plus className="w-3.5 h-3.5" /> {t("coach.logMeal")}
                               </>
                             )}
                           </button>
@@ -392,19 +394,19 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                         {/* Nutrition pill summaries */}
                         <div className="grid grid-cols-4 gap-1 bg-[#0B0E14] border border-white/5 rounded-xl p-2 text-center select-none">
                           <div>
-                            <div className="text-[9px] font-mono text-[#94A3B8] uppercase">Calories</div>
+                            <div className="text-[9px] font-mono text-[#94A3B8] uppercase">{t("coach.calories")}</div>
                             <div className="text-xs font-bold text-white mt-0.5">{recipe.calories} kcal</div>
                           </div>
                           <div>
-                            <div className="text-[9px] font-mono text-[#F43F5E] uppercase">Protein</div>
+                            <div className="text-[9px] font-mono text-[#F43F5E] uppercase">{t("coach.protein")}</div>
                             <div className="text-xs font-bold text-[#F43F5E] mt-0.5">{Math.round(recipe.protein)}g</div>
                           </div>
                           <div>
-                            <div className="text-[9px] font-mono text-[#F59E0B] uppercase">Carbs</div>
+                            <div className="text-[9px] font-mono text-[#F59E0B] uppercase">{t("coach.carbs")}</div>
                             <div className="text-xs font-bold text-[#F59E0B] mt-0.5">{Math.round(recipe.carbs)}g</div>
                           </div>
                           <div>
-                            <div className="text-[9px] font-mono text-[#10B981] uppercase">Fat</div>
+                            <div className="text-[9px] font-mono text-[#10B981] uppercase">{t("coach.fat")}</div>
                             <div className="text-xs font-bold text-[#10B981] mt-0.5">{Math.round(recipe.fat)}g</div>
                           </div>
                         </div>
@@ -417,7 +419,7 @@ export default function AiCoach({ isCompact = false }: AiCoachProps) {
                         {/* Collapse Instructions details */}
                         <div className="border-t border-white/5 pt-2.5">
                           <span className="text-[10px] font-bold text-[#818CF8] uppercase tracking-wider block mb-1">
-                            Prep & Cook Instructions:
+                            {t("coach.instructions")}
                           </span>
                           <p className="text-[10px] text-[#CBD5E1] whitespace-pre-line leading-relaxed pl-1.5 border-l border-[#818CF8]/30">
                             {recipe.instructions}
