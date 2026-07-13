@@ -16,6 +16,8 @@ import { Activity, Flame, TrendingUp, CircleAlert, Check, Award, Lock } from "lu
 import { useStore } from "../store";
 import { todayStr, addDays } from "../lib/date";
 import { computeStreakStats, computeBadges } from "../lib/streaks";
+import { useTranslation } from "react-i18next";
+import { localeTag } from "../i18n";
 
 interface ProgressChartsProps {
   isCompact?: boolean;
@@ -25,6 +27,7 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
   const entries = useStore((s) => s.entries);
   const goal = useStore((s) => s.goal);
   const hydration = useStore((s) => s.hydration);
+  const { t, i18n } = useTranslation();
   // 1. Generate 7 days of trend data ending today
   const getTrendData = () => {
     const data = [];
@@ -35,7 +38,7 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
       const d = new Date(dateStr + "T00:00:00");
 
       // Format date label (e.g. "Mon 23")
-      const label = d.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
+      const label = d.toLocaleDateString(localeTag(i18n.language), { weekday: "short", day: "numeric" });
 
       const dayEntries = entries.filter(e => e.date === dateStr);
       
@@ -78,16 +81,16 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
 
     if (totalKcal === 0) {
       return [
-        { name: "Protein", value: 30, color: "#10b981", grams: 0 },
-        { name: "Carbs", value: 50, color: "#fbbf24", grams: 0 },
-        { name: "Fat", value: 20, color: "#f87171", grams: 0 }
+        { name: t("charts.protein"), value: 30, color: "#10b981", grams: 0 },
+        { name: t("charts.carbs"), value: 50, color: "#fbbf24", grams: 0 },
+        { name: t("charts.fat"), value: 20, color: "#f87171", grams: 0 }
       ];
     }
 
     return [
-      { name: "Protein", value: Math.round((pKcal / totalKcal) * 100), color: "#4ADE80", grams: Math.round(protein) },
-      { name: "Carbs", value: Math.round((cKcal / totalKcal) * 100), color: "#38BDF8", grams: Math.round(carbs) },
-      { name: "Fat", value: Math.round((fKcal / totalKcal) * 100), color: "#FACC15", grams: Math.round(fat) }
+      { name: t("charts.protein"), value: Math.round((pKcal / totalKcal) * 100), color: "#4ADE80", grams: Math.round(protein) },
+      { name: t("charts.carbs"), value: Math.round((cKcal / totalKcal) * 100), color: "#38BDF8", grams: Math.round(carbs) },
+      { name: t("charts.fat"), value: Math.round((fKcal / totalKcal) * 100), color: "#FACC15", grams: Math.round(fat) }
     ];
   };
 
@@ -96,6 +99,15 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
   const totalGramsLogged = macroData.reduce((sum, m) => sum + m.grams, 0);
   const streak = computeStreakStats(entries, hydration);
   const badges = computeBadges(streak);
+
+  // Recharts uses the raw series keys as labels; map them to the active locale
+  // for the legend + tooltip without changing the underlying data keys.
+  const trendLabels: Record<string, string> = {
+    "Food Ingested": t("charts.foodIngested"),
+    "Active Burn": t("charts.activeBurn"),
+    "Net Calories": t("charts.netCalories"),
+    Goal: t("charts.goal"),
+  };
 
   return (
     <div id="analytics_panel" className="space-y-6">
@@ -107,14 +119,16 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
         </div>
         <div className="font-sans flex-1 min-w-0">
           <h3 className="font-bold text-sm">
-            {streak.current > 0 ? `${streak.current}-Day Streak` : "Start a Streak"}
+            {streak.current > 0
+              ? t("charts.streakTitle", { n: streak.current, days: t("charts.days", { count: streak.current }) })
+              : t("charts.startStreak")}
           </h3>
           <p className="text-xs text-[#E2E8F0] mt-0.5 leading-relaxed">
             {streak.current > 0
               ? streak.todayActive
-                ? `Nice work today! Keep it going — longest streak: ${streak.longest} ${streak.longest === 1 ? "day" : "days"}.`
-                : `Your streak is alive — log anything today to extend it. Longest: ${streak.longest} ${streak.longest === 1 ? "day" : "days"}.`
-              : "Log a meal, workout, or water today to begin your streak!"}
+                ? t("charts.streakToday", { longest: t("charts.days", { count: streak.longest }) })
+                : t("charts.streakAlive", { longest: t("charts.days", { count: streak.longest }) })
+              : t("charts.streakStart")}
           </p>
         </div>
       </div>
@@ -123,14 +137,14 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-sans font-bold text-white flex items-center gap-2">
-            <Award className="w-4 h-4 text-[#818CF8]" /> Achievements
+            <Award className="w-4 h-4 text-[#818CF8]" /> {t("charts.achievements")}
           </h3>
           <span className="text-[11px] font-mono font-bold text-[#818CF8] bg-[#6366F1]/10 border border-[#6366F1]/20 px-2.5 py-1 rounded-lg">
             {badges.filter((b) => b.earned).length} / {badges.length}
           </span>
         </div>
         <p className="text-[11px] text-[#94A3B8] font-sans leading-relaxed">
-          Log a meal, workout, or water on any day to keep your streak alive — miss a whole day and it resets. Stay consistent to unlock these:
+          {t("charts.achievementsExplainer")}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {badges.map((b) => (
@@ -142,8 +156,8 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
             >
               <span className={`text-xl leading-none shrink-0 ${b.earned ? "" : "opacity-30 grayscale"}`}>{b.emoji}</span>
               <div className="min-w-0 flex-1">
-                <p className={`text-xs font-bold leading-tight ${b.earned ? "text-white" : "text-[#64748B]"}`}>{b.label}</p>
-                <p className={`text-[10px] leading-tight mt-0.5 ${b.earned ? "text-[#94A3B8]" : "text-[#475569]"}`}>{b.description}</p>
+                <p className={`text-xs font-bold leading-tight ${b.earned ? "text-white" : "text-[#64748B]"}`}>{t(`charts.badges.${b.id}.label`)}</p>
+                <p className={`text-[10px] leading-tight mt-0.5 ${b.earned ? "text-[#94A3B8]" : "text-[#475569]"}`}>{t(`charts.badges.${b.id}.desc`)}</p>
               </div>
               {b.earned ? (
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -159,10 +173,10 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
         <div>
           <h3 className="font-sans font-bold text-white flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#818CF8]" /> 7-Day Balance Trend
+            <TrendingUp className="w-4 h-4 text-[#818CF8]" /> {t("charts.trendTitle")}
           </h3>
           <p className="text-[10px] text-[#94A3B8] font-sans mt-0.5">
-            Compares total food consumed against negative burned workout calories versus daily budget.
+            {t("charts.trendDesc")}
           </p>
         </div>
 
@@ -175,17 +189,18 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
               <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
               <XAxis dataKey="name" stroke="#64748B" tickLine={false} />
               <YAxis stroke="#64748B" tickLine={false} />
-              <Tooltip 
-                contentStyle={{ 
+              <Tooltip
+                formatter={(val, name) => [val as number, trendLabels[name as string] ?? name]}
+                contentStyle={{
                   backgroundColor: "#0B0E14",
                   borderColor: "#1E293B",
                   color: "#E2E8F0",
                   borderRadius: "12px",
                   fontSize: "11px",
                   fontFamily: "JetBrains Mono, monospace"
-                }} 
+                }}
               />
-              <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ color: "#E2E8F0" }} />
+              <Legend verticalAlign="top" height={36} iconType="circle" formatter={(value) => trendLabels[value as string] ?? value} wrapperStyle={{ color: "#E2E8F0" }} />
               
               {/* Positive Food Consumption */}
               <Bar dataKey="Food Ingested" fill="#6366F1" radius={[4, 4, 0, 0]} barSize={24} />
@@ -207,10 +222,10 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5">
         <div>
           <h3 className="font-sans font-bold text-white flex items-center gap-2">
-            <Activity className="w-4 h-4 text-[#818CF8]" /> Today's Energy Share
+            <Activity className="w-4 h-4 text-[#818CF8]" /> {t("charts.energyTitle")}
           </h3>
           <p className="text-[10px] text-[#94A3B8] font-sans mt-0.5">
-            Breakdown of daily energy contributions (kcal percentage) derived from logged proteins, carbs, and fats.
+            {t("charts.energyDesc")}
           </p>
         </div>
 
@@ -251,7 +266,7 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
                 {totalGramsLogged}g
               </span>
               <span className="text-[9px] uppercase font-sans text-[#64748B]">
-                Total Logged
+                {t("charts.totalLogged")}
               </span>
             </div>
           </div>
@@ -268,7 +283,7 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-bold text-white block">{m.grams}g</span>
-                  <span className="text-[9px] text-[#64748B]">{m.value}% of calories</span>
+                  <span className="text-[9px] text-[#64748B]">{t("charts.ofCalories", { value: m.value })}</span>
                 </div>
               </div>
             ))}
@@ -276,7 +291,7 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
             {totalGramsLogged === 0 && (
               <div className="flex gap-1.5 items-start mt-2 p-2 bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded-lg text-[9px]">
                 <CircleAlert className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                <span>Default balanced template displayed. Please log food items in the database to see live ratios!</span>
+                <span>{t("charts.defaultTemplate")}</span>
               </div>
             )}
           </div>

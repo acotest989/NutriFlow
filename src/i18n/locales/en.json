@@ -240,5 +240,39 @@
     "statusUnsupported": "Live scanning isn't supported on this browser — enter the code manually below.",
     "errCamera": "Camera permission was denied or is unavailable. You can still enter the barcode number manually below.",
     "errLookup": "Barcode analysis failed. Try a pre-registered code or check environment."
+  },
+  "charts": {
+    "streakTitle": "{{n}}-Day Streak",
+    "startStreak": "Start a Streak",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "streakToday": "Nice work today! Keep it going — longest streak: {{longest}}.",
+    "streakAlive": "Your streak is alive — log anything today to extend it. Longest: {{longest}}.",
+    "streakStart": "Log a meal, workout, or water today to begin your streak!",
+    "achievements": "Achievements",
+    "achievementsExplainer": "Log a meal, workout, or water on any day to keep your streak alive — miss a whole day and it resets. Stay consistent to unlock these:",
+    "trendTitle": "7-Day Balance Trend",
+    "trendDesc": "Compares total food consumed against negative burned workout calories versus daily budget.",
+    "foodIngested": "Food Ingested",
+    "activeBurn": "Active Burn",
+    "netCalories": "Net Calories",
+    "goal": "Goal",
+    "energyTitle": "Today's Energy Share",
+    "energyDesc": "Breakdown of daily energy contributions (kcal percentage) derived from logged proteins, carbs, and fats.",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "totalLogged": "Total Logged",
+    "ofCalories": "{{value}}% of calories",
+    "defaultTemplate": "Default balanced template displayed. Please log food items in the database to see live ratios!",
+    "badges": {
+      "start": { "label": "Getting Started", "desc": "Log your first item" },
+      "streak3": { "label": "Consistent", "desc": "Reach a 3-day streak" },
+      "streak7": { "label": "On Fire", "desc": "Reach a 7-day streak" },
+      "streak14": { "label": "Dedicated", "desc": "Reach a 14-day streak" },
+      "streak30": { "label": "Unstoppable", "desc": "Reach a 30-day streak" },
+      "hydrated": { "label": "Hydrated", "desc": "Log water on 7 days" },
+      "century": { "label": "Centurion", "desc": "Log 100 items total" }
+    }
   }
 }

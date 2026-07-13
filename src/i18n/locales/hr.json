@@ -240,5 +240,40 @@
     "statusUnsupported": "Skeniranje uživo nije podržano u ovom pregledniku — unesi kod ručno ispod.",
     "errCamera": "Pristup kameri je odbijen ili nije dostupan. I dalje možeš ručno unijeti broj barkoda ispod.",
     "errLookup": "Analiza barkoda nije uspjela. Pokušaj s registriranim kodom ili provjeri okruženje."
+  },
+  "charts": {
+    "streakTitle": "Niz od {{days}}",
+    "startStreak": "Započni niz",
+    "days_one": "{{count}} dan",
+    "days_few": "{{count}} dana",
+    "days_other": "{{count}} dana",
+    "streakToday": "Odličan rad danas! Samo nastavi — najduži niz: {{longest}}.",
+    "streakAlive": "Tvoj niz je živ — unesi bilo što danas da ga produžiš. Najduži: {{longest}}.",
+    "streakStart": "Unesi obrok, trening ili vodu danas kako bi započeo svoj niz!",
+    "achievements": "Postignuća",
+    "achievementsExplainer": "Unesi obrok, trening ili vodu bilo kojeg dana da održiš niz — propustiš li cijeli dan, resetira se. Budi dosljedan da otključaš ova postignuća:",
+    "trendTitle": "7-dnevni bilans",
+    "trendDesc": "Uspoređuje ukupno unesene kalorije sa sagorjelim kalorijama treninga u odnosu na dnevni proračun.",
+    "foodIngested": "Unesena hrana",
+    "activeBurn": "Sagorijevanje",
+    "netCalories": "Neto kalorije",
+    "goal": "Cilj",
+    "energyTitle": "Današnja raspodjela energije",
+    "energyDesc": "Pregled dnevnog doprinosa energiji (postotak kcal) iz unesenih proteina, ugljikohidrata i masti.",
+    "protein": "Proteini",
+    "carbs": "Ugljikohidrati",
+    "fat": "Masti",
+    "totalLogged": "Ukupno uneseno",
+    "ofCalories": "{{value}}% kalorija",
+    "defaultTemplate": "Prikazan je zadani uravnoteženi predložak. Unesi namirnice da vidiš stvarne omjere!",
+    "badges": {
+      "start": { "label": "Prvi korak", "desc": "Unesi svoju prvu stavku" },
+      "streak3": { "label": "Dosljedan", "desc": "Dostigni niz od 3 dana" },
+      "streak7": { "label": "Zahuktao se", "desc": "Dostigni niz od 7 dana" },
+      "streak14": { "label": "Predan", "desc": "Dostigni niz od 14 dana" },
+      "streak30": { "label": "Nezaustavljiv", "desc": "Dostigni niz od 30 dana" },
+      "hydrated": { "label": "Hidriran", "desc": "Unesi vodu 7 dana" },
+      "century": { "label": "Stotinar", "desc": "Unesi ukupno 100 stavki" }
+    }
   }
 }
