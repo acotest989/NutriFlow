@@ -28,18 +28,21 @@ import UpdatePassword from "./components/UpdatePassword";
 import DeleteAccountModal from "./components/DeleteAccountModal";
 import ResetDataModal from "./components/ResetDataModal";
 import Onboarding from "./components/Onboarding";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 import { stashPendingOnboarding } from "./lib/onboarding";
 import { useStore } from "./store";
+import { useTranslation } from "react-i18next";
 
 // Desktop top-nav tabs — mirror the mobile bottom nav so both views share the
-// same sections, driven by the same `activeMobileTab` state.
+// same sections, driven by the same `activeMobileTab` state. `tKey` points at
+// the nav label in the active locale (see src/i18n).
 const DESKTOP_TABS = [
-  { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
-  { id: "meals", label: "Meals", Icon: Apple },
-  { id: "exercises", label: "Active", Icon: Dumbbell },
-  { id: "coach", label: "AI Coach", Icon: Sparkles },
-  { id: "charts", label: "Trends", Icon: TrendingUp },
-  { id: "scanner", label: "UPC Scan", Icon: Scan },
+  { id: "dashboard", tKey: "nav.dashboard", Icon: LayoutDashboard },
+  { id: "meals", tKey: "nav.meals", Icon: Apple },
+  { id: "exercises", tKey: "nav.active", Icon: Dumbbell },
+  { id: "coach", tKey: "nav.coach", Icon: Sparkles },
+  { id: "charts", tKey: "nav.trends", Icon: TrendingUp },
+  { id: "scanner", tKey: "nav.scan", Icon: Scan },
 ] as const;
 
 export default function App() {
@@ -69,6 +72,7 @@ export default function App() {
   const currentDate = useStore((s) => s.currentDate);
   const theme = useStore((s) => s.theme);
   const toggleTheme = useStore((s) => s.toggleTheme);
+  const { t } = useTranslation();
 
   // Auth state
   const authReady = useStore((s) => s.authReady);
@@ -211,12 +215,13 @@ export default function App() {
                 Nutri<span className="text-[#818CF8]">Flow</span>
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <LanguageSwitcher />
               <button
                 id="mobile_theme_toggle"
                 onClick={toggleTheme}
                 className="p-1.5 rounded-lg border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 transition-all text-xs text-[#818CF8] flex items-center justify-center"
-                title={theme === 'deep-midnight' ? 'Switch to High Contrast Light Theme' : 'Switch to Deep Midnight Theme'}
+                title={theme === 'deep-midnight' ? t('header.themeToLight') : t('header.themeToDark')}
               >
                 {theme === 'deep-midnight' ? (
                   <Sun className="w-4.5 h-4.5 text-amber-400" />
@@ -226,7 +231,7 @@ export default function App() {
               </button>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="text-[9px] font-mono font-bold tracking-wider text-[#94A3B8] uppercase leading-none">Sync On</span>
+                <span className="hidden min-[420px]:inline text-[9px] font-mono font-bold tracking-wider text-[#94A3B8] uppercase leading-none">{t('header.syncOn')}</span>
               </div>
               <button
                 id="mobile_sign_out"
@@ -274,7 +279,7 @@ export default function App() {
               }`}
             >
               <LayoutDashboard className="w-5 h-5" />
-              <span>Dashboard</span>
+              <span>{t('nav.dashboard')}</span>
             </button>
             <button
               id="mobile_nav_meals"
@@ -284,7 +289,7 @@ export default function App() {
               }`}
             >
               <Apple className="w-5 h-5" />
-              <span>Meals</span>
+              <span>{t('nav.meals')}</span>
             </button>
             <button
               id="mobile_nav_workouts"
@@ -294,7 +299,7 @@ export default function App() {
               }`}
             >
               <Dumbbell className="w-5 h-5" />
-              <span>Active</span>
+              <span>{t('nav.active')}</span>
             </button>
             <button
               id="mobile_nav_coach"
@@ -304,7 +309,7 @@ export default function App() {
               }`}
             >
               <Sparkles className="w-5 h-5" />
-              <span>AI Coach</span>
+              <span>{t('nav.coach')}</span>
             </button>
             <button
               id="mobile_nav_analytics"
@@ -314,7 +319,7 @@ export default function App() {
               }`}
             >
               <TrendingUp className="w-5 h-5" />
-              <span>Trends</span>
+              <span>{t('nav.trends')}</span>
             </button>
             <button
               id="mobile_nav_scanner"
@@ -324,7 +329,7 @@ export default function App() {
               }`}
             >
               <Scan className="w-5 h-5" />
-              <span>UPC Scan</span>
+              <span>{t('nav.scan')}</span>
             </button>
           </nav>
         </div>
@@ -341,45 +346,46 @@ export default function App() {
                 <h2 className="font-sans font-black text-base tracking-tight text-white flex items-center gap-1.5">
                   NutriFlow<span className="text-[#818CF8]">Studio</span>
                 </h2>
-                <p className="text-[10px] text-[#94A3B8] font-sans">Professional Diet, Hydration, and Active Workout Workspace</p>
+                <p className="text-[10px] text-[#94A3B8] font-sans">{t('header.tagline')}</p>
               </div>
             </div>
 
             {/* Status and Active Date indicators */}
             <div className="flex items-center gap-4">
+              <LanguageSwitcher />
               <button
                 id="desktop_theme_toggle"
                 onClick={toggleTheme}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 transition-all text-xs font-semibold text-[#818CF8] cursor-pointer"
-                title={theme === 'deep-midnight' ? 'Switch to High Contrast Light Theme' : 'Switch to Deep Midnight Theme'}
+                title={theme === 'deep-midnight' ? t('header.themeToLight') : t('header.themeToDark')}
               >
                 {theme === 'deep-midnight' ? (
                   <>
                     <Sun className="w-4 h-4 text-amber-400" />
-                    <span className="text-[#E2E8F0] font-sans">High Contrast Light</span>
+                    <span className="text-[#E2E8F0] font-sans">{t('header.lightLabel')}</span>
                   </>
                 ) : (
                   <>
                     <Moon className="w-4 h-4 text-[#818CF8]" />
-                    <span className="text-[#0F172A] font-sans">Deep Midnight</span>
+                    <span className="text-[#0F172A] font-sans">{t('header.darkLabel')}</span>
                   </>
                 )}
               </button>
               <div className="flex items-center gap-1.5 bg-[#0B0E14] border border-white/5 px-3 py-1.5 rounded-xl">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-mono font-bold text-[#10B981] uppercase tracking-wider">AI Engines Connected</span>
+                <span className="text-[10px] font-mono font-bold text-[#10B981] uppercase tracking-wider">{t('header.aiConnected')}</span>
               </div>
               <div className="text-[11px] font-sans text-[#94A3B8]">
-                Logged date: <span className="text-white font-semibold font-mono bg-white/5 px-2.5 py-1 rounded-lg border border-white/5 ml-1">{currentDate}</span>
+                {t('header.loggedDate')} <span className="text-white font-semibold font-mono bg-white/5 px-2.5 py-1 rounded-lg border border-white/5 ml-1">{currentDate}</span>
               </div>
               <button
                 id="desktop_sign_out"
                 onClick={() => signOut()}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:border-rose-500/40 bg-white/5 hover:bg-rose-500/10 transition-all text-xs font-semibold text-[#94A3B8] hover:text-rose-400 cursor-pointer"
-                title={user.email ? `Sign out (${user.email})` : "Sign out"}
+                title={user.email ? `${t('header.signOut')} (${user.email})` : t('header.signOut')}
               >
                 <LogOut className="w-4 h-4" />
-                <span className="font-sans hidden xl:inline">Sign Out</span>
+                <span className="font-sans hidden xl:inline">{t('header.signOut')}</span>
               </button>
             </div>
           </div>
@@ -387,7 +393,7 @@ export default function App() {
           {/* Desktop tab navigation — mirrors the mobile tabs so both views share
               the same sections (driven by the same activeMobileTab state). */}
           <nav className="bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl p-2 flex items-center gap-1 shadow-lg overflow-x-auto">
-            {DESKTOP_TABS.map(({ id, label, Icon }) => {
+            {DESKTOP_TABS.map(({ id, tKey, Icon }) => {
               const active = activeMobileTab === id;
               return (
                 <button
@@ -399,7 +405,7 @@ export default function App() {
                       : "text-[#94A3B8] hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Icon className="w-4 h-4" /> {label}
+                  <Icon className="w-4 h-4" /> {t(tKey)}
                 </button>
               );
             })}
@@ -454,32 +460,32 @@ export default function App() {
       <footer className="text-center font-sans mt-6 px-6 pb-28 lg:mt-10 lg:pb-10 select-none">
         <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-[12px]">
           <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-white transition-colors">
-            Privacy Policy
+            {t('footer.privacy')}
           </a>
           <span className="text-[#334155]">·</span>
           <button
             onClick={() => navigate("/quiz")}
             className="text-[#94A3B8] hover:text-white transition-colors"
           >
-            Edit Profile
+            {t('footer.editProfile')}
           </button>
           <span className="text-[#334155]">·</span>
           <button
             onClick={() => setShowResetModal(true)}
             className="text-[#94A3B8] hover:text-amber-400 transition-colors"
           >
-            Reset Data
+            {t('footer.resetData')}
           </button>
           <span className="text-[#334155]">·</span>
           <button
             onClick={() => setShowDeleteModal(true)}
             className="text-[#94A3B8] hover:text-rose-400 transition-colors"
           >
-            Delete Account
+            {t('footer.deleteAccount')}
           </button>
           <span className="text-[#334155]">·</span>
           <a href="mailto:chillibrimedia@gmail.com" className="text-[#94A3B8] hover:text-white transition-colors">
-            Contact
+            {t('footer.contact')}
           </a>
           <span className="text-[#334155]">·</span>
           <a
@@ -488,11 +494,11 @@ export default function App() {
             rel="noopener noreferrer"
             className="text-[#818CF8] hover:text-[#a5b4fc] transition-colors inline-flex items-center gap-1"
           >
-            <Star className="w-3.5 h-3.5" /> Rate on Play
+            <Star className="w-3.5 h-3.5" /> {t('footer.rate')}
           </a>
         </div>
         <p className="text-[11px] text-[#64748B] mt-3">
-          NutriFlow · AI diet, hydration &amp; exercise tracker · © 2026
+          {t('footer.tagline')}
         </p>
       </footer>
 

@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "dashboard": "Pregled",
+    "meals": "Obroci",
+    "active": "Trening",
+    "coach": "AI Trener",
+    "trends": "Trendovi",
+    "scan": "Skener"
+  },
+  "header": {
+    "tagline": "Profesionalni prostor za ishranu, hidraciju i vežbanje",
+    "aiConnected": "AI motori povezani",
+    "syncOn": "Sinhronizovano",
+    "loggedDate": "Datum unosa:",
+    "signOut": "Odjava",
+    "themeToLight": "Pređi na svetlu temu (visok kontrast)",
+    "themeToDark": "Pređi na tamnu temu",
+    "lightLabel": "Svetla tema",
+    "darkLabel": "Tamna tema"
+  },
+  "footer": {
+    "privacy": "Politika privatnosti",
+    "editProfile": "Uredi profil",
+    "resetData": "Resetuj podatke",
+    "deleteAccount": "Obriši nalog",
+    "contact": "Kontakt",
+    "rate": "Oceni na Play-u",
+    "tagline": "NutriFlow · AI praćenje ishrane, hidracije i vežbanja · © 2026"
+  },
+  "lang": {
+    "label": "Jezik"
+  }
+}

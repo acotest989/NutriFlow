@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "meals": "Meals",
+    "active": "Active",
+    "coach": "AI Coach",
+    "trends": "Trends",
+    "scan": "UPC Scan"
+  },
+  "header": {
+    "tagline": "Professional Diet, Hydration, and Active Workout Workspace",
+    "aiConnected": "AI Engines Connected",
+    "syncOn": "Sync On",
+    "loggedDate": "Logged date:",
+    "signOut": "Sign Out",
+    "themeToLight": "Switch to High Contrast Light Theme",
+    "themeToDark": "Switch to Deep Midnight Theme",
+    "lightLabel": "High Contrast Light",
+    "darkLabel": "Deep Midnight"
+  },
+  "footer": {
+    "privacy": "Privacy Policy",
+    "editProfile": "Edit Profile",
+    "resetData": "Reset Data",
+    "deleteAccount": "Delete Account",
+    "contact": "Contact",
+    "rate": "Rate on Play",
+    "tagline": "NutriFlow · AI diet, hydration & exercise tracker · © 2026"
+  },
+  "lang": {
+    "label": "Language"
+  }
+}
