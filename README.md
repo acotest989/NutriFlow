@@ -177,6 +177,9 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 │   │   ├── date.ts                 # local-timezone date helpers (avoids UTC day-shift bugs)
 │   │   ├── image.ts                # client-side photo compression for meal-photo upload
 │   │   └── streaks.ts              # logging-streak + achievement-badge computation
+│   ├── i18n/                       # localization (English default; Serbian Latin, Croatian, Bosnian)
+│   │   ├── index.ts                # i18next init, LANGUAGES, setLanguage(), lazy-load + i18nReady
+│   │   └── locales/                # en bundled; sr/hr/bs lazy-loaded JSON (app-shell strings; extraction WIP)
 │   ├── index.css                   # Tailwind imports & theme declarations
 │   └── components/
 │       ├── Auth.tsx                # Sign-in / sign-up / forgot-password screen
@@ -185,6 +188,7 @@ NutriFlow is published on Google Play as a **Trusted Web Activity** — a thin A
 │       ├── DeleteAccountModal.tsx  # Confirm-and-delete-account modal
 │       ├── ResetDataModal.tsx      # Confirm-and-reset-logged-data modal
 │       ├── ErrorBoundary.tsx       # Graceful render-error fallback
+│       ├── LanguageSwitcher.tsx    # Header language picker (English / Serbian / Croatian / Bosnian)
 │       ├── Dashboard.tsx           # Calorie progress, goal edits & summary
 │       ├── FoodSearch.tsx          # Natural-language food lookup & additions
 │       ├── ExerciseTracker.tsx     # Cardio/strength logger & burned stats
