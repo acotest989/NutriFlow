@@ -30,6 +30,19 @@ function isSupported(code: string): code is LangCode {
   return LANGUAGES.some((l) => l.code === code);
 }
 
+// BCP-47 tag for Intl date/number formatting. Serbian is forced to Latin script
+// (sr-Latn) to match our Latin-only decision; the rest map 1:1.
+const LOCALE_TAGS: Record<LangCode, string> = {
+  en: "en-US",
+  sr: "sr-Latn",
+  hr: "hr-HR",
+  bs: "bs-Latn",
+};
+
+export function localeTag(lang: string = i18n.language): string {
+  return isSupported(lang) ? LOCALE_TAGS[lang] : "en-US";
+}
+
 const stored = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
 const initialLang: LangCode = stored && isSupported(stored) ? stored : "en";
 

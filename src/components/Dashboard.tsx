@@ -14,6 +14,8 @@ import {
 import { Goal } from "../types";
 import { useStore } from "../store";
 import { todayStr, addDays } from "../lib/date";
+import { useTranslation } from "react-i18next";
+import { localeTag } from "../i18n";
 
 interface DashboardProps {
   isCompact?: boolean;
@@ -28,6 +30,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
   const onAddQuickCalories = useStore((s) => s.addQuickCalories);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [tempGoal, setTempGoal] = useState<Goal>({ ...goal });
+  const { t, i18n } = useTranslation();
 
   // Calculate daily totals for selected date
   const dailyEntries = entries.filter(e => e.date === currentDate);
@@ -57,11 +60,11 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
 
   // Helper to format date beautifully
   const formatDateLabel = (dateStr: string) => {
-    if (dateStr === todayStr()) return "Today";
-    if (dateStr === addDays(todayStr(), -1)) return "Yesterday";
+    if (dateStr === todayStr()) return t("dashboard.today");
+    if (dateStr === addDays(todayStr(), -1)) return t("dashboard.yesterday");
 
     const d = new Date(dateStr + "T00:00:00");
-    return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+    return d.toLocaleDateString(localeTag(i18n.language), { weekday: "long", month: "short", day: "numeric" });
   };
 
   const changeDate = (days: number) => setCurrentDate(addDays(currentDate, days));
@@ -112,7 +115,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
         {/* Card Header with Safe Settings Button */}
         <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-3">
           <h3 className="font-sans font-bold text-sm text-[#818CF8] flex items-center gap-2">
-            <Target className="w-4 h-4" /> Calorie Balance & Goals
+            <Target className="w-4 h-4" /> {t("dashboard.balanceTitle")}
           </h3>
           <button 
             id="btn_edit_goal"
@@ -121,10 +124,10 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
               setIsEditingGoal(!isEditingGoal);
             }} 
             className="p-1.5 text-[#64748B] hover:text-[#818CF8] hover:bg-white/5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="Adjust Custom Goals"
+            title={t("dashboard.adjustGoalTitle")}
           >
-            <Settings className="w-4 h-4" /> 
-            <span className="text-[11px] font-sans">Adjust Goal</span>
+            <Settings className="w-4 h-4" />
+            <span className="text-[11px] font-sans">{t("dashboard.adjustGoal")}</span>
           </button>
         </div>
 
@@ -138,12 +141,12 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
           >
             <div className="flex items-center gap-2 mb-2 text-[#818CF8]">
               <Target className="w-5 h-5" />
-              <h3 className="font-semibold font-sans text-white">Custom Goal Settings</h3>
+              <h3 className="font-semibold font-sans text-white">{t("dashboard.customGoalSettings")}</h3>
             </div>
             
             <div className="grid grid-cols-2 gap-3 font-sans">
               <div>
-                <label className="text-xs text-[#94A3B8] block mb-1">Calories (kcal)</label>
+                <label className="text-xs text-[#94A3B8] block mb-1">{t("dashboard.caloriesLabel")}</label>
                 <input 
                   id="input_goal_calories"
                   type="number" 
@@ -153,7 +156,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                 />
               </div>
               <div>
-                <label className="text-xs text-[#94A3B8] block mb-1">Protein (g)</label>
+                <label className="text-xs text-[#94A3B8] block mb-1">{t("dashboard.proteinLabel")}</label>
                 <input 
                   id="input_goal_protein"
                   type="number" 
@@ -163,7 +166,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                 />
               </div>
               <div>
-                <label className="text-xs text-[#94A3B8] block mb-1">Carbs (g)</label>
+                <label className="text-xs text-[#94A3B8] block mb-1">{t("dashboard.carbsLabel")}</label>
                 <input 
                   id="input_goal_carbs"
                   type="number" 
@@ -173,7 +176,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                 />
               </div>
               <div>
-                <label className="text-xs text-[#94A3B8] block mb-1">Fat (g)</label>
+                <label className="text-xs text-[#94A3B8] block mb-1">{t("dashboard.fatLabel")}</label>
                 <input 
                   id="input_goal_fat"
                   type="number" 
@@ -191,14 +194,14 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                 onClick={() => setIsEditingGoal(false)} 
                 className="px-4 py-2 border border-white/10 rounded-xl text-xs text-[#94A3B8] hover:bg-white/5 font-sans"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button 
                 id="btn_submit_goal"
                 type="submit" 
                 className="px-4 py-2 bg-[#6366F1] hover:bg-[#818CF8] text-white rounded-xl text-xs font-sans font-semibold transition-colors shadow-sm"
               >
-                Save Goals
+                {t("dashboard.saveGoals")}
               </button>
             </div>
           </motion.form>
@@ -237,15 +240,15 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                   {Math.abs(remainingCalories).toLocaleString()}
                 </span>
                 <span className="text-[10px] text-[#64748B] uppercase tracking-widest font-sans font-semibold">
-                  {remainingCalories >= 0 ? "kcal Left" : "Over Target"}
+                  {remainingCalories >= 0 ? t("dashboard.kcalLeft") : t("dashboard.overTarget")}
                 </span>
                 {remainingCalories >= 0 ? (
                   <span className="text-[10px] text-[#818CF8] font-sans mt-1 bg-[#6366F1]/10 px-2.5 py-0.5 rounded-full font-semibold border border-[#6366F1]/10">
-                    {calPercent.toFixed(0)}% Done
+                    {t("dashboard.percentDone", { percent: calPercent.toFixed(0) })}
                   </span>
                 ) : (
                   <span className="text-[10px] text-rose-400 font-sans mt-1 bg-rose-500/10 px-2.5 py-0.5 rounded-full font-semibold border border-rose-500/10">
-                    Exceeded
+                    {t("dashboard.exceeded")}
                   </span>
                 )}
               </div>
@@ -258,7 +261,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                   <Apple className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs text-[#94A3B8] font-medium block">Consumed Food</span>
+                  <span className="text-xs text-[#94A3B8] font-medium block">{t("dashboard.consumedFood")}</span>
                   <div className="flex items-baseline gap-1">
                     <span id="text_consumed_kcal" className="text-xl font-bold text-[#F8FAFC]">{consumedCalories}</span>
                     <span className="text-[10px] text-[#64748B]">kcal</span>
@@ -269,7 +272,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                   id="btn_quick_add_meal"
                   onClick={() => onAddQuickCalories(200, 'meal')}
                   className="px-2 py-1 bg-white/5 hover:bg-white/10 text-[#818CF8] border border-white/10 rounded-lg text-[10px] font-semibold flex items-center gap-0.5 transition-colors"
-                  title="Quick Log +200 kcal"
+                  title={t("dashboard.quickAddMeal")}
                 >
                   <Plus className="w-3 h-3" /> 200
                 </button>
@@ -280,7 +283,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                   <Flame className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs text-[#94A3B8] font-medium block">Burned Workouts</span>
+                  <span className="text-xs text-[#94A3B8] font-medium block">{t("dashboard.burnedWorkouts")}</span>
                   <div className="flex items-baseline gap-1">
                     <span id="text_burned_kcal" className="text-xl font-bold text-[#F8FAFC]">{burnedCalories}</span>
                     <span className="text-[10px] text-[#64748B]">kcal</span>
@@ -291,15 +294,15 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
                   id="btn_quick_add_exercise"
                   onClick={() => onAddQuickCalories(150, 'exercise')}
                   className="px-2 py-1 bg-white/5 hover:bg-white/10 text-[#4ADE80] border border-white/10 rounded-lg text-[10px] font-semibold flex items-center gap-0.5 transition-colors"
-                  title="Quick Log -150 kcal"
+                  title={t("dashboard.quickAddExercise")}
                 >
                   <Plus className="w-3 h-3" /> 150
                 </button>
               </div>
 
               <div className="border-t border-dashed border-white/5 pt-3 flex justify-between text-xs text-[#64748B] px-1">
-                <span>Daily Budget: <b className="text-[#94A3B8]">{goal.calories} kcal</b></span>
-                <span>Net Calories: <b className="text-[#94A3B8]">{netCalories} kcal</b></span>
+                <span>{t("dashboard.dailyBudget")} <b className="text-[#94A3B8]">{goal.calories} kcal</b></span>
+                <span>{t("dashboard.netCalories")} <b className="text-[#94A3B8]">{netCalories} kcal</b></span>
               </div>
             </div>
           </div>
@@ -309,7 +312,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
       {/* Macronutrients Goals Progress */}
       <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5">
         <h3 className="font-sans font-bold text-white mb-5 flex items-center gap-2">
-          <Utensils className="w-4 h-4 text-[#818CF8]" /> Daily Macronutrients
+          <Utensils className="w-4 h-4 text-[#818CF8]" /> {t("dashboard.macrosTitle")}
         </h3>
 
         <div className="space-y-5 font-sans">
@@ -318,7 +321,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
             <div className="flex justify-between items-baseline mb-1">
               <span className="text-xs font-semibold text-[#E2E8F0] flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#FB923C] inline-block"></span>
-                Protein
+                {t("dashboard.protein")}
               </span>
               <span className="text-xs text-[#94A3B8]">
                 <b id="text_actual_protein" className="text-white">{consumedProtein.toFixed(1)}g</b> / {goal.protein}g ({proteinPercent.toFixed(0)}%)
@@ -339,7 +342,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
             <div className="flex justify-between items-baseline mb-1">
               <span className="text-xs font-semibold text-[#E2E8F0] flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8] inline-block"></span>
-                Carbohydrates
+                {t("dashboard.carbohydrates")}
               </span>
               <span className="text-xs text-[#94A3B8]">
                 <b id="text_actual_carbs" className="text-white">{consumedCarbs.toFixed(1)}g</b> / {goal.carbs}g ({carbsPercent.toFixed(0)}%)
@@ -360,7 +363,7 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
             <div className="flex justify-between items-baseline mb-1">
               <span className="text-xs font-semibold text-[#E2E8F0] flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#FACC15] inline-block"></span>
-                Fats
+                {t("dashboard.fats")}
               </span>
               <span className="text-xs text-[#94A3B8]">
                 <b id="text_actual_fat" className="text-white">{consumedFat.toFixed(1)}g</b> / {goal.fat}g ({fatPercent.toFixed(0)}%)
@@ -384,12 +387,12 @@ export default function Dashboard({ isCompact = false }: DashboardProps) {
           </div>
           <div>
             <p className="text-xs font-semibold text-[#818CF8] font-sans">
-              {remainingCalories > 0 
-                ? `You have ${remainingCalories} kcal left for your active target. Keep going!`
-                : "You have completed your daily net calorie goal! Excellent work staying balanced today."}
+              {remainingCalories > 0
+                ? t("dashboard.statusLeft", { kcal: remainingCalories })
+                : t("dashboard.statusDone")}
             </p>
             <p className="text-[10px] text-[#94A3B8] font-sans mt-0.5">
-              Macros contribute directly to muscle recovery and stable energy. Try logging balanced meals to match targets.
+              {t("dashboard.macrosNote")}
             </p>
           </div>
         </div>

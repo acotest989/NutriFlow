@@ -29,5 +29,54 @@
   },
   "lang": {
     "label": "Language"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
+    "delete": "Delete",
+    "close": "Close",
+    "loading": "Loading…"
+  },
+  "dashboard": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "balanceTitle": "Calorie Balance & Goals",
+    "adjustGoal": "Adjust Goal",
+    "adjustGoalTitle": "Adjust Custom Goals",
+    "customGoalSettings": "Custom Goal Settings",
+    "caloriesLabel": "Calories (kcal)",
+    "proteinLabel": "Protein (g)",
+    "carbsLabel": "Carbs (g)",
+    "fatLabel": "Fat (g)",
+    "saveGoals": "Save Goals",
+    "kcalLeft": "kcal Left",
+    "overTarget": "Over Target",
+    "percentDone": "{{percent}}% Done",
+    "exceeded": "Exceeded",
+    "consumedFood": "Consumed Food",
+    "burnedWorkouts": "Burned Workouts",
+    "quickAddMeal": "Quick Log +200 kcal",
+    "quickAddExercise": "Quick Log -150 kcal",
+    "dailyBudget": "Daily Budget:",
+    "netCalories": "Net Calories:",
+    "macrosTitle": "Daily Macronutrients",
+    "protein": "Protein",
+    "carbohydrates": "Carbohydrates",
+    "fats": "Fats",
+    "statusLeft": "You have {{kcal}} kcal left for your active target. Keep going!",
+    "statusDone": "You have completed your daily net calorie goal! Excellent work staying balanced today.",
+    "macrosNote": "Macros contribute directly to muscle recovery and stable energy. Try logging balanced meals to match targets."
+  },
+  "water": {
+    "title": "Hydration Tracker",
+    "target": "Target: 2.5L",
+    "perfect": "Perfect hydration! Goal exceeded today.",
+    "remaining": "{{ml}} ml remaining to meet daily baseline.",
+    "hydrated": "Hydrated",
+    "cup": "Cup",
+    "glass": "Glass",
+    "reduce": "Reduce",
+    "reduceTitle": "Reduce water log"
   }
 }

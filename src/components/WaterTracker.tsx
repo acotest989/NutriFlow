@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { Droplet, Plus, Trash2, Award } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 
 interface WaterTrackerProps {
@@ -10,6 +11,7 @@ export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
   const currentDate = useStore((s) => s.currentDate);
   const consumed = useStore((s) => s.hydration[currentDate] ?? 0);
   const adjustWater = useStore((s) => s.adjustWater);
+  const { t } = useTranslation();
   const target = 2500; // default 2500ml or 2.5L target
 
   // Persist water intake to Supabase (per user, per day).
@@ -25,10 +27,10 @@ export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
       <div>
         <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-4">
           <h3 className="font-sans font-bold text-sm text-[#38BDF8] flex items-center gap-2">
-            <Droplet className="w-4.5 h-4.5 text-[#38BDF8] animate-bounce" /> Hydration Tracker
+            <Droplet className="w-4.5 h-4.5 text-[#38BDF8] animate-bounce" /> {t("water.title")}
           </h3>
           <span className="text-[10px] font-mono uppercase bg-[#38BDF8]/10 px-2 py-0.5 rounded-full text-[#38BDF8] font-bold">
-            Target: 2.5L
+            {t("water.target")}
           </span>
         </div>
 
@@ -58,14 +60,14 @@ export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
               {consumed} <span className="text-xs font-semibold text-[#94A3B8]">ml</span>
             </div>
             <p className="text-[11px] text-[#94A3B8] leading-tight">
-              {percent >= 100 
-                ? "Perfect hydration! Goal exceeded today." 
-                : `${target - consumed} ml remaining to meet daily baseline.`}
+              {percent >= 100
+                ? t("water.perfect")
+                : t("water.remaining", { ml: target - consumed })}
             </p>
 
             {percent >= 100 && (
               <span className="inline-flex items-center gap-1 mt-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                <Award className="w-3.5 h-3.5" /> Hydrated
+                <Award className="w-3.5 h-3.5" /> {t("water.hydrated")}
               </span>
             )}
           </div>
@@ -80,7 +82,7 @@ export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
         >
           <Plus className="w-3.5 h-3.5 text-[#38BDF8] group-hover:scale-110 transition-transform" />
           <span className="text-[10px] font-bold font-mono">+250ml</span>
-          <span className="text-[9px] text-[#64748B] font-sans">Cup</span>
+          <span className="text-[9px] text-[#64748B] font-sans">{t("water.cup")}</span>
         </button>
 
         <button
@@ -89,17 +91,17 @@ export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
         >
           <Plus className="w-3.5 h-3.5 text-[#38BDF8] group-hover:scale-110 transition-transform" />
           <span className="text-[10px] font-bold font-mono">+500ml</span>
-          <span className="text-[9px] text-[#64748B] font-sans">Glass</span>
+          <span className="text-[9px] text-[#64748B] font-sans">{t("water.glass")}</span>
         </button>
 
         <button
           onClick={() => updateWater(-250)}
           className="bg-white/1 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/30 text-[#94A3B8] hover:text-rose-400 rounded-xl py-2 px-1 text-center transition-all flex flex-col items-center justify-center gap-1 active:scale-95"
-          title="Reduce water log"
+          title={t("water.reduceTitle")}
         >
           <Trash2 className="w-3.5 h-3.5" />
           <span className="text-[10px] font-bold font-mono">-250ml</span>
-          <span className="text-[9px] text-[#64748B] font-sans">Reduce</span>
+          <span className="text-[9px] text-[#64748B] font-sans">{t("water.reduce")}</span>
         </button>
       </div>
     </div>

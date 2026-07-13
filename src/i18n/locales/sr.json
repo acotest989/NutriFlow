@@ -29,5 +29,54 @@
   },
   "lang": {
     "label": "Jezik"
+  },
+  "common": {
+    "cancel": "Otkaži",
+    "save": "Sačuvaj",
+    "add": "Dodaj",
+    "delete": "Obriši",
+    "close": "Zatvori",
+    "loading": "Učitavanje…"
+  },
+  "dashboard": {
+    "today": "Danas",
+    "yesterday": "Juče",
+    "balanceTitle": "Balans kalorija i ciljevi",
+    "adjustGoal": "Podesi cilj",
+    "adjustGoalTitle": "Podesi prilagođene ciljeve",
+    "customGoalSettings": "Prilagođena podešavanja cilja",
+    "caloriesLabel": "Kalorije (kcal)",
+    "proteinLabel": "Proteini (g)",
+    "carbsLabel": "Ugljeni hidrati (g)",
+    "fatLabel": "Masti (g)",
+    "saveGoals": "Sačuvaj ciljeve",
+    "kcalLeft": "kcal preostalo",
+    "overTarget": "Iznad cilja",
+    "percentDone": "{{percent}}% urađeno",
+    "exceeded": "Premašeno",
+    "consumedFood": "Unesena hrana",
+    "burnedWorkouts": "Potrošeno treningom",
+    "quickAddMeal": "Brzo dodaj +200 kcal",
+    "quickAddExercise": "Brzo dodaj -150 kcal",
+    "dailyBudget": "Dnevni budžet:",
+    "netCalories": "Neto kalorije:",
+    "macrosTitle": "Dnevni makronutrijenti",
+    "protein": "Proteini",
+    "carbohydrates": "Ugljeni hidrati",
+    "fats": "Masti",
+    "statusLeft": "Imaš još {{kcal}} kcal do svog cilja. Samo nastavi!",
+    "statusDone": "Ispunio si svoj dnevni cilj neto kalorija! Odličan rad na održavanju ravnoteže danas.",
+    "macrosNote": "Makronutrijenti direktno doprinose oporavku mišića i stabilnoj energiji. Pokušaj da unosiš uravnotežene obroke kako bi ispunio ciljeve."
+  },
+  "water": {
+    "title": "Praćenje hidracije",
+    "target": "Cilj: 2.5L",
+    "perfect": "Savršena hidracija! Cilj premašen danas.",
+    "remaining": "Još {{ml}} ml do dnevnog minimuma.",
+    "hydrated": "Hidriran",
+    "cup": "Šolja",
+    "glass": "Čaša",
+    "reduce": "Smanji",
+    "reduceTitle": "Smanji unos vode"
   }
 }
