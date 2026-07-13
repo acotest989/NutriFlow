@@ -12,9 +12,10 @@ import {
   Line,
   ComposedChart
 } from "recharts";
-import { Activity, Award, TrendingUp, CircleAlert } from "lucide-react";
+import { Activity, Flame, TrendingUp, CircleAlert, Check, Award, Lock } from "lucide-react";
 import { useStore } from "../store";
 import { todayStr, addDays } from "../lib/date";
+import { computeStreakStats, computeBadges } from "../lib/streaks";
 
 interface ProgressChartsProps {
   isCompact?: boolean;
@@ -23,6 +24,7 @@ interface ProgressChartsProps {
 export default function ProgressCharts({ isCompact = false }: ProgressChartsProps) {
   const entries = useStore((s) => s.entries);
   const goal = useStore((s) => s.goal);
+  const hydration = useStore((s) => s.hydration);
   // 1. Generate 7 days of trend data ending today
   const getTrendData = () => {
     const data = [];
@@ -92,19 +94,64 @@ export default function ProgressCharts({ isCompact = false }: ProgressChartsProp
   const trendData = getTrendData();
   const macroData = getMacroDistribution();
   const totalGramsLogged = macroData.reduce((sum, m) => sum + m.grams, 0);
+  const streak = computeStreakStats(entries, hydration);
+  const badges = computeBadges(streak);
 
   return (
     <div id="analytics_panel" className="space-y-6">
-      {/* Motivating Stats Banner */}
-      <div className="bg-linear-to-r from-[#6366F1] to-[#4F46E5] rounded-3xl p-5 text-white shadow-md flex items-center gap-4 border border-white/5">
-        <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white shrink-0">
-          <Award className="w-6 h-6 animate-pulse text-[#818CF8]" />
+      {/* Streak hero */}
+      <div className="bg-linear-to-r from-[#6366F1] to-[#4F46E5] rounded-3xl p-5 text-white shadow-md border border-white/5 flex items-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/15 flex flex-col items-center justify-center shrink-0">
+          <Flame className={`w-5 h-5 ${streak.current > 0 ? "text-amber-300" : "text-white/50"}`} />
+          <span className="text-xl font-black leading-none mt-0.5">{streak.current}</span>
         </div>
-        <div className="font-sans">
-          <h3 className="font-bold text-sm">Motivation Center</h3>
+        <div className="font-sans flex-1 min-w-0">
+          <h3 className="font-bold text-sm">
+            {streak.current > 0 ? `${streak.current}-Day Streak` : "Start a Streak"}
+          </h3>
           <p className="text-xs text-[#E2E8F0] mt-0.5 leading-relaxed">
-            Consistently meeting macronutrient targets promotes stable fat loss and preserves skeletal muscle. Review your 7-day logs to evaluate balance!
+            {streak.current > 0
+              ? streak.todayActive
+                ? `Nice work today! Keep it going — longest streak: ${streak.longest} ${streak.longest === 1 ? "day" : "days"}.`
+                : `Your streak is alive — log anything today to extend it. Longest: ${streak.longest} ${streak.longest === 1 ? "day" : "days"}.`
+              : "Log a meal, workout, or water today to begin your streak!"}
           </p>
+        </div>
+      </div>
+
+      {/* Achievements card */}
+      <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-sans font-bold text-white flex items-center gap-2">
+            <Award className="w-4 h-4 text-[#818CF8]" /> Achievements
+          </h3>
+          <span className="text-[11px] font-mono font-bold text-[#818CF8] bg-[#6366F1]/10 border border-[#6366F1]/20 px-2.5 py-1 rounded-lg">
+            {badges.filter((b) => b.earned).length} / {badges.length}
+          </span>
+        </div>
+        <p className="text-[11px] text-[#94A3B8] font-sans leading-relaxed">
+          Log a meal, workout, or water on any day to keep your streak alive — miss a whole day and it resets. Stay consistent to unlock these:
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {badges.map((b) => (
+            <div
+              key={b.id}
+              className={`flex items-center gap-2.5 rounded-2xl px-3 py-2.5 border ${
+                b.earned ? "bg-[#6366F1]/10 border-[#6366F1]/25" : "bg-[#0B0E14] border-white/5"
+              }`}
+            >
+              <span className={`text-xl leading-none shrink-0 ${b.earned ? "" : "opacity-30 grayscale"}`}>{b.emoji}</span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-xs font-bold leading-tight ${b.earned ? "text-white" : "text-[#64748B]"}`}>{b.label}</p>
+                <p className={`text-[10px] leading-tight mt-0.5 ${b.earned ? "text-[#94A3B8]" : "text-[#475569]"}`}>{b.description}</p>
+              </div>
+              {b.earned ? (
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+              ) : (
+                <Lock className="w-3.5 h-3.5 text-[#475569] shrink-0" />
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
