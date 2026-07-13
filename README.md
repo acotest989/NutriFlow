@@ -52,14 +52,19 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 * **Achievement badges**: 7 unlockable badges (first log, 3/7/14/30-day streaks, hydration, 100 logs) shown earned vs locked, each with a clear "how to earn" description.
 * Computed **entirely client-side** from existing logged data (`src/lib/streaks.ts`) — no schema change — and timezone-safe via the local-date helpers.
 
+### 9. 🌍 Localization (English · Serbian · Croatian · Bosnian)
+* **Full UI translation** across every screen via `react-i18next`, with a header **language switcher**; the choice persists in `localStorage`.
+* **English is the bundled default**; Serbian (Latin), Croatian, and Bosnian bundles **lazy-load on demand** (own chunk each) so they don't grow the main bundle.
+* **AI replies in your language** — the active language is sent with each Gemini request (coach, recipes, photo, barcode). Dates format per-locale and day counts use correct Slavic plurals.
+
 ---
 
 ## 🛠️ Technology Stack
 
-* **Frontend**: React 19 (TypeScript), Vite 6, Tailwind CSS 4, [Zustand](https://github.com/pmndrs/zustand) (global state), Recharts (analytics), Framer Motion (animations), lucide-react (icons).
+* **Frontend**: React 19 (TypeScript), Vite 6, Tailwind CSS 4, [Zustand](https://github.com/pmndrs/zustand) (global state), Recharts (analytics), Framer Motion (animations), lucide-react (icons), [react-i18next](https://react.i18next.com) (localization — EN/SR/HR/BS, lazy-loaded locales).
 * **Backend**: Node.js Express server with a lazy-loaded `@google/genai` SDK, hardened with `helmet` (security headers), `express-rate-limit`, and `zod` request validation. AI calls retry transient Gemini errors with exponential backoff + jitter and **fall back across a model chain** (`GEMINI_MODELS`) when a model is overloaded. A privileged `@supabase/supabase-js` admin client (service-role) backs account deletion only.
 * **Auth & Data**: [Supabase](https://supabase.com) — authentication, PostgreSQL, and Row-Level Security. The browser talks to Supabase directly; the Express server is used only to proxy Gemini (keeping the API key server-side).
-* **Persistence**: User data (entries, goals, hydration) lives in Supabase per-user. Only UI preferences (theme) are kept in `localStorage`.
+* **Persistence**: User data (entries, goals, hydration) lives in Supabase per-user. Only UI preferences (theme, language) are kept in `localStorage`.
 
 ---
 

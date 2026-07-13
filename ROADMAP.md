@@ -82,13 +82,12 @@ NutriFlow currently runs on the default Cloud Run URL (`…run.app`) — not a d
 ### Localization / i18n (Balkan languages first)
 Localize the app for **Bosnian, Croatian, and Serbian** (English stays the default). Key insight: these three are mutually intelligible (~90–95 % identical UI text), so it's **one base translation + small per-variant overrides** (ijekavian vs ekavian, a few lexical swaps), *not* three from scratch. **Decision: Serbian in Latin script only** for v1 to simplify (skip Cyrillic; can add later). Estimated ~3–5 focused days (UI-only MVP ~2); native-speaker review keeps translation quality/cost low.
 
-Phased plan:
-1. ✅ **Framework + switcher** — *shipped*: `react-i18next` wired in `src/i18n/`, a header **language switcher** (`src/components/LanguageSwitcher.tsx`), choice persisted to `localStorage`. English is the bundled fallback; **sr/hr/bs locale bundles lazy-load via dynamic `import()`** (each ~0.8 kB chunk, no main-bundle growth). The **app shell** (nav tabs, header status/theme/date, footer) is the translated proof-of-concept surface. Follow-up: store the choice on the profile row too.
-2. **String extraction** — the bulk of the work: replace the hardcoded inline strings across ~15 components (Auth, Dashboard, FoodSearch, Onboarding, Scanner, PhotoAnalyzer, AiCoach, modals…) with translation keys, extending the `en`/`sr`/`hr`/`bs` files in `src/i18n/locales/`.
-3. **Localize AI responses** — pass the chosen language into the Gemini prompts (coach analysis, recipes, photo analysis) so the AI replies in the user's language; otherwise half the app stays English.
-4. **Locale formatting** — pass the active locale to date/number formatting (already using `toLocaleDateString`).
-* Optional later: translate the food/workout catalog names in `src/data.ts`; add Serbian Cyrillic; more languages.
-* ✅ De-risked with a **proof-of-concept** (i18next + switcher + translated app shell) — done; the full string extraction (step 2) is the remaining bulk.
+Phased plan — **all shipped** (English default; Serbian Latin, Croatian, Bosnian):
+1. ✅ **Framework + switcher** — `react-i18next` wired in `src/i18n/`, a header **language switcher** (`src/components/LanguageSwitcher.tsx`), choice persisted to `localStorage`. English is the bundled fallback; **sr/hr/bs locale bundles lazy-load via dynamic `import()`** (own chunk each, no main-bundle growth). Follow-up: store the choice on the profile row too.
+2. ✅ **String extraction** — every user-facing string across the app (App shell, Dashboard, WaterTracker, FoodSearch, ExerciseTracker, AiCoach, PhotoAnalyzer, Scanner, ProgressCharts + streak badges, Onboarding, Auth, UpdatePassword, and the modals) uses translation keys in `src/i18n/locales/{en,sr,hr,bs}.json`. Stored data (profile enums, restriction/workout names, meal-name provenance tags) stays canonical English by design.
+3. ✅ **Localize AI responses** — the active language is sent with each AI request; the server appends a language instruction so Gemini replies (names, summaries, notes, suggestions, recipes) in the user's language.
+4. ✅ **Locale formatting** — date labels (dashboard, 7-day trend) format via the active locale (`localeTag()`); day counts use proper Slavic plural forms (one/few/other).
+* Optional later: translate the food/workout catalog names in `src/data.ts`; add Serbian Cyrillic; more languages; native-speaker QA pass.
 
 ### Social / Account
 * ✅ **OAuth sign-in** — Google shipped (`signInWithOAuth`); Apple still optional/future.
