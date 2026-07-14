@@ -670,7 +670,10 @@ async function lookupUsdaFoods(query: string): Promise<UsdaFood[]> {
         }),
       }
     );
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`USDA food search failed: HTTP ${res.status} ${res.statusText}`);
+      return [];
+    }
     const data: any = await res.json();
     const foods: any[] = Array.isArray(data?.foods) ? data.foods : [];
 
@@ -706,8 +709,11 @@ async function lookupUsdaFoods(query: string): Promise<UsdaFood[]> {
       if (out.length >= 8) break;
     }
     return out;
-  } catch {
-    return []; // network error / timeout / abort -> no online results
+  } catch (err) {
+    // network error / timeout / abort -> no online results (client keeps local)
+    const msg = (err as Error)?.name === "AbortError" ? "request timed out (4.5s)" : String((err as Error)?.message ?? err);
+    console.warn(`USDA food search error: ${msg}`);
+    return [];
   } finally {
     clearTimeout(timer);
   }
@@ -880,6 +886,9 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Calorie & Macro Tracker server is running at http://0.0.0.0:${PORT}`);
+    console.log(
+      `Food search: ${process.env.FDC_API_KEY ? "USDA FoodData Central enabled" : "local catalog only (no FDC_API_KEY set)"}`
+    );
   });
 }
 
