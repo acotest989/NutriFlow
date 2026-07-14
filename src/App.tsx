@@ -336,8 +336,9 @@ export default function App() {
       ) : (
         /* ================= RESPONSIVE WEB/DESKTOP VIEWPORT ================= */
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-6 p-6">
-          {/* Desktop Brand Navigation Bar */}
-          <div className="bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl px-6 py-4 flex flex-col md:flex-row items-center justify-between shadow-xl gap-4">
+          {/* Desktop Brand Navigation Bar — raised above the tab nav so the
+              language dropdown overlaps it instead of being clipped behind it. */}
+          <div className="relative z-30 bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl px-6 py-4 flex flex-col md:flex-row items-center justify-between shadow-xl gap-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-[#6366F1] to-[#a855f7] flex items-center justify-center text-white shadow-md shadow-[#6366F1]/20">
                 <Flame className="w-5 h-5 animate-pulse" />
@@ -392,7 +393,7 @@ export default function App() {
 
           {/* Desktop tab navigation — mirrors the mobile tabs so both views share
               the same sections (driven by the same activeMobileTab state). */}
-          <nav className="bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl p-2 flex items-center gap-1 shadow-lg overflow-x-auto">
+          <nav className="relative z-20 bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl p-2 flex items-center gap-1 shadow-lg overflow-x-auto">
             {DESKTOP_TABS.map(({ id, tKey, Icon }) => {
               const active = activeMobileTab === id;
               return (
