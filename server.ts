@@ -15,9 +15,66 @@ const app = express();
 // Hosts (Render, Railway, Cloud Run, etc.) inject the port to listen on.
 const PORT = Number(process.env.PORT) || 3000;
 
-// Security headers. CSP is disabled for now because the SPA (Vite dev + bundled
-// assets) needs a tailored policy; tightening it is a Tier 3 follow-up.
-app.use(helmet({ contentSecurityPolicy: false }));
+// Detect production mode once so the CSP policy and the static-serving branch
+// (in startServer) agree on a single source of truth. Dev runs Vite middleware,
+// whose HMR client injects inline scripts and uses eval, so the strict CSP is
+// production-only.
+const IS_PROD = (() => {
+  const arg = process.argv[1] ?? "";
+  const isRunningFromTS = arg.endsWith("server.ts");
+  const isRunningFromBundle = arg.endsWith(".cjs") || arg.includes("dist");
+  const hasDist = fs.existsSync(path.join(process.cwd(), "dist", "index.html"));
+  return !isRunningFromTS && (process.env.NODE_ENV === "production" || isRunningFromBundle || hasDist);
+})();
+
+// The browser talks to Supabase directly (auth + every data query), so its
+// origin must be allow-listed in connect-src or login is blocked. It's the
+// PUBLIC project URL — the same value baked into the client bundle. Prefer a
+// runtime env var; fall back to the committed .env.production (public values
+// only) so the policy stays correct even when the server env doesn't re-declare
+// the VITE_* build vars. Returns "" only if it truly can't be resolved.
+function supabaseOrigin(): string {
+  let raw = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+  if (!raw) {
+    try {
+      const env = fs.readFileSync(path.join(process.cwd(), ".env.production"), "utf8");
+      raw = env.match(/^\s*VITE_SUPABASE_URL\s*=\s*["']?([^"'\r\n]+)/m)?.[1] ?? "";
+    } catch {
+      /* .env.production absent — fall through to the wildcard fallback in cspOptions */
+    }
+  }
+  try {
+    return raw ? new URL(raw).origin : "";
+  } catch {
+    return "";
+  }
+}
+
+// Tailored Content-Security-Policy for the SPA. Inherits helmet's strict
+// defaults (script-src 'self', object-src 'none', base-uri 'self',
+// frame-ancestors 'self', upgrade-insecure-requests, script-src-attr 'none')
+// and adds only what this app needs on top: Supabase for connect-src, and
+// data:/blob: images for the camera + photo previews (canvas.toDataURL /
+// URL.createObjectURL in src/lib/image.ts). style-src keeps 'unsafe-inline'
+// from the defaults (React/Recharts inline styles + the boot-splash <style>).
+function cspOptions() {
+  const origin = supabaseOrigin();
+  // REST/auth over https, realtime over wss. If the origin can't be resolved,
+  // fall back to any-https/wss so auth never breaks (still blocks http & other schemes).
+  const supabase = origin ? [origin, origin.replace(/^https:/, "wss:")] : ["https:", "wss:"];
+  return {
+    useDefaults: true,
+    directives: {
+      "img-src": ["'self'", "data:", "blob:"],
+      "connect-src": ["'self'", ...supabase],
+      "worker-src": ["'self'", "blob:"],
+    },
+  };
+}
+
+// Security headers. Apply the tailored CSP in production; disable it in dev
+// (Vite HMR needs inline scripts + eval). All other helmet defaults stay on.
+app.use(helmet({ contentSecurityPolicy: IS_PROD ? cspOptions() : false }));
 app.use(express.json({ limit: "1mb" }));
 
 // Lightweight health check for load balancers / uptime monitors.
@@ -757,10 +814,7 @@ app.delete("/api/account", async (req, res) => {
 
 // Configure Vite or Static Asset Serving
 async function startServer() {
-  const hasDist = fs.existsSync(path.join(process.cwd(), "dist", "index.html"));
-  const isRunningFromTS = process.argv[1] && process.argv[1].endsWith("server.ts");
-  const isRunningFromBundle = process.argv[1] && (process.argv[1].endsWith(".cjs") || process.argv[1].includes("dist"));
-  const isProd = !isRunningFromTS && (process.env.NODE_ENV === "production" || isRunningFromBundle || hasDist);
+  const isProd = IS_PROD; // computed once at module load (see top of file)
 
   if (!isProd) {
     console.log("Setting up Vite development middleware...");

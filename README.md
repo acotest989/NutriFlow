@@ -62,7 +62,7 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 ## 🛠️ Technology Stack
 
 * **Frontend**: React 19 (TypeScript), Vite 6, Tailwind CSS 4, [Zustand](https://github.com/pmndrs/zustand) (global state), Recharts (analytics), Framer Motion (animations), lucide-react (icons), [react-i18next](https://react.i18next.com) (localization — EN/SR/HR/BS, lazy-loaded locales).
-* **Backend**: Node.js Express server with a lazy-loaded `@google/genai` SDK, hardened with `helmet` (security headers), `express-rate-limit`, and `zod` request validation. AI calls retry transient Gemini errors with exponential backoff + jitter and **fall back across a model chain** (`GEMINI_MODELS`) when a model is overloaded. A privileged `@supabase/supabase-js` admin client (service-role) backs account deletion only.
+* **Backend**: Node.js Express server with a lazy-loaded `@google/genai` SDK, hardened with `helmet` (security headers + a tailored production **Content-Security-Policy** — `script-src 'self'`, no `unsafe-inline`/`eval`), `express-rate-limit`, and `zod` request validation. AI calls retry transient Gemini errors with exponential backoff + jitter and **fall back across a model chain** (`GEMINI_MODELS`) when a model is overloaded. A privileged `@supabase/supabase-js` admin client (service-role) backs account deletion only.
 * **Auth & Data**: [Supabase](https://supabase.com) — authentication, PostgreSQL, and Row-Level Security. The browser talks to Supabase directly; the Express server is used only to proxy Gemini (keeping the API key server-side).
 * **Persistence**: User data (entries, goals, hydration) lives in Supabase per-user. Only UI preferences (theme, language) are kept in `localStorage`.
 
@@ -136,6 +136,29 @@ The app ships as a single container (see `Dockerfile`) that serves both the API 
   * `GEMINI_MODELS` *(optional)* — override the model fallback chain without a code change.
 * The public `VITE_SUPABASE_*` values are baked at build time from `.env.production`.
 * After deploy, set the Cloud Run URL as the **Site URL** and add it to **Redirect URLs** in Supabase → **Authentication → URL Configuration** (so email confirmation works in production).
+
+### Secrets → Secret Manager (recommended)
+
+The server reads its secrets from `process.env` (`GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`), so you can source them from **Google Secret Manager** instead of storing them as plain Cloud Run env vars — **no code change**. One-time setup (adjust service name `nutriflow`, region, and project number `623241712044` if yours differ):
+
+```bash
+# 1. Store the key as a secret (paste the value via stdin; nothing is echoed to shell history)
+printf '%s' 'YOUR_GEMINI_API_KEY' | gcloud secrets create gemini-api-key --data-file=-
+#    Rotate later by adding a new version:
+#    printf '%s' 'NEW_KEY' | gcloud secrets versions add gemini-api-key --data-file=-
+
+# 2. Grant Cloud Run's runtime service account read access
+gcloud secrets add-iam-policy-binding gemini-api-key \
+  --member="serviceAccount:623241712044-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+
+# 3. Point the env var at the secret and drop the old plaintext var (same command)
+gcloud run services update nutriflow --region=europe-west1 \
+  --update-secrets=GEMINI_API_KEY=gemini-api-key:latest \
+  --remove-env-vars=GEMINI_API_KEY
+```
+
+Repeat for `SUPABASE_SERVICE_ROLE_KEY` (e.g. secret `supabase-service-role-key`). `latest` always resolves to the newest version, so a rotation (step 1's `versions add`) takes effect on the next cold start with no redeploy. Cert fingerprints, the anon/publishable key, and `SUPABASE_URL` are **not** secrets and can stay as plain env vars.
 
 ---
 
