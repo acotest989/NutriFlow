@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import {
   Flame,
   Apple,
@@ -16,13 +16,16 @@ import {
   X
 } from "lucide-react";
 import Dashboard from "./components/Dashboard";
-import FoodSearch from "./components/FoodSearch";
-import Scanner from "./components/Scanner";
-import PhotoAnalyzer from "./components/PhotoAnalyzer";
-import ExerciseTracker from "./components/ExerciseTracker";
-import ProgressCharts from "./components/ProgressCharts";
-import AiCoach from "./components/AiCoach";
 import WaterTracker from "./components/WaterTracker";
+// Heavy, non-initial tabs are lazy-loaded so recharts (charts), the camera
+// components, and the AI coach stay out of the initial bundle — the dashboard
+// tab paints without them.
+const FoodSearch = lazy(() => import("./components/FoodSearch"));
+const Scanner = lazy(() => import("./components/Scanner"));
+const PhotoAnalyzer = lazy(() => import("./components/PhotoAnalyzer"));
+const ExerciseTracker = lazy(() => import("./components/ExerciseTracker"));
+const ProgressCharts = lazy(() => import("./components/ProgressCharts"));
+const AiCoach = lazy(() => import("./components/AiCoach"));
 import Auth from "./components/Auth";
 import UpdatePassword from "./components/UpdatePassword";
 import DeleteAccountModal from "./components/DeleteAccountModal";
@@ -44,6 +47,13 @@ const DESKTOP_TABS = [
   { id: "charts", tKey: "nav.trends", Icon: TrendingUp },
   { id: "scanner", tKey: "nav.scan", Icon: Scan },
 ] as const;
+
+// Shown while a lazy-loaded tab's chunk is being fetched.
+const tabFallback = (
+  <div className="flex items-center justify-center py-20 text-[#818CF8]">
+    <Loader2 className="w-6 h-6 animate-spin" />
+  </div>
+);
 
 export default function App() {
   // Automatically switches between layouts responsively!
@@ -246,6 +256,7 @@ export default function App() {
 
           {/* Internal Scrollable Content Area */}
           <div className="flex-1 p-4 space-y-4">
+            <Suspense fallback={tabFallback}>
             {activeMobileTab === "dashboard" && (
               <div className="space-y-4 animate-fadeIn">
                 <Dashboard isCompact={true} />
@@ -267,6 +278,7 @@ export default function App() {
             )}
 
             {activeMobileTab === "coach" && <AiCoach isCompact={true} />}
+            </Suspense>
           </div>
 
           {/* iPhone Native Bottom Tab Navigation Bar */}
@@ -416,6 +428,7 @@ export default function App() {
               card here: each component brings its own card(s), so single-card
               components (AI Coach, Water) don't become a card-inside-a-card. */}
           <div className="min-h-[60vh]">
+            <Suspense fallback={tabFallback}>
             {activeMobileTab === "dashboard" && (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-fadeIn">
                 <Dashboard />
@@ -453,6 +466,7 @@ export default function App() {
                 <Scanner />
               </div>
             )}
+            </Suspense>
           </div>
         </div>
       )}
