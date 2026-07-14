@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Search, 
-  Sparkles, 
-  Plus, 
-  Trash2, 
-  Utensils, 
-  Scale, 
-  Loader2, 
-  Check, 
-  Database
+import {
+  Search,
+  Sparkles,
+  Plus,
+  Trash2,
+  Utensils,
+  Scale,
+  Loader2,
+  Check,
+  Database,
+  Globe
 } from "lucide-react";
 import { FoodItem } from "../types";
 import { COMMON_FOOD_ITEMS } from "../data";
@@ -26,6 +27,12 @@ export default function FoodSearch() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [multiplier, setMultiplier] = useState(1);
+
+  // Online food-database (USDA) results that augment the local COMMON_FOOD_ITEMS
+  // list as the user types. Progressive enhancement: if the backend has no FDC
+  // key or the lookup fails, this stays empty and the local search still works.
+  const [onlineResults, setOnlineResults] = useState<FoodItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Manual Food Form State
   const [isManualMode, setIsManualMode] = useState(false);
@@ -47,6 +54,39 @@ export default function FoodSearch() {
   const filteredFoods = COMMON_FOOD_ITEMS.filter(food =>
     food.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Debounced online lookup against the USDA-backed /api/food-search. Aborts the
+  // in-flight request on each keystroke so results never arrive out of order.
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (isManualMode || q.length < 2) {
+      setOnlineResults([]);
+      setIsSearching(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/food-search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q }),
+          signal: ctrl.signal,
+        });
+        const data = res.ok ? await res.json() : [];
+        setOnlineResults(Array.isArray(data) ? data : []);
+      } catch {
+        if (!ctrl.signal.aborted) setOnlineResults([]);
+      } finally {
+        if (!ctrl.signal.aborted) setIsSearching(false);
+      }
+    }, 400);
+    return () => {
+      ctrl.abort();
+      clearTimeout(timer);
+    };
+  }, [searchQuery, isManualMode]);
 
   const handleLogPreset = (food: FoodItem) => {
     onAddEntry({
@@ -223,6 +263,48 @@ export default function FoodSearch() {
               </div>
             )}
           </div>
+
+          {/* Online (USDA) database results — augment the local list as you type.
+              Hidden entirely when the lookup returns nothing, so it never shows a
+              misleading empty state (e.g. before an FDC key is configured). */}
+          {(isSearching || onlineResults.length > 0) && (
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center gap-1.5 px-1">
+                <Globe className="w-3 h-3 text-[#64748B]" />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B]">
+                  {t("food.onlineResults")}
+                </span>
+                {isSearching && <Loader2 className="w-3 h-3 animate-spin text-[#818CF8]" />}
+              </div>
+              {onlineResults.length > 0 && (
+                <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+                  {onlineResults.map(food => (
+                    <div
+                      key={food.id}
+                      onClick={() => setSelectedFood(food)}
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
+                        selectedFood?.id === food.id
+                          ? "border-[#6366F1] bg-[#6366F1]/10"
+                          : "border-white/5 hover:border-white/10 hover:bg-white/2"
+                      }`}
+                    >
+                      <div className="font-sans min-w-0 pr-2">
+                        <h4 className="text-sm font-semibold text-[#E2E8F0] truncate">{food.name}</h4>
+                        <p className="text-[10px] text-[#64748B] font-medium">
+                          {t("food.serving")} {food.servingSize}{food.servingUnit} • P: {food.protein}g • C: {food.carbs}g • F: {food.fat}g
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-sm font-bold text-[#818CF8] bg-[#6366F1]/10 px-2 py-1 rounded-xl border border-[#6366F1]/10">
+                          {food.calories} kcal
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Preset Servings Adjustment Modal Overlay */}
           <AnimatePresence>

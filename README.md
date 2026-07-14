@@ -98,6 +98,8 @@ Edit `.env`:
 GEMINI_API_KEY=your_gemini_api_key_here
 # Optional: override the Gemini model fallback chain (primary first, comma-separated)
 # GEMINI_MODELS=gemini-3.5-flash,gemini-2.5-flash
+# Optional: USDA FoodData Central key for the online food search (free — https://fdc.nal.usda.gov/api-key-signup)
+# FDC_API_KEY=your_usda_fdc_api_key
 
 # Server-side Supabase admin (for in-app account deletion only — service-role key bypasses RLS, keep secret)
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
@@ -134,6 +136,7 @@ The app ships as a single container (see `Dockerfile`) that serves both the API 
   * `GEMINI_API_KEY` — Gemini proxy.
   * `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` — required for in-app account deletion (without them `DELETE /api/account` returns "not configured"). The service-role/secret key bypasses RLS — keep it secret.
   * `GEMINI_MODELS` *(optional)* — override the model fallback chain without a code change.
+  * `FDC_API_KEY` *(optional)* — USDA FoodData Central key for the online food-database search (`/api/food-search`); without it, food search uses the in-bundle catalog only.
 * The public `VITE_SUPABASE_*` values are baked at build time from `.env.production`.
 * After deploy, set the Cloud Run URL as the **Site URL** and add it to **Redirect URLs** in Supabase → **Authentication → URL Configuration** (so email confirmation works in production).
 

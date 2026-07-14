@@ -107,19 +107,63 @@ describe("POST /api/estimate", () => {
   });
 });
 
-describe("POST /api/search-ai", () => {
-  it("returns the model's food array", async () => {
-    gemini.next = aiText([{ name: "Rice", calories: 200, protein: 4, carbs: 44, fat: 0.5, servingSize: 100, servingUnit: "g" }]);
-    const res = await request(app).post("/api/search-ai").send({ query: "rice" });
+describe("POST /api/food-search (USDA FoodData Central)", () => {
+  it("maps FDC results to the app's food shape when a key is configured", async () => {
+    vi.stubEnv("FDC_API_KEY", "test-fdc-key");
+    const fdc = {
+      foods: [
+        {
+          fdcId: 123456,
+          description: "HUMMUS", // ALL CAPS -> should be title-cased
+          foodNutrients: [
+            { nutrientId: 1008, value: 177 }, // energy kcal
+            { nutrientId: 1003, value: 8 }, // protein
+            { nutrientId: 1005, value: 20 }, // carbs
+            { nutrientId: 1004, value: 9 }, // fat
+          ],
+        },
+      ],
+    };
+    const fetchMock = vi.fn(async () => ({ ok: true, json: async () => fdc }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await request(app).post("/api/food-search").send({ query: "hummus" });
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body[0]).toMatchObject({ name: "Rice" });
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0]).toMatchObject({
+      id: "usda-123456",
+      name: "Hummus",
+      calories: 177,
+      protein: 8,
+      carbs: 20,
+      fat: 9,
+      servingSize: 100,
+      servingUnit: "g",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns [] without calling FDC when no key is configured", async () => {
+    vi.stubEnv("FDC_API_KEY", "");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await request(app).post("/api/food-search").send({ query: "rice" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns [] when the FDC lookup fails", async () => {
+    vi.stubEnv("FDC_API_KEY", "test-fdc-key");
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500 })));
+    const res = await request(app).post("/api/food-search").send({ query: "rice" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
   });
 
   it("rejects an empty query with 400", async () => {
-    const res = await request(app).post("/api/search-ai").send({ query: "" });
+    const res = await request(app).post("/api/food-search").send({ query: "" });
     expect(res.status).toBe(400);
-    expect(gemini.calls).toHaveLength(0);
   });
 });
 

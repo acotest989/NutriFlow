@@ -277,9 +277,8 @@ const barcodeSchema = z.object({
   barcode: z.string().min(1, "Barcode is required.").max(64),
   lang: langField,
 });
-const searchSchema = z.object({
-  query: z.string().min(1, "Search query is required.").max(200),
-  lang: langField,
+const foodSearchSchema = z.object({
+  query: z.string().min(1, "Search query is required.").max(100),
 });
 const photoSchema = z.object({
   // Base64 JPEG (no data: prefix needed — we strip it if present). The global
@@ -633,62 +632,96 @@ app.post("/api/analyze-photo", async (req, res) => {
   }
 });
 
-// 3. API Route: AI-powered food search/suggestions
-app.post("/api/search-ai", async (req, res) => {
-  const body = parseBody(searchSchema, req, res);
-  if (!body) return;
+// USDA FoodData Central — a free, government nutrition database. Backs the
+// "Database" search box with real generic-food data beyond the in-bundle
+// COMMON_FOOD_ITEMS list. Requires a free API key (FDC_API_KEY); without one we
+// return [] so the client simply falls back to its local catalog. Values for
+// the generic data types are per 100 g, matching how the app shows servings.
+type UsdaFood = {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servingSize: number;
+  servingUnit: string;
+};
 
-  const prompt = `Provide a list of 4 to 6 food items that match or are highly relevant to the search query: "${body.query}". For each food item, provide its typical serving size, serving unit, and exact nutritional content (calories, protein, carbs, fat).${langText(body.lang)}`;
+async function lookupUsdaFoods(query: string): Promise<UsdaFood[]> {
+  const apiKey = process.env.FDC_API_KEY;
+  if (!apiKey) return []; // no key configured -> client keeps its local catalog
 
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4500); // don't let a slow lookup hang the request
   try {
-    const result = await generateJSON({
-      contents: prompt,
-      config: {
-        systemInstruction: "You are a professional nutrition catalog. For any food query, suggest 4 to 6 relevant food items with exact calories and macronutrients. Return the list as a structured JSON array.",
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              name: {
-                type: Type.STRING,
-                description: "Name of the food item.",
-              },
-              calories: {
-                type: Type.INTEGER,
-                description: "Energy in kcal.",
-              },
-              protein: {
-                type: Type.NUMBER,
-                description: "Protein in grams.",
-              },
-              carbs: {
-                type: Type.NUMBER,
-                description: "Carbohydrates in grams.",
-              },
-              fat: {
-                type: Type.NUMBER,
-                description: "Fat in grams.",
-              },
-              servingSize: {
-                type: Type.INTEGER,
-                description: "Typical serving size number.",
-              },
-              servingUnit: {
-                type: Type.STRING,
-                description: "Serving unit (e.g. 'g', 'cup', 'oz', 'piece').",
-              },
-            },
-            required: ["name", "calories", "protein", "carbs", "fat", "servingSize", "servingUnit"],
-          },
-        },
-      },
-    });
-    res.json(result);
-  } catch (error) {
-    sendAiError(res, error, "Failed to search foods via AI.");
+    const res = await fetch(
+      `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          query,
+          pageSize: 10,
+          // Prefer generic whole foods; branded/barcode is already covered by
+          // Open Food Facts (/api/barcode), which keeps these results clean.
+          dataType: ["Foundation", "SR Legacy", "Survey (FNDDS)"],
+        }),
+      }
+    );
+    if (!res.ok) return [];
+    const data: any = await res.json();
+    const foods: any[] = Array.isArray(data?.foods) ? data.foods : [];
+
+    // FDC nutrients are a flat list keyed by a numeric nutrientId.
+    const nutrient = (list: any[], id: number): number | undefined => {
+      const n = list?.find((x) => x?.nutrientId === id);
+      return typeof n?.value === "number" ? n.value : undefined;
+    };
+    const round1 = (v: number) => Math.round(v * 10) / 10;
+    // Generic FDC descriptions are often ALL CAPS — title-case those for display.
+    const clean = (s: string) => {
+      const t = s.trim();
+      return t && t === t.toUpperCase() ? t.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : t;
+    };
+
+    const out: UsdaFood[] = [];
+    for (const f of foods) {
+      const list: any[] = Array.isArray(f?.foodNutrients) ? f.foodNutrients : [];
+      // 1008 = Energy (kcal); 2047/2048 = Atwater energy fallbacks.
+      const cal = nutrient(list, 1008) ?? nutrient(list, 2048) ?? nutrient(list, 2047);
+      const name = clean(String(f?.description ?? ""));
+      if (cal == null || !name) continue; // no usable energy value -> skip
+      out.push({
+        id: `usda-${f.fdcId}`,
+        name,
+        calories: Math.round(cal),
+        protein: round1(nutrient(list, 1003) ?? 0), // 1003 = Protein
+        carbs: round1(nutrient(list, 1005) ?? 0), // 1005 = Carbohydrate, by difference
+        fat: round1(nutrient(list, 1004) ?? 0), // 1004 = Total lipid (fat)
+        servingSize: 100,
+        servingUnit: "g",
+      });
+      if (out.length >= 8) break;
+    }
+    return out;
+  } catch {
+    return []; // network error / timeout / abort -> no online results
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+// 3. API Route: Food database search (USDA FoodData Central).
+// Returns [] when no FDC_API_KEY is set or nothing matches, so the client just
+// shows its local catalog. Branded/barcode lookups stay on Open Food Facts
+// (/api/barcode); free-text estimates stay on Gemini (/api/estimate).
+app.post("/api/food-search", async (req, res) => {
+  const body = parseBody(foodSearchSchema, req, res);
+  if (!body) return;
+  const foods = await lookupUsdaFoods(body.query);
+  res.json(foods);
 });
 
 // 4. API Route: AI Recipes Generator based on ingredients
