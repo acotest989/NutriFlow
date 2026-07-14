@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Languages, Check } from "lucide-react";
-import { LANGUAGES, setLanguage, type LangCode } from "../i18n";
+import { LANGUAGES, type LangCode } from "../i18n";
+import { useStore } from "../store";
 
 // Compact language picker for the app header. Shows the current language's short
 // code; opening it reveals the full list. Selecting one lazy-loads that locale's
 // bundle (see src/i18n) and persists the choice.
 export default function LanguageSwitcher() {
   const { t, i18n } = useTranslation();
+  const updateLanguage = useStore((s) => s.updateLanguage);
   const [open, setOpen] = useState(false);
 
   const current = LANGUAGES.find((l) => l.code === i18n.language) ?? LANGUAGES[0];
 
   const pick = (code: LangCode) => {
     setOpen(false);
-    if (code !== i18n.language) void setLanguage(code);
+    if (code !== i18n.language) void updateLanguage(code);
   };
 
   return (

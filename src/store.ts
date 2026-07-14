@@ -7,6 +7,7 @@ import { supabase } from "./lib/supabase";
 import { computeGoal } from "./lib/goal";
 import { readPendingOnboarding, clearPendingOnboarding } from "./lib/onboarding";
 import { todayStr } from "./lib/date";
+import i18n, { setLanguage as applyLanguage } from "./i18n";
 
 export type Theme = "deep-midnight" | "high-contrast-light";
 
@@ -37,6 +38,7 @@ const rowToProfile = (r: Record<string, unknown>): Profile => ({
   restrictions: (r.restrictions as string[]) ?? [],
   workouts: (r.workouts as string[]) ?? [],
   units: (r.units as Profile["units"]) ?? "metric",
+  language: (r.language as string) ?? undefined,
 });
 
 const rowToEntry = (r: EntryRow): LogEntry => ({
@@ -99,6 +101,7 @@ interface AppState {
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   setError: (message: string | null) => void;
+  updateLanguage: (code: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>()(
@@ -261,6 +264,10 @@ export const useStore = create<AppState>()(
           dataLoading: false,
         });
 
+        // Apply the user's saved language (syncs across devices). Only when set —
+        // existing users keep their local/browser choice until they change it.
+        if (profile?.language) void applyLanguage(profile.language);
+
         if (pending) {
           clearPendingOnboarding();
           const res = await get().completeOnboarding(pending);
@@ -306,8 +313,31 @@ export const useStore = create<AppState>()(
           .upsert({ user_id: user.id, ...goal, updated_at: new Date().toISOString() });
         if (gErr) console.error("Failed to save computed goal:", gErr);
 
-        set({ profile: { ...data, hasOnboarded: true }, hasOnboarded: true });
+        // Persist the chosen language as a separate best-effort write, so a
+        // not-yet-migrated `language` column can never block onboarding.
+        const { error: lErr } = await supabase
+          .from("profiles")
+          .update({ language: i18n.language })
+          .eq("user_id", user.id);
+        if (lErr) console.error("Failed to save language preference:", lErr);
+
+        set({ profile: { ...data, hasOnboarded: true, language: i18n.language }, hasOnboarded: true });
         return { error: null };
+      },
+
+      // Switch UI language: apply it immediately (i18n + localStorage) and, for a
+      // signed-in user, persist it to their profile so it follows them across
+      // devices. Best-effort on the server side — the local change never blocks.
+      updateLanguage: async (code) => {
+        await applyLanguage(code);
+        const user = get().user;
+        if (!user) return;
+        set((s) => (s.profile ? { profile: { ...s.profile, language: code } } : {}));
+        const { error } = await supabase
+          .from("profiles")
+          .update({ language: code, updated_at: new Date().toISOString() })
+          .eq("user_id", user.id);
+        if (error) console.error("Failed to save language preference:", error);
       },
 
       resetData: async () => {

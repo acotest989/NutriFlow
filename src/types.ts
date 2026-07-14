@@ -71,6 +71,7 @@ export interface OnboardingData {
 // Shape of a row in the Supabase `profiles` table.
 export interface Profile extends OnboardingData {
   hasOnboarded: boolean;
+  language?: string; // preferred UI language code (en/sr/hr/bs); synced across devices
 }
 
 export interface DailySummary {

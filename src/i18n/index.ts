@@ -62,7 +62,9 @@ async function ensureLoaded(code: LangCode): Promise<void> {
 }
 
 // Switch language: load its bundle if needed, apply it, then persist the choice.
-export async function setLanguage(code: LangCode): Promise<void> {
+// Tolerant of unknown codes (e.g. a stale value from the DB) — those no-op.
+export async function setLanguage(code: string): Promise<void> {
+  if (!isSupported(code)) return;
   await ensureLoaded(code);
   await i18n.changeLanguage(code);
   try {
