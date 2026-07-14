@@ -120,7 +120,7 @@ Other scripts:
 npm run build   # build client (dist/) + server bundle (dist/server.cjs)
 npm run start   # run the production server
 npm run lint    # type-check (tsc --noEmit, strict mode)
-npm test        # run the Vitest unit suite (goal/streak math + store actions)
+npm test        # run the Vitest suite (goal/streak math, store actions, + /api integration tests)
 ```
 
 ---

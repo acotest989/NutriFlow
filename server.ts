@@ -850,4 +850,11 @@ async function startServer() {
   });
 }
 
-startServer();
+// Boot the HTTP server — unless we're being imported by the test suite, which
+// drives `app` directly via supertest (Vitest sets process.env.VITEST). Guarding
+// this keeps `import { app }` side-effect-free: no app.listen, no Vite middleware.
+if (!process.env.VITEST) {
+  void startServer();
+}
+
+export { app };

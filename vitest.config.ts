@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.{test,spec}.ts"],
+    // src/** for unit tests; root-level *.test.ts for the server integration suite.
+    include: ["src/**/*.{test,spec}.ts", "*.{test,spec}.ts"],
   },
 });
