@@ -12,7 +12,7 @@ NutriFlow is a deployed, multi-user cloud application (Google Cloud Run + Supaba
 * **Persistent database & cloud sync** — meals, exercises, goals, and hydration persist per-user in **Supabase (PostgreSQL)** and sync across devices.
 * **Authentication** — Supabase email/password auth with email confirmation; the app is gated behind sign-in.
 * **Row-Level Security** — every table has RLS so users access only their own rows.
-* **Hardened backend** — `helmet` security headers, `express-rate-limit` on the AI routes, `zod` request validation, a `/health` endpoint, and graceful retry/handling of transient Gemini errors.
+* **Hardened backend** — `helmet` security headers with a tailored production **Content-Security-Policy** (`script-src 'self'`, no inline/eval), `express-rate-limit` on the AI routes, `zod` request validation, a `/health` endpoint, and graceful retry/handling of transient Gemini errors.
 * **Resilient UX** — global error boundary, user-facing error toasts, and data-loading indicators.
 * **Production deployment** — containerized (`Dockerfile`) and deployed to Cloud Run with auto-deploy on push to `main`.
 * **Android app on Google Play** — packaged as a **Trusted Web Activity (TWA)** wrapping the live site (`app.nutriflow.twa`), domain-verified via Digital Asset Links, installed and confirmed running full-screen (no address bar). Store listing, Data Safety, content rating, and privacy/data-deletion pages complete. See [play-store packaging notes].
