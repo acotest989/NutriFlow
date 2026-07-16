@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Flame,
@@ -9,9 +9,11 @@ import {
   Watch,
   Dumbbell,
   Globe,
-  Loader2
+  Loader2,
+  History,
+  Check
 } from "lucide-react";
-import { ExerciseItem } from "../types";
+import { ExerciseItem, LogEntry } from "../types";
 import { PRESET_EXERCISES } from "../data";
 import { useStore } from "../store";
 import { useTranslation } from "react-i18next";
@@ -35,8 +37,12 @@ export default function ExerciseTracker() {
   // "no online matches" hint — only after a real search (never on a net error).
   const [searchDone, setSearchDone] = useState(false);
 
+  // Active sub-tab: preset/online search | recent quick-add | manual entry.
+  const [mode, setMode] = useState<"search" | "recent" | "manual">("search");
+  // "Recent" tab: briefly flash the just-clicked item's button after re-adding.
+  const [justAdded, setJustAdded] = useState<string | null>(null);
+
   // Manual custom entry state
-  const [isManual, setIsManual] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customCalories, setCustomCalories] = useState("");
   const [customMinutes, setCustomMinutes] = useState("30");
@@ -45,11 +51,45 @@ export default function ExerciseTracker() {
     ex.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Recent distinct exercises for one-tap re-logging. `entries` is newest-first,
+  // so walk it and keep the first occurrence of each name.
+  const recentExercises = useMemo(() => {
+    const seen = new Set<string>();
+    const out: LogEntry[] = [];
+    for (const e of entries) {
+      if (e.type !== "exercise") continue;
+      const key = e.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(e);
+      if (out.length >= 15) break;
+    }
+    return out;
+  }, [entries]);
+
+  // Re-log a previous workout with its exact burn/duration for the current date.
+  const handleReAdd = (ex: LogEntry) => {
+    onAddEntry({
+      date: currentDate,
+      type: "exercise",
+      name: ex.name,
+      calories: ex.calories,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      quantity: ex.quantity,
+    });
+    // Key the "added" flash by name (not id): re-adding mints a new entry id,
+    // and the Recent row is deduped by name, so the row's id changes underfoot.
+    setJustAdded(ex.name);
+    setTimeout(() => setJustAdded((cur) => (cur === ex.name ? null : cur)), 1200);
+  };
+
   // Debounced online lookup against the wger-backed /api/exercise-search. Aborts
   // the in-flight request on each keystroke so results never arrive out of order.
   useEffect(() => {
     const q = searchQuery.trim();
-    if (isManual || q.length < 2) {
+    if (mode !== "search" || q.length < 2) {
       setOnlineResults([]);
       setIsSearching(false);
       setSearchDone(false);
@@ -81,7 +121,7 @@ export default function ExerciseTracker() {
       ctrl.abort();
       clearTimeout(timer);
     };
-  }, [searchQuery, isManual]);
+  }, [searchQuery, mode]);
 
   const handleLogPreset = (exercise: ExerciseItem) => {
     const totalBurned = Math.round(exercise.caloriesPerMinute * minutes);
@@ -117,7 +157,7 @@ export default function ExerciseTracker() {
     setCustomName("");
     setCustomCalories("");
     setCustomMinutes("30");
-    setIsManual(false);
+    setMode("search");
   };
 
   // Logged exercises on current date
@@ -130,9 +170,9 @@ export default function ExerciseTracker() {
       <div className="flex bg-[#0B0E14] p-1 rounded-2xl border border-white/5">
         <button
           id="tab_preset_exercises"
-          onClick={() => { setIsManual(false); }}
+          onClick={() => setMode("search")}
           className={`flex-1 py-2 rounded-xl text-xs font-sans font-semibold transition-all ${
-            !isManual ? "bg-[#141923] text-[#4ADE80] border border-white/5 shadow-sm" : "text-[#94A3B8] hover:text-white"
+            mode === "search" ? "bg-[#141923] text-[#4ADE80] border border-white/5 shadow-sm" : "text-[#94A3B8] hover:text-white"
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
@@ -140,10 +180,21 @@ export default function ExerciseTracker() {
           </div>
         </button>
         <button
-          id="tab_manual_exercise"
-          onClick={() => { setIsManual(true); }}
+          id="tab_recent_exercises"
+          onClick={() => setMode("recent")}
           className={`flex-1 py-2 rounded-xl text-xs font-sans font-semibold transition-all ${
-            isManual ? "bg-[#141923] text-[#4ADE80] border border-white/5 shadow-sm" : "text-[#94A3B8] hover:text-white"
+            mode === "recent" ? "bg-[#141923] text-[#4ADE80] border border-white/5 shadow-sm" : "text-[#94A3B8] hover:text-white"
+          }`}
+        >
+          <div className="flex items-center justify-center gap-1.5">
+            <History className="w-3.5 h-3.5" /> {t("common.recent")}
+          </div>
+        </button>
+        <button
+          id="tab_manual_exercise"
+          onClick={() => setMode("manual")}
+          className={`flex-1 py-2 rounded-xl text-xs font-sans font-semibold transition-all ${
+            mode === "manual" ? "bg-[#141923] text-[#4ADE80] border border-white/5 shadow-sm" : "text-[#94A3B8] hover:text-white"
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
@@ -153,7 +204,7 @@ export default function ExerciseTracker() {
       </div>
 
       {/* Main Mode View Panels */}
-      {!isManual ? (
+      {mode === "search" ? (
         /* Presets Search Database Panel */
         <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
           <div className="flex items-center justify-between">
@@ -320,6 +371,54 @@ export default function ExerciseTracker() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      ) : mode === "recent" ? (
+        /* Recent workouts — one-tap re-log with the same burn/duration */
+        <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-sans font-bold text-white">{t("exercise.recentTitle")}</h3>
+            <span className="text-[10px] font-mono bg-white/5 text-[#94A3B8] px-2 py-1 rounded-md border border-white/5">
+              {recentExercises.length}
+            </span>
+          </div>
+          {recentExercises.length > 0 ? (
+            <div className="max-h-112 overflow-y-auto space-y-2 pr-1">
+              {recentExercises.map((ex) => (
+                <div
+                  key={ex.id}
+                  className="p-3 rounded-2xl border border-white/5 hover:border-white/10 hover:bg-white/2 transition-all flex justify-between items-center gap-2"
+                >
+                  <div className="font-sans flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-[#4ADE80]/10 flex items-center justify-center text-[#4ADE80] shrink-0">
+                      <Activity className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-semibold text-[#E2E8F0] truncate">{ex.name}</h4>
+                      <p className="text-[10px] text-[#64748B] font-medium">-{ex.calories} kcal</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleReAdd(ex)}
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                      justAdded === ex.name
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                        : "bg-[#4ADE80] hover:bg-[#22C55E] text-[#0B0E14] shadow-md"
+                    }`}
+                  >
+                    {justAdded === ex.name ? (
+                      <><Check className="w-3.5 h-3.5" /> {t("common.added")}</>
+                    ) : (
+                      <><Plus className="w-3.5 h-3.5" /> {t("common.add")}</>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 text-[#64748B] text-xs font-sans">
+              {t("exercise.recentEmpty")}
+            </div>
+          )}
         </div>
       ) : (
         /* Manual Custom Exercise Panel */

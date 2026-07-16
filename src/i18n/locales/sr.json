@@ -38,7 +38,9 @@
     "close": "Zatvori",
     "loading": "Učitavanje…",
     "dismiss": "Odbaci",
-    "offline": "Niste na mreži — povežite se za sinhronizaciju"
+    "offline": "Niste na mreži — povežite se za sinhronizaciju",
+    "recent": "Nedavno",
+    "added": "Dodato"
   },
   "dashboard": {
     "today": "Danas",
@@ -91,6 +93,8 @@
     "noMatch": "Nema podudarnih namirnica u standardnoj bazi. Pređi na AI unos!",
     "onlineResults": "Onlajn rezultati",
     "noOnlineMatches": "Nema onlajn rezultata",
+    "recentTitle": "Nedavni obroci",
+    "recentEmpty": "Još ništa nije zabeleženo — obroci će se pojaviti ovde.",
     "adjustPortion": "Podesi množilac porcije",
     "total": "Ukupno:",
     "kcal": "Kcal",
@@ -133,6 +137,8 @@
   },
   "exercise": {
     "presetWorkouts": "Gotovi treninzi",
+    "recentTitle": "Nedavni treninzi",
+    "recentEmpty": "Još ništa nije zabeleženo — treninzi će se pojaviti ovde.",
     "customWorkout": "Prilagođen trening",
     "catalogTitle": "Katalog treninga",
     "activities": "{{n}} aktivnosti",

@@ -38,7 +38,9 @@
     "close": "Close",
     "loading": "Loading…",
     "dismiss": "Dismiss",
-    "offline": "You're offline — reconnect to sync"
+    "offline": "You're offline — reconnect to sync",
+    "recent": "Recent",
+    "added": "Added"
   },
   "dashboard": {
     "today": "Today",
@@ -91,6 +93,8 @@
     "noMatch": "No matching foods found in standard database. Switch to AI log!",
     "onlineResults": "Online results",
     "noOnlineMatches": "No online matches",
+    "recentTitle": "Recent meals",
+    "recentEmpty": "Nothing logged yet — your meals will appear here.",
     "adjustPortion": "Adjust Portion Multiplier",
     "total": "Total:",
     "kcal": "Kcal",
@@ -133,6 +137,8 @@
   },
   "exercise": {
     "presetWorkouts": "Preset Workouts",
+    "recentTitle": "Recent workouts",
+    "recentEmpty": "Nothing logged yet — your workouts will appear here.",
     "customWorkout": "Custom Workout",
     "catalogTitle": "Workout Catalog",
     "activities": "{{n}} Activities",

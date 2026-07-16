@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
@@ -10,9 +10,10 @@ import {
   Loader2,
   Check,
   Database,
-  Globe
+  Globe,
+  History
 } from "lucide-react";
-import { FoodItem } from "../types";
+import { FoodItem, LogEntry } from "../types";
 import { COMMON_FOOD_ITEMS } from "../data";
 import { useStore } from "../store";
 import { todayStr, addDays } from "../lib/date";
@@ -37,8 +38,12 @@ export default function FoodSearch() {
   // "no online matches" hint — only after a real search (never on a net error).
   const [searchDone, setSearchDone] = useState(false);
 
+  // Active sub-tab: database search | recent quick-add | manual & AI entry.
+  const [mode, setMode] = useState<"search" | "recent" | "manual">("search");
+  // "Recent" tab: briefly flash the just-clicked item's button after re-adding.
+  const [justAdded, setJustAdded] = useState<string | null>(null);
+
   // Manual Food Form State
-  const [isManualMode, setIsManualMode] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualCalories, setManualCalories] = useState("");
   const [manualProtein, setManualProtein] = useState("");
@@ -58,11 +63,45 @@ export default function FoodSearch() {
     food.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Recent distinct meals for one-tap re-logging. `entries` is already
+  // newest-first, so walk it and keep the first occurrence of each name.
+  const recentMeals = useMemo(() => {
+    const seen = new Set<string>();
+    const out: LogEntry[] = [];
+    for (const e of entries) {
+      if (e.type !== "meal") continue;
+      const key = e.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(e);
+      if (out.length >= 15) break;
+    }
+    return out;
+  }, [entries]);
+
+  // Re-log a previous meal with its exact macros for the current date.
+  const handleReAdd = (m: LogEntry) => {
+    onAddEntry({
+      date: currentDate,
+      type: "meal",
+      name: m.name,
+      calories: m.calories,
+      protein: m.protein,
+      carbs: m.carbs,
+      fat: m.fat,
+      quantity: m.quantity,
+    });
+    // Key the "added" flash by name (not id): re-adding mints a new entry id,
+    // and the Recent row is deduped by name, so the row's id changes underfoot.
+    setJustAdded(m.name);
+    setTimeout(() => setJustAdded((cur) => (cur === m.name ? null : cur)), 1200);
+  };
+
   // Debounced online lookup against the USDA-backed /api/food-search. Aborts the
   // in-flight request on each keystroke so results never arrive out of order.
   useEffect(() => {
     const q = searchQuery.trim();
-    if (isManualMode || q.length < 2) {
+    if (mode !== "search" || q.length < 2) {
       setOnlineResults([]);
       setIsSearching(false);
       setSearchDone(false);
@@ -94,7 +133,7 @@ export default function FoodSearch() {
       ctrl.abort();
       clearTimeout(timer);
     };
-  }, [searchQuery, isManualMode]);
+  }, [searchQuery, mode]);
 
   const handleLogPreset = (food: FoodItem) => {
     onAddEntry({
@@ -137,7 +176,7 @@ export default function FoodSearch() {
     setManualFat("");
     setManualServingSize("100");
     setManualServingUnit("g");
-    setIsManualMode(false);
+    setMode("search");
   };
 
   const handleAiEstimate = async (e: React.FormEvent) => {
@@ -194,9 +233,9 @@ export default function FoodSearch() {
       <div className="flex bg-[#0B0E14] p-1 rounded-2xl border border-white/5">
         <button
           id="tab_preset_foods"
-          onClick={() => { setIsManualMode(false); }}
+          onClick={() => setMode("search")}
           className={`flex-1 py-2 rounded-xl text-xs font-sans font-semibold transition-all ${
-            !isManualMode ? "bg-[#141923] text-[#818CF8] shadow-sm border border-white/5" : "text-[#94A3B8] hover:text-white"
+            mode === "search" ? "bg-[#141923] text-[#818CF8] shadow-sm border border-white/5" : "text-[#94A3B8] hover:text-white"
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
@@ -204,10 +243,21 @@ export default function FoodSearch() {
           </div>
         </button>
         <button
-          id="tab_manual_food"
-          onClick={() => { setIsManualMode(true); }}
+          id="tab_recent_foods"
+          onClick={() => setMode("recent")}
           className={`flex-1 py-2 rounded-xl text-xs font-sans font-semibold transition-all ${
-            isManualMode ? "bg-[#141923] text-[#818CF8] shadow-sm border border-white/5" : "text-[#94A3B8] hover:text-white"
+            mode === "recent" ? "bg-[#141923] text-[#818CF8] shadow-sm border border-white/5" : "text-[#94A3B8] hover:text-white"
+          }`}
+        >
+          <div className="flex items-center justify-center gap-1.5">
+            <History className="w-3.5 h-3.5" /> {t("common.recent")}
+          </div>
+        </button>
+        <button
+          id="tab_manual_food"
+          onClick={() => setMode("manual")}
+          className={`flex-1 py-2 rounded-xl text-xs font-sans font-semibold transition-all ${
+            mode === "manual" ? "bg-[#141923] text-[#818CF8] shadow-sm border border-white/5" : "text-[#94A3B8] hover:text-white"
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
@@ -217,7 +267,7 @@ export default function FoodSearch() {
       </div>
 
       {/* Main Mode View Panels */}
-      {!isManualMode ? (
+      {mode === "search" ? (
         /* Presets Search Database Panel */
         <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
           <div className="flex items-center justify-between">
@@ -388,6 +438,51 @@ export default function FoodSearch() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      ) : mode === "recent" ? (
+        /* Recent meals — one-tap re-log with the exact same macros */
+        <div className="bg-[#141923] rounded-3xl p-6 shadow-md border border-white/5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-sans font-bold text-white">{t("food.recentTitle")}</h3>
+            <span className="text-[10px] font-mono bg-white/5 text-[#94A3B8] px-2 py-1 rounded-md border border-white/5">
+              {recentMeals.length}
+            </span>
+          </div>
+          {recentMeals.length > 0 ? (
+            <div className="max-h-112 overflow-y-auto space-y-2 pr-1">
+              {recentMeals.map((m) => (
+                <div
+                  key={m.id}
+                  className="p-3 rounded-2xl border border-white/5 hover:border-white/10 hover:bg-white/2 transition-all flex justify-between items-center gap-2"
+                >
+                  <div className="font-sans min-w-0">
+                    <h4 className="text-sm font-semibold text-[#E2E8F0] truncate">{m.name}</h4>
+                    <p className="text-[10px] text-[#64748B] font-medium">
+                      {m.calories} kcal • P: {m.protein}g • C: {m.carbs}g • F: {m.fat}g
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleReAdd(m)}
+                    className={`shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                      justAdded === m.name
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                        : "bg-[#6366F1] hover:bg-[#818CF8] text-white shadow-md"
+                    }`}
+                  >
+                    {justAdded === m.name ? (
+                      <><Check className="w-3.5 h-3.5" /> {t("common.added")}</>
+                    ) : (
+                      <><Plus className="w-3.5 h-3.5" /> {t("common.add")}</>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 text-[#64748B] text-xs font-sans">
+              {t("food.recentEmpty")}
+            </div>
+          )}
         </div>
       ) : (
         /* Manual and AI Powered Estimations Panel */
