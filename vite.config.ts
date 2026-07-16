@@ -62,6 +62,24 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // Split the stable vendor libraries out of the app bundle. They
+          // change far less often than app code, so the browser (and the PWA
+          // precache) can reuse them across deploys, and it clears Vite's
+          // >500 kB single-chunk warning. recharts/d3 are deliberately left
+          // out — they already live in the lazy-loaded ProgressCharts chunk.
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+            if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react-vendor';
+            if (id.includes('@supabase')) return 'supabase';
+            if (/[\\/]node_modules[\\/](i18next|react-i18next)[\\/]/.test(id)) return 'i18n';
+            if (/[\\/]node_modules[\\/](motion|framer-motion|motion-dom|motion-utils)[\\/]/.test(id)) return 'motion';
+          },
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
