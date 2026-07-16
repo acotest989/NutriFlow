@@ -405,7 +405,7 @@ export default function App() {
 
           {/* Desktop tab navigation — mirrors the mobile tabs so both views share
               the same sections (driven by the same activeMobileTab state). */}
-          <nav className="relative z-20 bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl p-2 flex items-center gap-1 shadow-lg overflow-x-auto">
+          <nav className="relative z-20 bg-[#141923]/90 border border-white/5 backdrop-blur-md rounded-3xl p-2 flex items-center justify-center gap-1 shadow-lg overflow-x-auto">
             {DESKTOP_TABS.map(({ id, tKey, Icon }) => {
               const active = activeMobileTab === id;
               return (
@@ -430,7 +430,7 @@ export default function App() {
           <div className="min-h-[60vh]">
             <Suspense fallback={tabFallback}>
             {activeMobileTab === "dashboard" && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-fadeIn">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start animate-fadeIn">
                 <Dashboard />
                 <WaterTracker />
               </div>

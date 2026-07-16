@@ -90,6 +90,7 @@
     "serving": "Porcija:",
     "noMatch": "Nema podudarnih namirnica u standardnoj bazi. Pređi na AI unos!",
     "onlineResults": "Onlajn rezultati",
+    "noOnlineMatches": "Nema onlajn rezultata",
     "adjustPortion": "Podesi množilac porcije",
     "total": "Ukupno:",
     "kcal": "Kcal",

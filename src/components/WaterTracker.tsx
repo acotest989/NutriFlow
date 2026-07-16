@@ -22,7 +22,7 @@ export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
   const percent = Math.min(100, Math.round((consumed / target) * 100));
 
   return (
-    <div className="bg-[#141923] rounded-3xl p-5 shadow-lg border border-white/5 font-sans h-full flex flex-col justify-between">
+    <div className="bg-[#141923] rounded-3xl p-5 shadow-lg border border-white/5 font-sans flex flex-col">
       {/* Header */}
       <div>
         <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-4">

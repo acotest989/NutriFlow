@@ -31,6 +31,9 @@ export default function ExerciseTracker() {
   // lookup is cold or fails, this stays empty and the local search still works.
   const [onlineResults, setOnlineResults] = useState<ExerciseItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  // True once a lookup has completed for the current query, so we can show a
+  // "no online matches" hint — only after a real search (never on a net error).
+  const [searchDone, setSearchDone] = useState(false);
 
   // Manual custom entry state
   const [isManual, setIsManual] = useState(false);
@@ -49,10 +52,12 @@ export default function ExerciseTracker() {
     if (isManual || q.length < 2) {
       setOnlineResults([]);
       setIsSearching(false);
+      setSearchDone(false);
       return;
     }
     const ctrl = new AbortController();
     setIsSearching(true);
+    setSearchDone(false);
     const timer = setTimeout(async () => {
       try {
         const res = await fetch("/api/exercise-search", {
@@ -62,9 +67,12 @@ export default function ExerciseTracker() {
           signal: ctrl.signal,
         });
         const data = res.ok ? await res.json() : [];
-        setOnlineResults(Array.isArray(data) ? data : []);
+        if (!ctrl.signal.aborted) {
+          setOnlineResults(Array.isArray(data) ? data : []);
+          setSearchDone(true); // a lookup completed -> allow the "no matches" hint
+        }
       } catch {
-        if (!ctrl.signal.aborted) setOnlineResults([]);
+        if (!ctrl.signal.aborted) setOnlineResults([]); // net error: no hint
       } finally {
         if (!ctrl.signal.aborted) setIsSearching(false);
       }
@@ -202,7 +210,7 @@ export default function ExerciseTracker() {
           {/* Online (wger) database results — augment the local list as you type.
               Hidden when the lookup returns nothing (cold cache / no match), so it
               never shows a misleading empty state. */}
-          {(isSearching || onlineResults.length > 0) && (
+          {(isSearching || searchDone || onlineResults.length > 0) && (
             <div className="space-y-2 pt-1">
               <div className="flex items-center gap-1.5 px-1">
                 <Globe className="w-3 h-3 text-[#64748B]" />
@@ -242,6 +250,11 @@ export default function ExerciseTracker() {
                     </div>
                   ))}
                 </div>
+              )}
+              {!isSearching && searchDone && onlineResults.length === 0 && (
+                <p className="text-[11px] text-[#64748B] font-sans px-1 py-1">
+                  {t("food.noOnlineMatches")}
+                </p>
               )}
             </div>
           )}

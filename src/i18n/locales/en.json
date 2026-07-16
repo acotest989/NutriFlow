@@ -90,6 +90,7 @@
     "serving": "Serving:",
     "noMatch": "No matching foods found in standard database. Switch to AI log!",
     "onlineResults": "Online results",
+    "noOnlineMatches": "No online matches",
     "adjustPortion": "Adjust Portion Multiplier",
     "total": "Total:",
     "kcal": "Kcal",
