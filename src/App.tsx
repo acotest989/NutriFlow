@@ -260,7 +260,7 @@ export default function App() {
             {activeMobileTab === "dashboard" && (
               <div className="space-y-4 animate-fadeIn">
                 <Dashboard isCompact={true} />
-                <WaterTracker isCompact={true} />
+                <WaterTracker />
               </div>
             )}
 

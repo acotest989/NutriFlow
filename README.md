@@ -47,6 +47,7 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 * **📸 Snap a Meal (AI photo analysis)**: Take or upload a photo of your plate — **Gemini vision** estimates the foods and total calories/macros, which you review, adjust, and log (`POST /api/analyze-photo`).
 * **Quick-pick catalog**: a curated starter list of common foods and workouts (`src/data.ts`) for one-tap logging.
 * **Online exercise database (wger)**: the workout "Database" tab debounces a live lookup against the free, open **wger** catalog (`/api/exercise-search`, ~842 exercises, no API key), augmenting the local presets. Burn rate (`kcal/min`) is estimated from each exercise's category, then fine-tuned with the duration slider.
+* **Recent quick-add**: a **"Recent"** tab in both Meals and Workouts re-logs a previously logged item (e.g. your usual coffee) in one click with its exact macros/duration — no re-searching.
 
 ### 8. 🔥 Streaks & Achievements
 * **Daily streak**: kept alive by logging *any* meal, exercise, or water each day; the Trends tab shows the current streak (with an alive-from-yesterday grace) and the longest run.

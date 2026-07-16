@@ -3,11 +3,7 @@ import { Droplet, Plus, Trash2, Award } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 
-interface WaterTrackerProps {
-  isCompact?: boolean;
-}
-
-export default function WaterTracker({ isCompact = false }: WaterTrackerProps) {
+export default function WaterTracker() {
   const currentDate = useStore((s) => s.currentDate);
   const consumed = useStore((s) => s.hydration[currentDate] ?? 0);
   const adjustWater = useStore((s) => s.adjustWater);
