@@ -46,6 +46,7 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 * **Real Barcode Scanning**: Point the device camera at a product barcode — it's read on-device via the native `BarcodeDetector` API (Chrome/Android, including the TWA), then looked up against **Open Food Facts** (falling back to a demo list, then an AI estimate). Manual code entry works everywhere as a fallback. Scanning and lookup live in a single unified card.
 * **📸 Snap a Meal (AI photo analysis)**: Take or upload a photo of your plate — **Gemini vision** estimates the foods and total calories/macros, which you review, adjust, and log (`POST /api/analyze-photo`).
 * **Quick-pick catalog**: a curated starter list of common foods and workouts (`src/data.ts`) for one-tap logging.
+* **Online exercise database (wger)**: the workout "Database" tab debounces a live lookup against the free, open **wger** catalog (`/api/exercise-search`, ~842 exercises, no API key), augmenting the local presets. Burn rate (`kcal/min`) is estimated from each exercise's category, then fine-tuned with the duration slider.
 
 ### 8. 🔥 Streaks & Achievements
 * **Daily streak**: kept alive by logging *any* meal, exercise, or water each day; the Trends tab shows the current streak (with an alive-from-yesterday grace) and the longest run.

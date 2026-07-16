@@ -730,6 +730,131 @@ app.post("/api/food-search", async (req, res) => {
   res.json(foods);
 });
 
+// wger (https://wger.de) — a free, open exercise database (no API key). Backs the
+// exercise "Database" search with a far larger catalog than the in-bundle
+// PRESET_EXERCISES. wger has no working per-query search endpoint anymore, so we
+// fetch the full English exercise list once (~842 items) into an in-memory cache
+// and substring-filter it here; the cache is warmed at startup and refreshed
+// daily. wger carries no calorie/MET data, so we estimate caloriesPerMinute from
+// each exercise's category (weight-agnostic, matching how PRESET_EXERCISES are
+// keyed); the user still fine-tunes the burn via the duration slider.
+type WgerExercise = { id: string; name: string; caloriesPerMinute: number; category: string };
+
+const WGER_CATEGORY_KCAL: Record<string, number> = {
+  Cardio: 9.5,
+  Legs: 6.0,
+  Back: 6.0,
+  Chest: 5.5,
+  Shoulders: 5.0,
+  Arms: 4.5,
+  Abs: 4.5,
+  Calves: 4.5,
+};
+const WGER_DEFAULT_KCAL = 5.5;
+const WGER_TTL_MS = 24 * 60 * 60 * 1000;
+
+let wgerCache: WgerExercise[] = [];
+let wgerCacheAt = 0;
+let wgerBuildPromise: Promise<void> | null = null;
+
+async function buildWgerCache(): Promise<void> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4500);
+  try {
+    // language=2 is English; limit=999 fits the whole catalog (~842) in one page.
+    const res = await fetch(
+      "https://wger.de/api/v2/exerciseinfo/?language=2&limit=999&format=json",
+      { signal: ctrl.signal, headers: { Accept: "application/json" } }
+    );
+    if (!res.ok) {
+      console.warn(`wger exercise fetch failed: HTTP ${res.status} ${res.statusText}`);
+      return;
+    }
+    const data: any = await res.json();
+    const results: any[] = Array.isArray(data?.results) ? data.results : [];
+    const seen = new Set<string>();
+    const out: WgerExercise[] = [];
+    for (const r of results) {
+      const cat = String(r?.category?.name ?? "");
+      const en = Array.isArray(r?.translations)
+        ? r.translations.find((t: any) => t?.language === 2 && t?.name)
+        : null;
+      const name = String(en?.name ?? "").trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue; // dedupe variants that share a display name
+      seen.add(key);
+      out.push({
+        id: `wger-${r.id}`,
+        name,
+        caloriesPerMinute: WGER_CATEGORY_KCAL[cat] ?? WGER_DEFAULT_KCAL,
+        category: cat,
+      });
+    }
+    if (out.length) {
+      out.sort((a, b) => a.name.localeCompare(b.name));
+      wgerCache = out;
+      wgerCacheAt = Date.now();
+      console.log(`wger exercise catalog cached: ${out.length} exercises`);
+    }
+  } catch (err) {
+    const msg = (err as Error)?.name === "AbortError" ? "request timed out (4.5s)" : String((err as Error)?.message ?? err);
+    console.warn(`wger exercise fetch error: ${msg}`);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Build the cache if it's empty or stale; concurrent callers share one build.
+function ensureWgerCache(): Promise<void> {
+  const fresh = wgerCache.length > 0 && Date.now() - wgerCacheAt < WGER_TTL_MS;
+  if (fresh) return Promise.resolve();
+  if (!wgerBuildPromise) {
+    wgerBuildPromise = buildWgerCache().finally(() => {
+      wgerBuildPromise = null;
+    });
+  }
+  return wgerBuildPromise;
+}
+
+// Rank exact > prefix > word-start > substring so the best names surface first.
+function rankWgerMatch(name: string, q: string): number {
+  const n = name.toLowerCase();
+  if (n === q) return 0;
+  if (n.startsWith(q)) return 1;
+  if (new RegExp(`\\b${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(n)) return 2;
+  return 3;
+}
+
+async function lookupWgerExercises(query: string): Promise<WgerExercise[]> {
+  // Don't hang the request on a cold build; if it's slow the client keeps its
+  // local presets and the next search (cache now warm) returns online hits.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<void>((r) => {
+    timer = setTimeout(r, 4500);
+  });
+  try {
+    await Promise.race([ensureWgerCache(), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+  const q = query.trim().toLowerCase();
+  if (!q || wgerCache.length === 0) return [];
+  const matches = wgerCache.filter((e) => e.name.toLowerCase().includes(q));
+  matches.sort((a, b) => rankWgerMatch(a.name, q) - rankWgerMatch(b.name, q) || a.name.length - b.name.length);
+  return matches.slice(0, 12);
+}
+
+// 3b. API Route: Exercise database search (wger). Returns [] on a cold cache or
+// no match, so the client just shows its local PRESET_EXERCISES. Reuses the
+// generic {query} validator.
+app.post("/api/exercise-search", async (req, res) => {
+  const body = parseBody(foodSearchSchema, req, res);
+  if (!body) return;
+  const exercises = await lookupWgerExercises(body.query);
+  res.json(exercises);
+});
+
 // 4. API Route: AI Recipes Generator based on ingredients
 app.post("/api/generate-recipes", async (req, res) => {
   const body = parseBody(recipesSchema, req, res);
@@ -889,6 +1014,9 @@ async function startServer() {
     console.log(
       `Food search: ${process.env.FDC_API_KEY ? "USDA FoodData Central enabled" : "local catalog only (no FDC_API_KEY set)"}`
     );
+    // Warm the wger exercise catalog in the background so the first search is fast.
+    console.log("Exercise search: warming wger catalog…");
+    void ensureWgerCache();
   });
 }
 

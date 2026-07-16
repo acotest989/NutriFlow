@@ -167,6 +167,61 @@ describe("POST /api/food-search (USDA FoodData Central)", () => {
   });
 });
 
+describe("POST /api/exercise-search (wger)", () => {
+  // wger `exerciseinfo` shape: base id + category + per-language translations.
+  const wger = {
+    count: 2,
+    next: null,
+    results: [
+      {
+        id: 539,
+        category: { id: 11, name: "Chest" },
+        translations: [
+          { language: 1, name: "Schrägbankdrücken" },
+          { language: 2, name: "Incline Bench Press" }, // English = language 2
+        ],
+      },
+      {
+        id: 88,
+        category: { id: 15, name: "Cardio" },
+        translations: [{ language: 2, name: "Treadmill Running" }],
+      },
+    ],
+  };
+
+  it("returns [] when the wger catalog fetch fails (cold cache)", async () => {
+    // Runs before any successful build, so the in-memory cache is still empty.
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 502 })));
+    const res = await request(app).post("/api/exercise-search").send({ query: "bench" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("maps wger exercises and derives kcal/min from the category", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => wger })));
+    const res = await request(app).post("/api/exercise-search").send({ query: "press" });
+    expect(res.status).toBe(200);
+    const hit = res.body.find((e: { id: string }) => e.id === "wger-539");
+    expect(hit).toMatchObject({
+      id: "wger-539",
+      name: "Incline Bench Press", // English translation, not the German one
+      caloriesPerMinute: 5.5, // Chest -> 5.5 kcal/min
+    });
+  });
+
+  it("filters the cached catalog and returns [] for no match", async () => {
+    // Cache is warm from the previous test; a miss yields an empty list.
+    const res = await request(app).post("/api/exercise-search").send({ query: "zznomatch" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("rejects an empty query with 400", async () => {
+    const res = await request(app).post("/api/exercise-search").send({ query: "" });
+    expect(res.status).toBe(400);
+  });
+});
+
 describe("POST /api/generate-recipes", () => {
   it("returns recipes and forwards profile prefs into the prompt", async () => {
     gemini.next = aiText([{ name: "Veggie Omelette", calories: 300, protein: 20, carbs: 5, fat: 22, prepTime: 10, difficulty: "Easy", summary: "Quick", instructions: "Whisk & cook." }]);

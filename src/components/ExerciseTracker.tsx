@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Flame, 
-  Trash2, 
-  Search, 
-  Plus, 
-  Activity, 
-  Watch, 
-  Dumbbell 
+import {
+  Flame,
+  Trash2,
+  Search,
+  Plus,
+  Activity,
+  Watch,
+  Dumbbell,
+  Globe,
+  Loader2
 } from "lucide-react";
 import { ExerciseItem } from "../types";
 import { PRESET_EXERCISES } from "../data";
@@ -24,6 +26,12 @@ export default function ExerciseTracker() {
   const [selectedExercise, setSelectedExercise] = useState<ExerciseItem | null>(null);
   const [minutes, setMinutes] = useState(30);
 
+  // Online exercise-database (wger) results that augment the local
+  // PRESET_EXERCISES as the user types. Progressive enhancement: if the backend
+  // lookup is cold or fails, this stays empty and the local search still works.
+  const [onlineResults, setOnlineResults] = useState<ExerciseItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   // Manual custom entry state
   const [isManual, setIsManual] = useState(false);
   const [customName, setCustomName] = useState("");
@@ -33,6 +41,39 @@ export default function ExerciseTracker() {
   const filteredExercises = PRESET_EXERCISES.filter(ex =>
     ex.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Debounced online lookup against the wger-backed /api/exercise-search. Aborts
+  // the in-flight request on each keystroke so results never arrive out of order.
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (isManual || q.length < 2) {
+      setOnlineResults([]);
+      setIsSearching(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/exercise-search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q }),
+          signal: ctrl.signal,
+        });
+        const data = res.ok ? await res.json() : [];
+        setOnlineResults(Array.isArray(data) ? data : []);
+      } catch {
+        if (!ctrl.signal.aborted) setOnlineResults([]);
+      } finally {
+        if (!ctrl.signal.aborted) setIsSearching(false);
+      }
+    }, 400);
+    return () => {
+      ctrl.abort();
+      clearTimeout(timer);
+    };
+  }, [searchQuery, isManual]);
 
   const handleLogPreset = (exercise: ExerciseItem) => {
     const totalBurned = Math.round(exercise.caloriesPerMinute * minutes);
@@ -157,6 +198,53 @@ export default function ExerciseTracker() {
               </div>
             ))}
           </div>
+
+          {/* Online (wger) database results — augment the local list as you type.
+              Hidden when the lookup returns nothing (cold cache / no match), so it
+              never shows a misleading empty state. */}
+          {(isSearching || onlineResults.length > 0) && (
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center gap-1.5 px-1">
+                <Globe className="w-3 h-3 text-[#64748B]" />
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B]">
+                  {t("food.onlineResults")}
+                </span>
+                {isSearching && <Loader2 className="w-3 h-3 animate-spin text-[#4ADE80]" />}
+              </div>
+              {onlineResults.length > 0 && (
+                <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+                  {onlineResults.map(ex => (
+                    <div
+                      key={ex.id}
+                      onClick={() => setSelectedExercise(ex)}
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
+                        selectedExercise?.id === ex.id
+                          ? "border-[#4ADE80] bg-[#4ADE80]/10"
+                          : "border-white/5 hover:border-white/10 hover:bg-white/2"
+                      }`}
+                    >
+                      <div className="font-sans flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-[#4ADE80]/10 flex items-center justify-center text-[#4ADE80] shrink-0">
+                          <Activity className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-semibold text-[#E2E8F0] truncate">{ex.name}</h4>
+                          <p className="text-[10px] text-[#64748B] font-medium">
+                            {t("exercise.estBurn", { kcal: (ex.caloriesPerMinute * 30).toFixed(0) })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono text-[#94A3B8] bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+                          {ex.caloriesPerMinute} kcal/min
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Preset Servings Adjustment Modal Overlay */}
           <AnimatePresence>
