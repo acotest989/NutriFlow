@@ -57,6 +57,11 @@ It ships on the **web** (Google Cloud Run) and on **Android via the Google Play 
 * **English is the bundled default**; Serbian (Latin), Croatian, and Bosnian bundles **lazy-load on demand** (own chunk each) so they don't grow the main bundle.
 * **AI replies in your language** — the active language is sent with each Gemini request (coach, recipes, photo, barcode). Dates format per-locale and day counts use correct Slavic plurals.
 
+### 10. 📴 Offline-ready (installable PWA)
+* **Launches offline**: a `vite-plugin-pwa` (Workbox) service worker precaches the app shell (hashed JS/CSS/icons + `index.html`), so the installed app / TWA opens from cache instead of a blank screen when the network drops. An **offline banner** makes the state explicit.
+* **Never serves a stale app**: `autoUpdate` + a content-revision precache manifest mean each deploy activates and reloads onto the fresh build automatically; `/api/*` and the server-rendered pages are excluded from the cache. Registration is CSP-safe (no inline script). A `PWA_KILL=1` build ships a self-destroying worker as an escape hatch.
+* *Data itself still needs a connection* (offline viewing/queued writes are a future step).
+
 ---
 
 ## 🛠️ Technology Stack

@@ -37,7 +37,8 @@
     "delete": "Delete",
     "close": "Close",
     "loading": "Loading…",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "offline": "You're offline — reconnect to sync"
   },
   "dashboard": {
     "today": "Today",

@@ -62,10 +62,6 @@
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
-
-    <!-- Clean up Service Workers to avoid stale iframe caches. External file (not
-         inline) so the production CSP can keep a strict script-src 'self'. -->
-    <script src="/sw-cleanup.js" defer></script>
   </body>
 </html>
 

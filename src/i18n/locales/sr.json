@@ -37,7 +37,8 @@
     "delete": "Obriši",
     "close": "Zatvori",
     "loading": "Učitavanje…",
-    "dismiss": "Odbaci"
+    "dismiss": "Odbaci",
+    "offline": "Niste na mreži — povežite se za sinhronizaciju"
   },
   "dashboard": {
     "today": "Danas",
