@@ -762,60 +762,46 @@ const WGER_DEFAULT_KCAL = 5.5;
 const WGER_TTL_MS = 24 * 60 * 60 * 1000;
 // Small pages keep the JSON parse (and so the heap) tiny; the cap is a safety
 // backstop so a paging bug can't loop forever. ~842 exercises ≈ 9 pages.
-const WGER_PAGE_SIZE = 100;
-const WGER_MAX_PAGES = 25;
-const WGER_PAGE_TIMEOUT_MS = 8000;
-// How long a search waits for a cold catalog before giving up. Cloud Run only
-// gives the container full CPU while a request is in flight, so a background
-// warm gets starved and the build realistically only completes *inside* a
-// request — waiting here is what makes the first search after a cold start
-// return real results. Capped so a wger outage can't hang the request.
+// Generous: the catalog is ~5 MB in one response and Cloud Run's egress is slow
+// on a cold instance (4.5s was not enough and timed out repeatedly).
+const WGER_FETCH_TIMEOUT_MS = 20000;
+// How long a search waits on a cold catalog before answering 503 (the build then
+// keeps going for the next search). Cloud Run only gives the container full CPU
+// while a request is in flight, so requests are what drive the build forward.
 const WGER_LOOKUP_WAIT_MS = 8000;
 
 let wgerCache: WgerExercise[] = [];
 let wgerCacheAt = 0;
 let wgerBuildPromise: Promise<void> | null = null;
 
-// One page of wger's exerciseinfo, with its own timeout. Returns null on any
-// HTTP/network problem so the caller can keep whatever it has already collected.
-async function fetchWgerPage(url: string): Promise<any | null> {
+// Pull the whole catalog in ONE request, keeping only {id, name, category, kcal}.
+//
+// Paging it (9 sequential round trips) looked leaner on memory but is the wrong
+// shape for Cloud Run: the container only gets real CPU while a request is in
+// flight, so a multi-round-trip build can't finish inside one request window — a
+// page then times out, that aborts the whole build, and the next request starts
+// over from page 1. It never converged, and every search answered 503.
+//
+// One request is a single round trip that a request window can actually finish.
+// The ~5 MB parse spikes the heap ~40 MB, which is fine inside the container's
+// 256Mi, and we still retain only the extracted fields (~75 KB).
+async function buildWgerCache(): Promise<void> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), WGER_PAGE_TIMEOUT_MS);
+  const timer = setTimeout(() => ctrl.abort(), WGER_FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" } });
+    // language=2 is English; limit=999 covers the whole catalog (~842) in one page.
+    const res = await fetch(
+      "https://wger.de/api/v2/exerciseinfo/?language=2&limit=999&format=json",
+      { signal: ctrl.signal, headers: { Accept: "application/json" } }
+    );
     if (!res.ok) {
       console.warn(`wger exercise fetch failed: HTTP ${res.status} ${res.statusText}`);
-      return null;
+      return;
     }
-    return await res.json();
-  } catch (err) {
-    const msg = (err as Error)?.name === "AbortError"
-      ? `request timed out (${WGER_PAGE_TIMEOUT_MS}ms)`
-      : String((err as Error)?.message ?? err);
-    console.warn(`wger exercise fetch error: ${msg}`);
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// Walk the catalog page by page, keeping ONLY {id, name, category, kcal}. Pulling
-// all ~842 exerciseinfo records at once is ~5 MB of JSON whose parse spikes the
-// heap ~40 MB — enough to OOM a small container — and reliably outran a short
-// timeout. Page-at-a-time keeps the peak to roughly one page (each page object
-// becomes garbage before the next fetch), and the retained cache is ~100 KB.
-async function buildWgerCache(): Promise<void> {
-  const seen = new Set<string>();
-  const out: WgerExercise[] = [];
-  let url: string | null =
-    `https://wger.de/api/v2/exerciseinfo/?language=2&limit=${WGER_PAGE_SIZE}&format=json`;
-  let pages = 0;
-
-  while (url && pages < WGER_MAX_PAGES) {
-    const data = await fetchWgerPage(url);
-    if (!data) break; // network/HTTP problem -> keep what we've got so far
-    pages++;
-    const results: any[] = Array.isArray(data.results) ? data.results : [];
+    const data: any = await res.json();
+    const results: any[] = Array.isArray(data?.results) ? data.results : [];
+    const seen = new Set<string>();
+    const out: WgerExercise[] = [];
     for (const r of results) {
       const cat = String(r?.category?.name ?? "");
       const en = Array.isArray(r?.translations)
@@ -833,16 +819,21 @@ async function buildWgerCache(): Promise<void> {
         category: cat,
       });
     }
-    url = typeof data.next === "string" ? data.next : null;
-  }
-
-  if (out.length) {
-    out.sort((a, b) => a.name.localeCompare(b.name));
-    wgerCache = out;
-    wgerCacheAt = Date.now();
-    console.log(`wger exercise catalog cached: ${out.length} exercises (${pages} pages)`);
-  } else {
-    console.warn("wger exercise catalog: nothing cached (client keeps local presets)");
+    if (out.length) {
+      out.sort((a, b) => a.name.localeCompare(b.name));
+      wgerCache = out;
+      wgerCacheAt = Date.now();
+      console.log(`wger exercise catalog cached: ${out.length} exercises`);
+    } else {
+      console.warn("wger exercise catalog: nothing cached (client keeps local presets)");
+    }
+  } catch (err) {
+    const msg = (err as Error)?.name === "AbortError"
+      ? `request timed out (${WGER_FETCH_TIMEOUT_MS}ms)`
+      : String((err as Error)?.message ?? err);
+    console.warn(`wger exercise fetch error: ${msg}`);
+  } finally {
+    clearTimeout(timer);
   }
 }
 
