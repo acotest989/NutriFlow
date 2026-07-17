@@ -189,12 +189,13 @@ describe("POST /api/exercise-search (wger)", () => {
     ],
   };
 
-  it("returns [] when the wger catalog fetch fails (cold cache)", async () => {
+  it("reports 503 (not an empty list) while the catalog is unavailable", async () => {
     // Runs before any successful build, so the in-memory cache is still empty.
+    // A cold/failed catalog must not look like "no matches" to the client.
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 502 })));
     const res = await request(app).post("/api/exercise-search").send({ query: "bench" });
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual([]);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBeTruthy();
   });
 
   it("maps wger exercises and derives kcal/min from the category", async () => {

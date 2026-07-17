@@ -765,6 +765,12 @@ const WGER_TTL_MS = 24 * 60 * 60 * 1000;
 const WGER_PAGE_SIZE = 100;
 const WGER_MAX_PAGES = 25;
 const WGER_PAGE_TIMEOUT_MS = 8000;
+// How long a search waits for a cold catalog before giving up. Cloud Run only
+// gives the container full CPU while a request is in flight, so a background
+// warm gets starved and the build realistically only completes *inside* a
+// request — waiting here is what makes the first search after a cold start
+// return real results. Capped so a wger outage can't hang the request.
+const WGER_LOOKUP_WAIT_MS = 8000;
 
 let wgerCache: WgerExercise[] = [];
 let wgerCacheAt = 0;
@@ -861,32 +867,40 @@ function rankWgerMatch(name: string, q: string): number {
   return 3;
 }
 
-async function lookupWgerExercises(query: string): Promise<WgerExercise[]> {
-  // Don't hang the request on a cold build; if it's slow the client keeps its
-  // local presets and the next search (cache now warm) returns online hits.
+// Returns null when the catalog isn't available (still warming, or wger is
+// unreachable) so the caller can say "not ready" rather than let an empty list
+// be read as "no matches". [] means the catalog IS loaded and nothing matched.
+async function lookupWgerExercises(query: string): Promise<WgerExercise[] | null> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<void>((r) => {
-    timer = setTimeout(r, 4500);
+    timer = setTimeout(r, WGER_LOOKUP_WAIT_MS);
   });
   try {
     await Promise.race([ensureWgerCache(), timeout]);
   } finally {
     clearTimeout(timer);
   }
+  if (wgerCache.length === 0) return null; // catalog unavailable
   const q = query.trim().toLowerCase();
-  if (!q || wgerCache.length === 0) return [];
+  if (!q) return [];
   const matches = wgerCache.filter((e) => e.name.toLowerCase().includes(q));
   matches.sort((a, b) => rankWgerMatch(a.name, q) - rankWgerMatch(b.name, q) || a.name.length - b.name.length);
   return matches.slice(0, 12);
 }
 
-// 3b. API Route: Exercise database search (wger). Returns [] on a cold cache or
-// no match, so the client just shows its local PRESET_EXERCISES. Reuses the
-// generic {query} validator.
+// 3b. API Route: Exercise database search (wger). 503 while the catalog is still
+// warming (or wger is unreachable) so the client keeps its local
+// PRESET_EXERCISES and doesn't mistake an empty list for "no matches"; a 200 []
+// means the catalog is loaded and genuinely had no hit. Reuses the {query}
+// validator.
 app.post("/api/exercise-search", async (req, res) => {
   const body = parseBody(foodSearchSchema, req, res);
   if (!body) return;
   const exercises = await lookupWgerExercises(body.query);
+  if (exercises === null) {
+    res.status(503).json({ error: "Exercise catalog is still loading. Try again in a moment." });
+    return;
+  }
   res.json(exercises);
 });
 

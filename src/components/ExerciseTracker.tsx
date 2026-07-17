@@ -106,10 +106,16 @@ export default function ExerciseTracker() {
           body: JSON.stringify({ query: q }),
           signal: ctrl.signal,
         });
-        const data = res.ok ? await res.json() : [];
         if (!ctrl.signal.aborted) {
-          setOnlineResults(Array.isArray(data) ? data : []);
-          setSearchDone(true); // a lookup completed -> allow the "no matches" hint
+          if (res.ok) {
+            const data = await res.json();
+            setOnlineResults(Array.isArray(data) ? data : []);
+            setSearchDone(true); // a real lookup ran -> allow the "no matches" hint
+          } else {
+            // 503 = the catalog is still warming up. Keep the local presets and
+            // stay quiet rather than wrongly claiming there are no matches.
+            setOnlineResults([]);
+          }
         }
       } catch {
         if (!ctrl.signal.aborted) setOnlineResults([]); // net error: no hint
