@@ -146,6 +146,8 @@ The app ships as a single container (see `Dockerfile`) that serves both the API 
   * `FDC_API_KEY` *(optional)* — USDA FoodData Central key for the online food-database search (`/api/food-search`); without it, food search uses the in-bundle catalog only.
 * The public `VITE_SUPABASE_*` values are baked at build time from `.env.production`.
 * After deploy, set the Cloud Run URL as the **Site URL** and add it to **Redirect URLs** in Supabase → **Authentication → URL Configuration** (so email confirmation works in production).
+* ⚠️ **Give the service at least 256 MiB of memory** (`gcloud run services update nutriflow --region=… --memory=256Mi`). The Node/Express baseline with the Supabase + Gemini SDKs is already ~105 MB, and the wger catalog fetch briefly adds ~40 MB. At the **128 MiB default this OOM-crash-loops** (`Memory limit of 128 MiB exceeded with ~146 MiB used`) — the container restarts endlessly and every `/api/*` call fails. This costs nothing: Cloud Run's free tier gives 360,000 GiB-s/month (≈400 hrs at 256 MiB) while **CPU** (180,000 vCPU-s ≈ 50 hrs) is the binding quota at any of these sizes.
+* ⚠️ **Cloud Run only allocates CPU while a request is in flight.** Don't add background/startup work that needs sustained CPU or several round trips — it stalls, times out, and can hold locks that block real requests. The wger catalog is deliberately built on the *first search* (one round trip), not at startup, for exactly this reason.
 
 ### Secrets → Secret Manager (recommended)
 

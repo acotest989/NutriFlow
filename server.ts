@@ -1054,9 +1054,13 @@ async function startServer() {
     console.log(
       `Food search: ${process.env.FDC_API_KEY ? "USDA FoodData Central enabled" : "local catalog only (no FDC_API_KEY set)"}`
     );
-    // Warm the wger exercise catalog in the background so the first search is fast.
-    console.log("Exercise search: warming wger catalog…");
-    void ensureWgerCache();
+    // Deliberately NO wger pre-warm here. Cloud Run only gives the container CPU
+    // while a request is in flight, so a background warm stalls, times out — and
+    // worse, it holds the single-flight build lock while doing so, making the
+    // first real search wait on a fetch that's already doomed. The catalog is
+    // built by the first search instead (~2-4s, with CPU allocated). See
+    // lookupWgerExercises / ensureWgerCache.
+    console.log("Exercise search: wger catalog builds on first search");
   });
 }
 
