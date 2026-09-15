@@ -1,6 +1,0 @@
-{
-  "name": "NutriFlow",
-  "description": "An elegant, AI-powered personal diet, hydration, and exercise tracker with active pantry recipe generator, custom goal settings, barcode scanner, and an intelligent daily coach.",
-  "requestFramePermissions": ["camera"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
