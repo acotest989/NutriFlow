@@ -25,6 +25,12 @@ Because the Android app is a thin TWA over the live web app, **content/feature/U
 
 ---
 
+## 🚧 In progress: native Android app (Flutter)
+
+A native Flutter rewrite lives in the sibling repo `NutriFlow-flutter` and will replace the TWA on Google Play (same package `app.nutriflow.twa`, same upload key, versionCode 5+). Same Supabase project and schema; Gemini moves from the Express proxy to **Firebase AI Logic** + App Check, account deletion to the `delete_own_account()` RPC (migration `0005`), and Open Food Facts / USDA / wger are called directly from the app. The web app on Cloud Run keeps working unchanged. Setup + release steps: `NutriFlow-flutter/README.md`.
+
+---
+
 ## 🎯 Near-term (next up)
 
 Prioritized post-launch work:

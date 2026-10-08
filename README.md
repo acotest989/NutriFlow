@@ -93,6 +93,8 @@ npm install
    * `supabase/migrations/0001_init.sql` (entries + goals)
    * `supabase/migrations/0002_hydration.sql` (hydration)
    * `supabase/migrations/0003_profiles.sql` (onboarding profiles)
+   * `supabase/migrations/0004_profile_language.sql` (synced UI language)
+   * `supabase/migrations/0005_delete_own_account.sql` (account deletion RPC used by the native Flutter app)
 3. From **Project Settings → API**, copy your **Project URL** and **anon / publishable key**.
 
 ### 3. Configure environment variables
